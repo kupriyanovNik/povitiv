@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ConsentPage() {
   return (
     <main className="mx-auto max-w-[760px] px-4 py-16 sm:px-6">
-      <Link href="/" className="text-sm font-semibold text-pine hover:underline">
+      <Link href="/" className="text-sm font-semibold text-wine hover:underline">
         На главную
       </Link>
       <h1 className="mt-6 text-3xl font-extrabold tracking-[-0.02em]">

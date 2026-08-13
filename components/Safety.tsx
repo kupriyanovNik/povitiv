@@ -46,7 +46,7 @@ export function Safety() {
     <section className="py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <h2 className="max-w-[22ch] text-3xl font-extrabold tracking-[-0.02em] sm:text-4xl lg:text-[44px] lg:leading-[1.08]">
+          <h2 className="font-display max-w-[22ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Критические этапы сделки под контролем
           </h2>
           <p className="mt-4 max-w-[56ch] text-base leading-relaxed text-ink-soft sm:text-lg">
@@ -62,7 +62,7 @@ export function Safety() {
               <p.icon
                 size={26}
                 weight="duotone"
-                className="mt-0.5 shrink-0 text-pine"
+                className="mt-0.5 shrink-0 text-wine"
               />
               <div>
                 <h3 className="font-bold tracking-[-0.01em]">{p.title}</h3>

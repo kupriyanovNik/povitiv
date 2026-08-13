@@ -65,7 +65,7 @@ function Item({
           transition={
             reduce ? { duration: 0 } : { type: "spring", duration: 0.35, bounce: 0 }
           }
-          className="shrink-0 text-pine"
+          className="shrink-0 text-wine"
         >
           <Plus size={20} weight="bold" />
         </motion.span>
@@ -97,7 +97,7 @@ export function FAQ() {
     <section id="faq" className="scroll-mt-20 bg-surface py-20 lg:py-28">
       <div className="mx-auto max-w-[880px] px-4 sm:px-6">
         <Reveal>
-          <h2 className="text-3xl font-extrabold tracking-[-0.02em] sm:text-4xl lg:text-[44px]">
+          <h2 className="font-display text-3xl font-bold sm:text-4xl lg:text-[44px]">
             Частые вопросы
           </h2>
         </Reveal>

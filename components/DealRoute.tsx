@@ -67,7 +67,7 @@ export function DealRoute() {
       <div className="mx-auto grid max-w-[1280px] gap-12 px-4 sm:px-6 lg:grid-cols-[5fr_7fr] lg:gap-20 lg:px-8">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <Reveal>
-            <h2 className="max-w-[16ch] text-3xl font-extrabold tracking-[-0.02em] sm:text-4xl lg:text-[44px] lg:leading-[1.08]">
+            <h2 className="font-display max-w-[16ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
               Вся работа по сделке в одном агентстве
             </h2>
             <p className="mt-4 max-w-[44ch] text-base leading-relaxed text-ink-soft sm:text-lg">
@@ -78,7 +78,7 @@ export function DealRoute() {
             </p>
             <button
               onClick={() => openLead()}
-              className="mt-8 inline-flex h-12 items-center rounded-xl bg-pine px-6 font-semibold text-white transition-colors hover:bg-pine-deep active:scale-[0.98]"
+              className="mt-8 inline-flex h-12 items-center rounded-full bg-wine px-6 font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98]"
             >
               Обсудить задачу
             </button>
@@ -95,13 +95,13 @@ export function DealRoute() {
             <motion.div
               aria-hidden
               style={{ scaleY: reduce ? 1 : scaleY }}
-              className="absolute bottom-6 left-[15px] top-6 w-px origin-top bg-pine"
+              className="absolute bottom-6 left-[15px] top-6 w-px origin-top bg-wine"
             />
           )}
           <ol ref={listRef} className="space-y-9">
             {STEPS.map((step, i) => (
               <li key={step.title} className="relative flex gap-6">
-                <span className="tnum relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-[13px] font-bold text-pine">
+                <span className="tnum relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-[13px] font-bold text-wine">
                   {i + 1}
                 </span>
                 <div className="pt-0.5">

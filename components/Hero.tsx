@@ -26,15 +26,16 @@ export function Hero({ featured }: { featured: Listing }) {
         <div>
           <motion.p
             {...enter(0)}
-            className="text-[13px] font-semibold uppercase tracking-[0.14em] text-pine"
+            className="text-[13px] font-semibold uppercase tracking-[0.14em] text-wine"
           >
             Москва и Московская область, с 2010 года
           </motion.p>
           <motion.h1
             {...enter(0.08)}
-            className="mt-4 max-w-[13ch] text-[40px] font-extrabold leading-[1.04] tracking-[-0.025em] sm:text-5xl lg:text-[64px]"
+            className="font-display mt-4 max-w-[14ch] text-[40px] font-bold leading-[1.07] sm:text-5xl sm:leading-[1.07] lg:text-[64px]"
           >
-            Недвижимость: спокойно и под&nbsp;контролем
+            Недвижимость: <span className="text-wine">спокойно</span> и
+            под&nbsp;контролем
           </motion.h1>
           <motion.p
             {...enter(0.16)}
@@ -47,13 +48,13 @@ export function Hero({ featured }: { featured: Listing }) {
           <motion.div {...enter(0.24)} className="mt-8 flex flex-wrap gap-3">
             <button
               onClick={() => openLead("Продать")}
-              className="inline-flex h-13 items-center rounded-xl bg-pine px-7 text-base font-semibold text-white shadow-[0_12px_30px_-12px_rgba(27,91,67,0.55)] transition-[background-color,transform] hover:bg-pine-deep active:scale-[0.98]"
+              className="inline-flex h-13 items-center rounded-full bg-wine px-7 text-base font-semibold text-white shadow-[0_12px_30px_-12px_rgba(125,27,36,0.45)] transition-[background-color,transform] hover:bg-wine-deep active:scale-[0.98]"
             >
               Оценить объект
             </button>
             <button
               onClick={() => openLead("Купить")}
-              className="inline-flex h-13 items-center rounded-xl border border-ink/15 bg-surface px-7 text-base font-semibold text-ink transition-colors hover:border-ink/35 active:scale-[0.98]"
+              className="inline-flex h-13 items-center rounded-full border border-ink/15 bg-surface px-7 text-base font-semibold text-ink transition-colors hover:border-ink/35 active:scale-[0.98]"
             >
               Подобрать недвижимость
             </button>
@@ -86,7 +87,7 @@ export function Hero({ featured }: { featured: Listing }) {
               className="group absolute inset-x-4 bottom-4 flex items-center justify-between gap-4 rounded-xl border border-white/25 bg-white/85 p-4 backdrop-blur-md transition-transform hover:-translate-y-0.5 sm:inset-x-5 sm:bottom-5"
             >
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-pine">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-wine">
                   Сейчас в работе
                 </p>
                 <p className="mt-1 truncate text-[15px] font-bold leading-snug">
@@ -100,7 +101,7 @@ export function Hero({ featured }: { featured: Listing }) {
                 <span className="tnum text-[15px] font-extrabold">
                   {formatPrice(featured.price, featured.priceNote)}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-pine">
+                <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-wine">
                   Смотреть
                   <ArrowUpRight
                     size={14}

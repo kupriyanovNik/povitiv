@@ -13,13 +13,13 @@ export function MobileBar() {
         <a
           href={site.phoneHref}
           aria-label={`Позвонить: ${site.phone}`}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-line text-pine"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-line text-wine"
         >
           <Phone size={20} weight="bold" />
         </a>
         <button
           onClick={() => openLead()}
-          className="h-12 flex-1 rounded-xl bg-pine font-semibold text-white transition-colors hover:bg-pine-deep active:scale-[0.99]"
+          className="h-12 flex-1 rounded-full bg-wine font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.99]"
         >
           Получить консультацию
         </button>

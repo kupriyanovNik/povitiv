@@ -1,17 +1,25 @@
 @import "tailwindcss";
 
+/*
+ * Фирменный бордовый «Позитив ВТ» (positiv-vt.ru: #800000 / #4f080b /
+ * #2f0608, золото #efa04d) в современном UI: нейтральная светлая
+ * бумага, один винный акцент, золото только для рейтинговых звёзд.
+ *
+ * Скругления: кнопки и чипы pill (rounded-full), поля ввода 12px
+ * (rounded-xl), карточки 16px (rounded-2xl).
+ */
 :root {
   color-scheme: light;
-  --paper: #f5f4f0;
+  --paper: #f8f6f4;
   --surface: #ffffff;
-  --ink: #1f241f;
-  --ink-soft: #555c52;
-  --line: #e4e2da;
-  --pine: #1b5b43;
-  --pine-deep: #124232;
-  --pine-ink: #0d3126;
-  --pine-tint: #e7efe9;
-  --pine-tint-strong: #d8e6dc;
+  --ink: #211d1c;
+  --ink-soft: #6b625e;
+  --line: #e9e4e0;
+  --wine: #7d1b24;
+  --wine-deep: #5e1119;
+  --wine-ink: #330a0f;
+  --wine-tint: #f5e8e6;
+  --gold: #d98e3b;
 }
 
 @theme inline {
@@ -20,13 +28,14 @@
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-line: var(--line);
-  --color-pine: var(--pine);
-  --color-pine-deep: var(--pine-deep);
-  --color-pine-ink: var(--pine-ink);
-  --color-pine-tint: var(--pine-tint);
-  --color-pine-tint-strong: var(--pine-tint-strong);
+  --color-wine: var(--wine);
+  --color-wine-deep: var(--wine-deep);
+  --color-wine-ink: var(--wine-ink);
+  --color-wine-tint: var(--wine-tint);
+  --color-gold: var(--gold);
   --font-sans: var(--font-golos), "Golos Text", system-ui, -apple-system,
     "Segoe UI", sans-serif;
+  --font-display: var(--font-geologica), "Geologica", var(--font-sans);
 }
 
 html {
@@ -47,9 +56,15 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Дисплейный гротеск для заголовков и крупных акцентов */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
 ::selection {
-  background: var(--pine-tint-strong);
-  color: var(--pine-ink);
+  background: var(--wine-tint);
+  color: var(--wine-ink);
 }
 
 .tnum {
@@ -58,7 +73,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--pine);
+  outline: 2px solid var(--wine);
   outline-offset: 2px;
   border-radius: 4px;
 }

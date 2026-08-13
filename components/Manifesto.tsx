@@ -5,7 +5,7 @@ export function Manifesto() {
     <section className="py-20 lg:py-28">
       <div className="mx-auto max-w-[880px] px-4 text-center sm:px-6">
         <Reveal>
-          <p className="text-2xl font-bold leading-[1.35] tracking-[-0.015em] sm:text-3xl lg:text-[34px]">
+          <p className="font-display text-2xl font-semibold leading-[1.35] sm:text-3xl lg:text-[36px] lg:leading-[1.3]">
             Мы не сетевой гигант, а команда из семи специалистов, которые
             работают вместе почти десять лет и лично ведут каждую сделку. Нас
             можно проверить: профили, оценки и сделки открыты на ЦИАН и

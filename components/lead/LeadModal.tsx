@@ -100,7 +100,7 @@ function ModalContent({
 
         {status === "success" ? (
           <div className="py-6 text-center">
-            <CheckCircle size={56} weight="fill" className="mx-auto text-pine" />
+            <CheckCircle size={56} weight="fill" className="mx-auto text-wine" />
             <h3 className="mt-4 text-xl font-bold">
               Спасибо, заявка отправлена
             </h3>
@@ -110,7 +110,7 @@ function ModalContent({
             </p>
             <button
               onClick={onClose}
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-pine px-6 font-semibold text-white transition-colors hover:bg-pine-deep active:scale-[0.98]"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-wine px-6 font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98]"
             >
               Готово
             </button>
@@ -139,7 +139,7 @@ function ModalContent({
                     onClick={() => setTask(t)}
                     className={`h-9 rounded-full border px-3.5 text-sm font-medium transition-colors ${
                       task === t
-                        ? "border-pine bg-pine text-white"
+                        ? "border-wine bg-wine text-white"
                         : "border-line bg-surface text-ink hover:border-ink/30"
                     }`}
                   >
@@ -161,7 +161,7 @@ function ModalContent({
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="name"
                   placeholder="Как к вам обращаться?"
-                  className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-pine"
+                  className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-wine"
                 />
               </div>
               <div className="space-y-2">
@@ -178,7 +178,7 @@ function ModalContent({
                   autoComplete="tel"
                   inputMode="tel"
                   placeholder="+7 900 000-00-00"
-                  className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-pine"
+                  className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-wine"
                 />
               </div>
               {/* honeypot для ботов, посетители поле не видят */}
@@ -198,7 +198,7 @@ function ModalContent({
               <button
                 type="submit"
                 disabled={status === "sending"}
-                className="h-12 w-full rounded-xl bg-pine font-semibold text-white transition-colors hover:bg-pine-deep active:scale-[0.98] disabled:opacity-60"
+                className="h-12 w-full rounded-full bg-wine font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98] disabled:opacity-60"
               >
                 {status === "sending" ? "Отправляем…" : "Обсудить задачу"}
               </button>

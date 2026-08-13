@@ -41,7 +41,7 @@ function FeaturedCard({ listing }: { listing: Listing }) {
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
         />
         {listing.badge && (
-          <span className="absolute left-4 top-4 rounded-full bg-surface/90 px-3 py-1.5 text-xs font-bold text-pine backdrop-blur-sm">
+          <span className="absolute left-4 top-4 rounded-full bg-surface/90 px-3 py-1.5 text-xs font-bold text-wine backdrop-blur-sm">
             {listing.badge}
           </span>
         )}
@@ -56,13 +56,13 @@ function FeaturedCard({ listing }: { listing: Listing }) {
           </span>
         </div>
         <p className="mt-1.5 flex items-center gap-1.5 text-sm text-ink-soft">
-          <MapPin size={14} weight="bold" className="shrink-0 text-pine" />
+          <MapPin size={14} weight="bold" className="shrink-0 text-wine" />
           {listing.address}
         </p>
         <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-ink-soft">
           {listing.highlight}
         </p>
-        <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-semibold text-pine">
+        <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-semibold text-wine">
           Смотреть объект
           <ArrowUpRight
             size={14}
@@ -98,7 +98,7 @@ function CompactCard({ listing }: { listing: Listing }) {
             {listing.title}
           </h3>
           {listing.badge && (
-            <span className="hidden shrink-0 rounded-full bg-pine-tint px-2.5 py-1 text-[11px] font-bold text-pine sm:block">
+            <span className="hidden shrink-0 rounded-full bg-wine-tint px-2.5 py-1 text-[11px] font-bold text-wine sm:block">
               {listing.badge}
             </span>
           )}
@@ -110,7 +110,7 @@ function CompactCard({ listing }: { listing: Listing }) {
           <span className="tnum text-[15px] font-extrabold">
             {formatPrice(listing.price, listing.priceNote)}
           </span>
-          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-pine">
+          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-wine">
             Смотреть
             <ArrowUpRight
               size={13}
@@ -144,10 +144,10 @@ export function Listings({ listings }: { listings: Listing[] }) {
     <section id="obekty" className="scroll-mt-20 bg-surface py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-pine">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-wine">
             Актуальные объявления агентства
           </p>
-          <h2 className="mt-3 max-w-[26ch] text-3xl font-extrabold tracking-[-0.02em] sm:text-4xl lg:text-[44px] lg:leading-[1.08]">
+          <h2 className="font-display mt-3 max-w-[26ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Недвижимость, с которой мы работаем
           </h2>
         </Reveal>
@@ -165,7 +165,7 @@ export function Listings({ listings }: { listings: Listing[] }) {
               onClick={() => setFilter(f.key)}
               className={`tnum h-10 rounded-full border px-4 text-sm font-semibold transition-colors ${
                 filter === f.key
-                  ? "border-pine bg-pine text-white"
+                  ? "border-wine bg-wine text-white"
                   : "border-line bg-surface text-ink hover:border-ink/30"
               }`}
             >
@@ -214,7 +214,7 @@ export function Listings({ listings }: { listings: Listing[] }) {
             href={site.profiles.cian}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-ink/15 bg-surface px-5 text-sm font-semibold transition-colors hover:border-ink/35"
+            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-ink/15 bg-surface px-5 text-sm font-semibold transition-colors hover:border-ink/35"
           >
             Все объявления на ЦИАН
             <ArrowUpRight size={15} weight="bold" />

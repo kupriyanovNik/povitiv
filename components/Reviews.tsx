@@ -27,7 +27,7 @@ export function Reviews({
     <section id="otzyvy" className="scroll-mt-20 bg-surface py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <h2 className="max-w-[26ch] text-3xl font-extrabold tracking-[-0.02em] sm:text-4xl lg:text-[44px] lg:leading-[1.08]">
+          <h2 className="font-display max-w-[26ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Что говорят после проведённых сделок
           </h2>
           <p className="mt-4 max-w-[56ch] text-base leading-relaxed text-ink-soft sm:text-lg">
@@ -38,9 +38,9 @@ export function Reviews({
 
         <div className="mt-10 grid gap-4 lg:mt-12 lg:grid-cols-[7fr_5fr]">
           {textReview && (
-            <figure className="flex flex-col justify-between rounded-2xl bg-pine-tint p-7 sm:p-10">
-              <Quotes size={36} weight="fill" className="text-pine/40" />
-              <blockquote className="mt-4 text-xl font-semibold leading-[1.4] tracking-[-0.01em] sm:text-2xl">
+            <figure className="flex flex-col justify-between rounded-2xl bg-wine-tint p-7 sm:p-10">
+              <Quotes size={36} weight="fill" className="text-wine/40" />
+              <blockquote className="font-display mt-4 text-2xl font-semibold leading-[1.35] sm:text-[27px]">
                 «{textReview.text}»
               </blockquote>
               <figcaption className="mt-6 text-[15px] text-ink-soft">
@@ -53,9 +53,9 @@ export function Reviews({
           )}
 
           <div className="flex flex-col gap-4">
-            <div className="flex flex-1 flex-col justify-center rounded-2xl bg-pine-ink p-7 text-white sm:p-8">
+            <div className="flex flex-1 flex-col justify-center rounded-2xl bg-wine-ink p-7 text-white sm:p-8">
               <div className="flex items-end gap-3">
-                <span className="tnum text-6xl font-extrabold leading-none">
+                <span className="font-display text-6xl font-bold leading-none">
                   {rating.toFixed(1).replace(".", ",")}
                 </span>
                 <div className="mb-1 flex gap-0.5" aria-label="5 звёзд из 5">
@@ -83,7 +83,7 @@ export function Reviews({
                         key={i}
                         size={13}
                         weight="fill"
-                        className="text-pine"
+                        className="text-gold"
                       />
                     ))}
                   </div>
@@ -103,7 +103,7 @@ export function Reviews({
           href={site.profiles.domclick}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-8 inline-flex h-11 items-center gap-2 rounded-xl border border-ink/15 bg-surface px-5 text-sm font-semibold transition-colors hover:border-ink/35"
+          className="mt-8 inline-flex h-11 items-center gap-2 rounded-full border border-ink/15 bg-surface px-5 text-sm font-semibold transition-colors hover:border-ink/35"
         >
           Посмотреть отзывы на Домклик
           <ArrowUpRight size={15} weight="bold" />

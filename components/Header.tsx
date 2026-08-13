@@ -49,7 +49,7 @@ export function Header() {
       >
         <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-8 px-4 sm:px-6 lg:h-[72px] lg:px-8">
           <a href="#" className="flex shrink-0 flex-col leading-tight">
-            <span className="text-[17px] font-extrabold tracking-[-0.01em]">
+            <span className="font-display text-[19px] font-extrabold leading-none">
               Позитив ВТ
             </span>
             <span className="hidden text-[11px] font-medium text-ink-soft sm:block">
@@ -72,14 +72,14 @@ export function Header() {
           <div className="ml-auto flex items-center gap-3 lg:ml-0">
             <a
               href={site.phoneHref}
-              className="tnum hidden items-center gap-2 text-sm font-semibold text-ink transition-colors hover:text-pine md:flex"
+              className="tnum hidden items-center gap-2 text-sm font-semibold text-ink transition-colors hover:text-wine md:flex"
             >
-              <Phone size={16} weight="bold" className="text-pine" />
+              <Phone size={16} weight="bold" className="text-wine" />
               {site.phone}
             </a>
             <button
               onClick={() => openLead("Продать")}
-              className="hidden h-10 items-center rounded-xl bg-pine px-4 text-sm font-semibold text-white transition-colors hover:bg-pine-deep active:scale-[0.98] sm:inline-flex"
+              className="hidden h-10 items-center rounded-full bg-wine px-4 text-sm font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98] sm:inline-flex"
             >
               Оценить объект
             </button>
@@ -117,7 +117,7 @@ export function Header() {
               transition={{ type: "spring", duration: 0.4, bounce: 0 }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[17px] font-extrabold">Позитив ВТ</span>
+                <span className="font-display text-[19px] font-extrabold">Позитив ВТ</span>
                 <button
                   onClick={() => setMenuOpen(false)}
                   aria-label="Закрыть меню"
@@ -144,7 +144,7 @@ export function Header() {
                     setMenuOpen(false);
                     openLead("Продать");
                   }}
-                  className="h-12 rounded-xl bg-pine font-semibold text-white transition-colors hover:bg-pine-deep active:scale-[0.98]"
+                  className="h-12 rounded-full bg-wine font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98]"
                 >
                   Оценить объект
                 </button>
@@ -152,7 +152,7 @@ export function Header() {
                   href={site.phoneHref}
                   className="tnum flex h-12 items-center justify-center gap-2 rounded-xl border border-line font-semibold"
                 >
-                  <Phone size={18} weight="bold" className="text-pine" />
+                  <Phone size={18} weight="bold" className="text-wine" />
                   {site.phone}
                 </a>
               </div>

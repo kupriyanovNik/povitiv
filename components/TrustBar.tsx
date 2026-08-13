@@ -90,7 +90,7 @@ export function TrustBar({
               <dt className="order-2 text-[13px] leading-snug text-ink-soft">
                 {s.label}
               </dt>
-              <dd className="order-1 text-3xl font-extrabold tracking-[-0.02em] lg:text-4xl">
+              <dd className="font-display order-1 text-3xl font-bold lg:text-[38px] lg:leading-none">
                 <CountUp stat={s} />
               </dd>
             </div>

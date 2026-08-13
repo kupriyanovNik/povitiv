@@ -45,7 +45,7 @@ export function Team({ agents }: { agents: Agent[] }) {
     <section id="komanda" className="scroll-mt-20 py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <h2 className="max-w-[24ch] text-3xl font-extrabold tracking-[-0.02em] sm:text-4xl lg:text-[44px] lg:leading-[1.08]">
+          <h2 className="font-display max-w-[24ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Специалисты, которые ведут сделку
           </h2>
           <p className="mt-4 max-w-[54ch] text-base leading-relaxed text-ink-soft sm:text-lg">
@@ -72,7 +72,7 @@ export function Team({ agents }: { agents: Agent[] }) {
                   />
                 </div>
               ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-pine-tint text-xl font-bold text-pine">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-wine-tint text-xl font-bold text-wine">
                   {initials(agent.name)}
                 </div>
               )}
@@ -82,7 +82,7 @@ export function Team({ agents }: { agents: Agent[] }) {
                   <SealCheck
                     size={18}
                     weight="fill"
-                    className="shrink-0 text-pine"
+                    className="shrink-0 text-wine"
                     aria-label="Профиль подтверждён"
                   />
                 )}
@@ -105,7 +105,7 @@ export function Team({ agents }: { agents: Agent[] }) {
                 )}
                 {agent.ratingVotes > 0 && (
                   <p className="tnum flex items-center gap-1 font-semibold">
-                    <Star size={14} weight="fill" className="text-pine" />
+                    <Star size={14} weight="fill" className="text-gold" />
                     {agent.ratingAvg?.toFixed(1).replace(".", ",")} по оценкам
                     сделок
                   </p>

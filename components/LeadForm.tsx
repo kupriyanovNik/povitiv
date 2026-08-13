@@ -27,13 +27,13 @@ export function LeadForm() {
   };
 
   return (
-    <section id="zayavka" className="scroll-mt-20 bg-pine-ink py-20 lg:py-28">
+    <section id="zayavka" className="scroll-mt-20 bg-wine-ink py-20 lg:py-28">
       <div className="mx-auto grid max-w-[1280px] items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
         <Reveal>
-          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-pine-tint">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-wine-tint">
             Бесплатная консультация
           </p>
-          <h2 className="mt-3 max-w-[20ch] text-3xl font-extrabold tracking-[-0.02em] text-white sm:text-4xl lg:text-[44px] lg:leading-[1.08]">
+          <h2 className="font-display mt-3 max-w-[20ch] text-3xl font-bold text-white sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Получите предварительную оценку и план сделки
           </h2>
           <p className="mt-4 max-w-[50ch] text-base leading-relaxed text-white/75 sm:text-lg">
@@ -46,7 +46,7 @@ export function LeadForm() {
                 <CheckCircle
                   size={20}
                   weight="fill"
-                  className="shrink-0 text-pine-tint"
+                  className="shrink-0 text-wine-tint"
                 />
                 <span className="text-[15px] font-medium">{r}</span>
               </li>
@@ -64,7 +64,7 @@ export function LeadForm() {
               <CheckCircle
                 size={64}
                 weight="fill"
-                className="mx-auto text-pine"
+                className="mx-auto text-wine"
               />
               <h3 className="mt-5 text-2xl font-bold">
                 Спасибо, заявка отправлена
@@ -87,7 +87,7 @@ export function LeadForm() {
                     onChange={(e) => setName(e.target.value)}
                     autoComplete="name"
                     placeholder="Как к вам обращаться?"
-                    className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-pine"
+                    className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-wine"
                   />
                 </div>
                 <div className="space-y-2">
@@ -101,7 +101,7 @@ export function LeadForm() {
                     autoComplete="tel"
                     inputMode="tel"
                     placeholder="+7 900 000-00-00"
-                    className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-pine"
+                    className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-wine"
                   />
                 </div>
               </div>
@@ -118,7 +118,7 @@ export function LeadForm() {
                       onClick={() => setTask(t)}
                       className={`h-9 rounded-full border px-3.5 text-sm font-medium transition-colors ${
                         task === t
-                          ? "border-pine bg-pine text-white"
+                          ? "border-wine bg-wine text-white"
                           : "border-line bg-surface text-ink hover:border-ink/30"
                       }`}
                     >
@@ -140,7 +140,7 @@ export function LeadForm() {
                   value={object}
                   onChange={(e) => setObject(e.target.value)}
                   placeholder="Например: двухкомнатная квартира, Химки"
-                  className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-pine"
+                  className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-[15px] placeholder:text-ink-soft/70 focus:border-wine"
                 />
               </div>
 
@@ -157,7 +157,7 @@ export function LeadForm() {
                   onChange={(e) => setComment(e.target.value)}
                   rows={3}
                   placeholder="Кратко опишите ситуацию"
-                  className="w-full resize-none rounded-xl border border-line bg-surface px-4 py-3 text-[15px] placeholder:text-ink-soft/70 focus:border-pine"
+                  className="w-full resize-none rounded-xl border border-line bg-surface px-4 py-3 text-[15px] placeholder:text-ink-soft/70 focus:border-wine"
                 />
               </div>
 
@@ -180,7 +180,7 @@ export function LeadForm() {
               <button
                 type="submit"
                 disabled={status === "sending"}
-                className="h-13 w-full rounded-xl bg-pine text-base font-semibold text-white transition-colors hover:bg-pine-deep active:scale-[0.99] disabled:opacity-60"
+                className="h-13 w-full rounded-full bg-wine text-base font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.99] disabled:opacity-60"
               >
                 {status === "sending" ? "Отправляем…" : "Отправить заявку"}
               </button>

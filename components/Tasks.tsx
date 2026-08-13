@@ -89,7 +89,7 @@ export function Tasks({ photo }: { photo: string }) {
     <section id="uslugi" className="scroll-mt-20 py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <h2 className="max-w-[24ch] text-3xl font-extrabold tracking-[-0.02em] sm:text-4xl lg:text-[44px] lg:leading-[1.08]">
+          <h2 className="font-display max-w-[24ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             С какой задачей вам помочь?
           </h2>
           <p className="mt-4 max-w-[52ch] text-base leading-relaxed text-ink-soft sm:text-lg">
@@ -102,7 +102,7 @@ export function Tasks({ photo }: { photo: string }) {
           <CardShell
             onClick={() => openLead("Продать")}
             label="Продать недвижимость"
-            className="relative min-h-[280px] overflow-hidden bg-pine-ink text-white"
+            className="relative min-h-[280px] overflow-hidden bg-wine-ink text-white"
           >
             <Image
               src={photo}
@@ -113,7 +113,7 @@ export function Tasks({ photo }: { photo: string }) {
             />
             <div
               aria-hidden
-              className="absolute inset-0 bg-gradient-to-t from-pine-ink via-pine-ink/55 to-transparent"
+              className="absolute inset-0 bg-gradient-to-t from-wine-ink via-wine-ink/55 to-transparent"
             />
             <div className="relative mt-auto">
               <h3 className="text-2xl font-bold tracking-[-0.01em]">
@@ -136,7 +136,7 @@ export function Tasks({ photo }: { photo: string }) {
           <CardShell
             onClick={() => openLead("Купить")}
             label="Купить недвижимость"
-            className="min-h-[280px] bg-pine-tint"
+            className="min-h-[280px] bg-wine-tint"
           >
             <div className="mt-auto">
               <h3 className="text-2xl font-bold tracking-[-0.01em]">
@@ -145,7 +145,7 @@ export function Tasks({ photo }: { photo: string }) {
               <p className="mt-2 max-w-[44ch] text-[15px] leading-relaxed text-ink-soft">
                 {PRIMARY[1].text}
               </p>
-              <span className="mt-5 inline-flex items-center gap-2 text-[15px] font-semibold text-pine">
+              <span className="mt-5 inline-flex items-center gap-2 text-[15px] font-semibold text-wine">
                 {PRIMARY[1].cta}
                 <ArrowRight
                   size={16}
@@ -173,7 +173,7 @@ export function Tasks({ photo }: { photo: string }) {
                   {card.text}
                 </p>
               </div>
-              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-pine">
+              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-wine">
                 {card.cta}
                 <ArrowRight
                   size={14}
