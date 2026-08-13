@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Позитив ВТ: продающий лендинг агентства недвижимости
 
-## Getting Started
+Лендинг московского агентства недвижимости «Позитив ВТ» (ООО «Агентство «Позитив ВТ», ИНН 7707723617). Next.js 16 (App Router) + Tailwind v4 + Motion. Все цифры и объекты на странице реальные: подтягиваются с ЦИАН и Домклик.
 
-First, run the development server:
+## Запуск
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Продакшен:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Данные: откуда и как обновлять
 
-## Learn More
+Источник правды: два JSON-файла, которые читаются при сборке страницы.
 
-To learn more about Next.js, take a look at the following resources:
+- `data/listings.json` — объявления агентства (ЦИАН + Домклик)
+- `data/agency.json` — статистика, команда и отзывы (Домклик)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Обновление одним скриптом:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run sync
+```
 
-## Deploy on Vercel
+Что делает `scripts/sync-listings.mjs`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Домклик** — обычный fetch: статистика агентства (20 сделок/12 мес, рейтинг 5.0), 7 риелторов с аватарами, 7 отзывов + объявления через открытый API `api.domclick.ru/pts/agencies/v1/offers`.
+2. **ЦИАН** — страница компании [cian.ru/company/211681](https://www.cian.ru/company/211681) защищена от ботов, поэтому открывается через `playwright-core` + установленный Google Chrome (headless). Из карточек берутся цена, адрес, метро, площадь, этаж, описание и фото.
+3. Фото скачиваются в `public/listings/<id>/`, аватары в `public/team/` (хотлинки не используются).
+4. Рукописные поля (`title`, `highlight`, `address`) существующих объектов сохраняются при обновлении; снятые с публикации объявления удаляются, новые добавляются.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Скрипт можно поставить в cron (раз в сутки). Если ЦИАН недоступен, прежние данные остаются как есть.
+
+## Заявки → Telegram
+
+`POST /api/lead` принимает `{ name, phone, task, object?, comment? }`, валидирует, ограничивает частоту (5/мин с IP), отсекает ботов honeypot-полем и шлёт сообщение менеджеру в Telegram.
+
+Настройка:
+
+1. Создайте бота через [@BotFather](https://t.me/BotFather), возьмите токен.
+2. Добавьте бота в чат менеджеров, узнайте `chat_id` (например через `https://api.telegram.org/bot<TOKEN>/getUpdates`).
+3. Скопируйте `.env.example` в `.env.local` и заполните:
+
+```bash
+cp .env.example .env.local
+```
+
+Пока переменные не заданы, заявки не теряются: форма работает, содержимое пишется в серверный лог с пометкой `[lead]`.
+
+На будущее: у Домклика есть [Chats API для агентств](https://public-api.domclick.ru/chats/swagger) с вебхуками о новых сообщениях. Когда агентство получит токен в партнёрском кабинете, той же инфраструктурой можно пересылать в Telegram и сообщения из чатов Домклик (см. `research/04-parsing-notes.md`).
+
+## Структура
+
+```
+app/
+  page.tsx            # сборка лендинга из секций
+  api/lead/route.ts   # приём заявок + Telegram
+  privacy/, consent/  # юридические страницы
+components/           # секции: Hero, TrustBar, Tasks, DealRoute, Listings, Team, Reviews, Safety, LeadForm, FAQ...
+  lead/               # контекст модалки заявки + отправка
+data/                 # listings.json, agency.json (сид закоммичен, обновляется npm run sync)
+lib/site.ts           # контакты, реквизиты, ссылки на профили
+scripts/sync-listings.mjs
+research/             # досье на агентство, структура, контент-дайджест, заметки по парсингу
+```
+
+## Перед публикацией проверить
+
+- [ ] Актуальный телефон и график (сейчас указаны публичные: +7 495 609-28-64, Пн-Пт 10:00-18:00)
+- [ ] Ссылки WhatsApp/Telegram агентства (пока не опубликованы агентством, на сайте не показываются)
+- [ ] Домен в `metadataBase` (`app/layout.tsx`), сейчас `positiv-vt.ru`
+- [ ] Согласие агентства на использование фото объектов из объявлений на своём сайте
+- [ ] Тексты «Политика конфиденциальности» и «Согласие» с юристом
+- [ ] `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` в окружении хостинга

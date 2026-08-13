@@ -1,0 +1,164 @@
+{
+  "updatedAt": "2026-08-13",
+  "sources": {
+    "domclick": "https://agencies.domclick.ru/agency/269616",
+    "cian": "https://www.cian.ru/company/211681"
+  },
+  "agency": {
+    "name": "Позитив ВТ",
+    "nameLegal": "ООО \"АГЕНТСТВО \"ПОЗИТИВ ВТ\"",
+    "inn": "7707723617",
+    "ogrn": "1107746276769",
+    "dealsCount12m": 20,
+    "domclickRating": 5,
+    "domclickReviewVotes": 7,
+    "domclickSince": "2017-10-18",
+    "cianYears": "14 лет 4 месяца",
+    "cianStatus": [
+      "Суперагент",
+      "Документы проверены"
+    ],
+    "worksSince": 2010,
+    "logoUrl": "https://img.dmclk.ru/s200x200q80/partner-logos/p/4/d/53f8c8c2-bf5a-4d08-8005-051f72d0e223.png",
+    "address": "Москва, ул. Палиха, 14/33, стр. 2, офис 26",
+    "phone": "+7 (495) 609-28-64",
+    "workHours": "Пн-Пт, 10:00-18:00"
+  },
+  "agents": [
+    {
+      "name": "Екатерина Клименко",
+      "casId": 1144449,
+      "verified": true,
+      "avatar": "/team/ekaterina-klimenko.png",
+      "registeredAt": "2017-10-26",
+      "deals12m": 5,
+      "ratingAvg": 5,
+      "ratingVotes": 2
+    },
+    {
+      "name": "Ольга Инкулец",
+      "casId": 580905,
+      "verified": true,
+      "avatar": "/team/olga-inkulets.png",
+      "registeredAt": "2017-05-12",
+      "deals12m": 15,
+      "ratingAvg": 5,
+      "ratingVotes": 1
+    },
+    {
+      "name": "Татьяна Чистякова",
+      "casId": 1148219,
+      "verified": true,
+      "avatar": null,
+      "registeredAt": "2017-10-26",
+      "deals12m": 6,
+      "ratingAvg": 0,
+      "ratingVotes": 0
+    },
+    {
+      "name": "Ирина Лисовская",
+      "casId": 1148165,
+      "verified": false,
+      "avatar": null,
+      "registeredAt": "2017-10-26",
+      "deals12m": 7,
+      "ratingAvg": 5,
+      "ratingVotes": 1
+    },
+    {
+      "name": "Наталья Гречишникова",
+      "casId": 919050,
+      "verified": true,
+      "avatar": "/team/natalya-grechishnikova.png",
+      "registeredAt": "2017-09-15",
+      "deals12m": 14,
+      "ratingAvg": 5,
+      "ratingVotes": 2
+    },
+    {
+      "name": "Надежда Аккуратнова",
+      "casId": 1148211,
+      "verified": false,
+      "avatar": null,
+      "registeredAt": "2017-10-26",
+      "deals12m": 4,
+      "ratingAvg": 5,
+      "ratingVotes": 1
+    },
+    {
+      "name": "Вера Тарасенкова",
+      "casId": 1148227,
+      "verified": false,
+      "avatar": null,
+      "registeredAt": "2017-10-26",
+      "deals12m": 0,
+      "ratingAvg": 0,
+      "ratingVotes": 0
+    }
+  ],
+  "reviews": [
+    {
+      "id": 522897,
+      "rating": 5,
+      "text": "Очень грамотно и профессионально выполняет свою работу. Спокойна и выдержанная. Обязательная.",
+      "createdAt": "2023-05-19",
+      "dealAt": "2023-05-18",
+      "agent": "Гречишникова Наталья Ивановна",
+      "author": "Жунус Д."
+    },
+    {
+      "id": 1034452,
+      "rating": 5,
+      "text": null,
+      "createdAt": "2026-04-17",
+      "dealAt": "2026-04-15",
+      "agent": "Клименко Екатерина Владимировна",
+      "author": "Евгения Т."
+    },
+    {
+      "id": 832300,
+      "rating": 5,
+      "text": null,
+      "createdAt": "2025-03-22",
+      "dealAt": "2025-03-18",
+      "agent": "Клименко Екатерина Владимировна",
+      "author": "Кирилл К."
+    },
+    {
+      "id": 679038,
+      "rating": 5,
+      "text": null,
+      "createdAt": "2023-11-12",
+      "dealAt": "2023-11-08",
+      "agent": "Аккуратнова Надежда Львовна",
+      "author": "Виталий К."
+    },
+    {
+      "id": 658198,
+      "rating": 5,
+      "text": null,
+      "createdAt": "2023-10-14",
+      "dealAt": "2023-03-03",
+      "agent": "Лисовская Ирина Эдуардовна",
+      "author": "Кермен Б."
+    },
+    {
+      "id": 637592,
+      "rating": 5,
+      "text": null,
+      "createdAt": "2023-09-23",
+      "dealAt": "2023-09-19",
+      "agent": "Инкулец Ольга Борисовна",
+      "author": "Анатолий К."
+    },
+    {
+      "id": 489120,
+      "rating": 5,
+      "text": null,
+      "createdAt": "2023-04-08",
+      "dealAt": "2023-03-17",
+      "agent": "Гречишникова Наталья Ивановна",
+      "author": "Юлия И."
+    }
+  ]
+}

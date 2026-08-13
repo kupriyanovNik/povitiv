@@ -1,0 +1,121 @@
+{
+  "updatedAt": "2026-08-13",
+  "sources": {
+    "cian": "https://www.cian.ru/company/211681",
+    "domclick": "https://agencies.domclick.ru/agency/269616"
+  },
+  "listings": [
+    {
+      "id": "cian-330345138",
+      "source": "cian",
+      "url": "https://www.cian.ru/rent/flat/330345138/",
+      "dealType": "rent",
+      "category": "flat",
+      "title": "1-комнатная квартира, 36 м²",
+      "badge": null,
+      "price": 40000,
+      "priceNote": "в месяц",
+      "area": 36,
+      "floor": "16 из 18",
+      "rooms": 1,
+      "address": "Москва, ул. 6-я Нововатутинская, 3к2",
+      "metro": "Кедровая",
+      "highlight": "Квартира в отличном состоянии, есть всё для комфортного проживания. Коммунальные платежи включены.",
+      "photos": [
+        "/listings/cian-330345138/1.jpg",
+        "/listings/cian-330345138/2.jpg",
+        "/listings/cian-330345138/3.jpg",
+        "/listings/cian-330345138/4.jpg"
+      ]
+    },
+    {
+      "id": "cian-329009582",
+      "source": "cian",
+      "url": "https://domodedovo.cian.ru/sale/flat/329009582/",
+      "dealType": "sale",
+      "category": "room",
+      "title": "Комната 18,3 м² с лоджией",
+      "badge": null,
+      "price": 3400000,
+      "priceNote": null,
+      "area": 18.3,
+      "floor": "7 из 17",
+      "rooms": null,
+      "address": "Домодедово, мкр. Северный, ул. Овражная, 1к2",
+      "metro": "Подольск",
+      "highlight": "Один взрослый собственник, никто не зарегистрирован, свободная продажа. Дом 2006 года.",
+      "photos": [
+        "/listings/cian-329009582/1.jpg",
+        "/listings/cian-329009582/2.jpg",
+        "/listings/cian-329009582/3.jpg",
+        "/listings/cian-329009582/4.jpg"
+      ]
+    },
+    {
+      "id": "cian-329166977",
+      "source": "cian",
+      "url": "https://www.cian.ru/sale/flat/329166977/",
+      "dealType": "sale",
+      "category": "flat",
+      "title": "Пентхаус 250 м², 3 уровня",
+      "badge": null,
+      "price": 180000000,
+      "priceNote": null,
+      "area": 250,
+      "floor": "18 из 18",
+      "rooms": null,
+      "address": "Москва, Якиманка, ул. Шаболовка, 10к1",
+      "metro": "Октябрьская",
+      "highlight": "Трёхуровневый пентхаус в ЖК бизнес-класса «Созвездие Капитал-2». Панорамное остекление, потолки до 4,2 метра, верхний этаж.",
+      "photos": [
+        "/listings/cian-329166977/1.jpg",
+        "/listings/cian-329166977/2.jpg",
+        "/listings/cian-329166977/3.jpg",
+        "/listings/cian-329166977/4.jpg"
+      ]
+    },
+    {
+      "id": "cian-316539871",
+      "source": "cian",
+      "url": "https://zvenigorod.cian.ru/sale/suburban/316539871/",
+      "dealType": "sale",
+      "category": "house",
+      "title": "Дом 154 м², 3 этажа",
+      "badge": null,
+      "price": 16000000,
+      "priceNote": null,
+      "area": 154,
+      "floor": null,
+      "rooms": null,
+      "address": "Одинцовский округ, с. Юдино, 1-е Успенское шоссе",
+      "metro": null,
+      "highlight": "Новый дом 2025 года постройки на землях ИЖС. Подходит ипотека, полная стоимость в договоре.",
+      "photos": [
+        "/listings/cian-316539871/1.jpg",
+        "/listings/cian-316539871/2.jpg",
+        "/listings/cian-316539871/3.jpg",
+        "/listings/cian-316539871/4.jpg"
+      ]
+    },
+    {
+      "id": "domclick-1895331392",
+      "source": "domclick",
+      "url": "https://domclick.ru/card/sale__lot__1895331392",
+      "dealType": "sale",
+      "category": "land",
+      "title": "Участок 29,3 га",
+      "badge": null,
+      "price": 25000000,
+      "priceNote": null,
+      "area": null,
+      "floor": null,
+      "rooms": null,
+      "address": "Россия, Самарская область, Ставропольский район, с. Винновка",
+      "metro": null,
+      "highlight": "Земли населённых пунктов. Подходит для индивидуального строительства или туристического проекта.",
+      "photos": [
+        "/listings/domclick-1895331392/1.jpg"
+      ]
+    }
+  ]
+}

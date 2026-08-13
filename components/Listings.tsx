@@ -1,0 +1,226 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Image from "next/image";
+import { motion } from "motion/react";
+import { ArrowUpRight, MapPin } from "@phosphor-icons/react/dist/ssr";
+import type { Listing } from "@/lib/data";
+import { formatPrice } from "@/lib/data";
+import { site } from "@/lib/site";
+import { Reveal } from "./Reveal";
+
+type Filter = "all" | "sale" | "rent" | "suburban";
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: "all", label: "Все" },
+  { key: "sale", label: "Продажа" },
+  { key: "rent", label: "Аренда" },
+  { key: "suburban", label: "Загородная" },
+];
+
+function matches(l: Listing, f: Filter): boolean {
+  if (f === "all") return true;
+  if (f === "suburban") return l.category === "house" || l.category === "land";
+  return l.dealType === f;
+}
+
+function FeaturedCard({ listing }: { listing: Listing }) {
+  return (
+    <a
+      href={listing.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface"
+    >
+      <div className="relative aspect-[4/3] w-full overflow-hidden">
+        <Image
+          src={listing.photos[0]}
+          alt={`${listing.title}, ${listing.address}`}
+          fill
+          sizes="(min-width: 1024px) 55vw, 100vw"
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+        />
+        {listing.badge && (
+          <span className="absolute left-4 top-4 rounded-full bg-surface/90 px-3 py-1.5 text-xs font-bold text-pine backdrop-blur-sm">
+            {listing.badge}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-6">
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="text-xl font-bold leading-snug tracking-[-0.01em]">
+            {listing.title}
+          </h3>
+          <span className="tnum shrink-0 text-xl font-extrabold">
+            {formatPrice(listing.price, listing.priceNote)}
+          </span>
+        </div>
+        <p className="mt-1.5 flex items-center gap-1.5 text-sm text-ink-soft">
+          <MapPin size={14} weight="bold" className="shrink-0 text-pine" />
+          {listing.address}
+        </p>
+        <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-ink-soft">
+          {listing.highlight}
+        </p>
+        <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-semibold text-pine">
+          Смотреть объект
+          <ArrowUpRight
+            size={14}
+            weight="bold"
+            className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          />
+        </span>
+      </div>
+    </a>
+  );
+}
+
+function CompactCard({ listing }: { listing: Listing }) {
+  return (
+    <a
+      href={listing.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group grid grid-cols-[140px_1fr] overflow-hidden rounded-2xl border border-line bg-surface sm:grid-cols-[180px_1fr]"
+    >
+      <div className="relative h-full min-h-[120px] overflow-hidden">
+        <Image
+          src={listing.photos[0]}
+          alt={`${listing.title}, ${listing.address}`}
+          fill
+          sizes="180px"
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+        />
+      </div>
+      <div className="flex flex-col p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-[15px] font-bold leading-snug tracking-[-0.01em]">
+            {listing.title}
+          </h3>
+          {listing.badge && (
+            <span className="hidden shrink-0 rounded-full bg-pine-tint px-2.5 py-1 text-[11px] font-bold text-pine sm:block">
+              {listing.badge}
+            </span>
+          )}
+        </div>
+        <p className="mt-1 line-clamp-1 text-[13px] text-ink-soft">
+          {listing.address}
+        </p>
+        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
+          <span className="tnum text-[15px] font-extrabold">
+            {formatPrice(listing.price, listing.priceNote)}
+          </span>
+          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-pine">
+            Смотреть
+            <ArrowUpRight
+              size={13}
+              weight="bold"
+              className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            />
+          </span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+export function Listings({ listings }: { listings: Listing[] }) {
+  const [filter, setFilter] = useState<Filter>("all");
+  const filtered = useMemo(
+    () => listings.filter((l) => matches(l, filter)),
+    [listings, filter],
+  );
+  const [featured, ...rest] = filtered;
+
+  const counts = useMemo(() => {
+    const map = new Map<Filter, number>();
+    for (const f of FILTERS) {
+      map.set(f.key, listings.filter((l) => matches(l, f.key)).length);
+    }
+    return map;
+  }, [listings]);
+
+  return (
+    <section id="obekty" className="scroll-mt-20 bg-surface py-20 lg:py-28">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <Reveal>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-pine">
+            Актуальные объявления агентства
+          </p>
+          <h2 className="mt-3 max-w-[26ch] text-3xl font-extrabold tracking-[-0.02em] sm:text-4xl lg:text-[44px] lg:leading-[1.08]">
+            Недвижимость, с которой мы работаем
+          </h2>
+        </Reveal>
+
+        <div
+          className="mt-8 flex flex-wrap gap-2"
+          role="tablist"
+          aria-label="Фильтр объектов"
+        >
+          {FILTERS.filter((f) => (counts.get(f.key) ?? 0) > 0).map((f) => (
+            <button
+              key={f.key}
+              role="tab"
+              aria-selected={filter === f.key}
+              onClick={() => setFilter(f.key)}
+              className={`tnum h-10 rounded-full border px-4 text-sm font-semibold transition-colors ${
+                filter === f.key
+                  ? "border-pine bg-pine text-white"
+                  : "border-line bg-surface text-ink hover:border-ink/30"
+              }`}
+            >
+              {f.label}
+              <span
+                className={`ml-1.5 ${filter === f.key ? "text-white/70" : "text-ink-soft"}`}
+              >
+                {counts.get(f.key)}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="mt-10 rounded-2xl border border-line p-10 text-center">
+            <p className="font-semibold">В этой категории сейчас нет объектов</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              Посмотрите другие категории или спросите нас о новых поступлениях.
+            </p>
+          </div>
+        ) : (
+          <motion.div
+            key={filter}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-10 grid items-start gap-4 lg:grid-cols-[11fr_9fr]"
+          >
+            {featured && <FeaturedCard listing={featured} />}
+            {rest.length > 0 && (
+              <div className="flex flex-col gap-4">
+                {rest.map((l) => (
+                  <CompactCard key={l.id} listing={l} />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        <div className="mt-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <p className="max-w-[60ch] text-sm text-ink-soft">
+            Цены и доступность объектов могут меняться. Уточняйте актуальную
+            информацию у специалиста.
+          </p>
+          <a
+            href={site.profiles.cian}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-ink/15 bg-surface px-5 text-sm font-semibold transition-colors hover:border-ink/35"
+          >
+            Все объявления на ЦИАН
+            <ArrowUpRight size={15} weight="bold" />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
