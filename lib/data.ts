@@ -1,5 +1,6 @@
 import listingsJson from "@/data/listings.json";
 import agencyJson from "@/data/agency.json";
+import externalReviewsJson from "@/data/reviews-external.json";
 
 export type Listing = {
   id: string;
@@ -72,6 +73,33 @@ export function getListings(): { updatedAt: string; listings: Listing[] } {
 export function getAgency(): AgencyData {
   return agencyJson as unknown as AgencyData;
 }
+
+export type ExternalReview = {
+  source: string;
+  sourceLabel: string;
+  url: string;
+  author: string;
+  date: string;
+  rating: number;
+  agent: string | null;
+  text: string;
+};
+
+export function getExternalReviews(): ExternalReview[] {
+  return (externalReviewsJson as { reviews: ExternalReview[] }).reviews;
+}
+
+/** Единый формат цитаты для карусели отзывов. */
+export type QuoteReview = {
+  id: string;
+  text: string;
+  author: string;
+  date: string;
+  rating: number;
+  sourceLabel: string;
+  url: string;
+  agentNote: string | null;
+};
 
 export function formatPrice(price: number, note?: string | null): string {
   const formatted = new Intl.NumberFormat("ru-RU").format(price);

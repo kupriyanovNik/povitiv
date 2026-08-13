@@ -1,6 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useAnimate,
+  useReducedMotion,
+} from "motion/react";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import { leadTasks, site, type LeadTask } from "@/lib/site";
 import { useLeadSubmit } from "./lead/useLeadSubmit";
@@ -15,6 +21,8 @@ const RESULTS = [
 
 export function LeadForm() {
   const { status, error, submit } = useLeadSubmit();
+  const reduce = useReducedMotion();
+  const [scope, animateEl] = useAnimate();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [task, setTask] = useState<LeadTask>("Продать");
@@ -23,7 +31,15 @@ export function LeadForm() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submit({ name, phone, task, object, comment });
+    const ok = await submit({ name, phone, task, object, comment });
+    // короткий «шейк» формы как телесная обратная связь об ошибке
+    if (!ok && !reduce && scope.current) {
+      animateEl(
+        scope.current,
+        { x: [0, -6, 6, -3, 3, 0] },
+        { duration: 0.3, ease: "easeInOut" },
+      );
+    }
   };
 
   return (
@@ -59,13 +75,32 @@ export function LeadForm() {
         </Reveal>
 
         <div className="rounded-2xl bg-surface p-6 shadow-2xl shadow-black/25 sm:p-8">
+          <AnimatePresence mode="wait" initial={false}>
           {status === "success" ? (
-            <div className="py-10 text-center">
-              <CheckCircle
-                size={64}
-                weight="fill"
-                className="mx-auto text-wine"
-              />
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="py-10 text-center"
+            >
+              <motion.span
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  type: "spring",
+                  duration: 0.5,
+                  bounce: 0.3,
+                  delay: 0.1,
+                }}
+                className="inline-block"
+              >
+                <CheckCircle
+                  size={64}
+                  weight="fill"
+                  className="mx-auto text-wine"
+                />
+              </motion.span>
               <h3 className="mt-5 text-2xl font-bold">
                 Спасибо, заявка отправлена
               </h3>
@@ -73,9 +108,16 @@ export function LeadForm() {
                 Мы получили ваши контактные данные. Специалист свяжется с вами
                 по указанному номеру.
               </p>
-            </div>
+            </motion.div>
           ) : (
-            <form onSubmit={onSubmit} className="space-y-5">
+            <motion.form
+              key="form"
+              ref={scope}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onSubmit={onSubmit}
+              className="space-y-5"
+            >
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label htmlFor="lf-name" className="block text-sm font-semibold">
@@ -172,9 +214,15 @@ export function LeadForm() {
               />
 
               {status === "error" && error && (
-                <p className="text-sm font-medium text-[#b3261e]" role="alert">
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="text-sm font-medium text-[#b3261e]"
+                  role="alert"
+                >
                   {error}
-                </p>
+                </motion.p>
               )}
 
               <button
@@ -194,8 +242,9 @@ export function LeadForm() {
                   {site.phone}
                 </a>
               </p>
-            </form>
+            </motion.form>
           )}
+          </AnimatePresence>
         </div>
       </div>
     </section>

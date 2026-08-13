@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  useAnimate,
+  useReducedMotion,
+} from "motion/react";
 import { CheckCircle, X } from "@phosphor-icons/react/dist/ssr";
 import { site, type LeadTask } from "@/lib/site";
 import { useLeadSubmit } from "./useLeadSubmit";
@@ -42,6 +47,7 @@ function ModalContent({
 }) {
   const reduce = useReducedMotion();
   const { status, error, submit } = useLeadSubmit();
+  const [formScope, animateEl] = useAnimate();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [task, setTask] = useState<LeadTask>(initialTask ?? "Продать");
@@ -63,7 +69,15 @@ function ModalContent({
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submit({ name, phone, task });
+    const ok = await submit({ name, phone, task });
+    // короткий «шейк» формы как телесная обратная связь об ошибке
+    if (!ok && !reduce && formScope.current) {
+      animateEl(
+        formScope.current,
+        { x: [0, -6, 6, -3, 3, 0] },
+        { duration: 0.3, ease: "easeInOut" },
+      );
+    }
   };
 
   return (
@@ -98,9 +112,28 @@ function ModalContent({
           <X size={20} weight="bold" />
         </button>
 
+        <AnimatePresence mode="wait" initial={false}>
         {status === "success" ? (
-          <div className="py-6 text-center">
-            <CheckCircle size={56} weight="fill" className="mx-auto text-wine" />
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="py-6 text-center"
+          >
+            <motion.span
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{
+                type: "spring",
+                duration: 0.5,
+                bounce: 0.3,
+                delay: 0.1,
+              }}
+              className="inline-block"
+            >
+              <CheckCircle size={56} weight="fill" className="mx-auto text-wine" />
+            </motion.span>
             <h3 className="mt-4 text-xl font-bold">
               Спасибо, заявка отправлена
             </h3>
@@ -114,9 +147,13 @@ function ModalContent({
             >
               Готово
             </button>
-          </div>
+          </motion.div>
         ) : (
-          <>
+          <motion.div
+            key="form"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
             <h3 className="pr-8 text-xl font-bold tracking-[-0.01em]">
               Расскажите, что нужно сделать
             </h3>
@@ -124,7 +161,7 @@ function ModalContent({
               Оставьте номер и выберите задачу. Специалист свяжется с вами и
               уточнит детали.
             </p>
-            <form onSubmit={onSubmit} className="mt-5 space-y-4">
+            <form ref={formScope} onSubmit={onSubmit} className="mt-5 space-y-4">
               <div
                 className="flex flex-wrap gap-2"
                 role="radiogroup"
@@ -191,9 +228,15 @@ function ModalContent({
                 className="hidden"
               />
               {status === "error" && error && (
-                <p className="text-sm font-medium text-[#b3261e]" role="alert">
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="text-sm font-medium text-[#b3261e]"
+                  role="alert"
+                >
                   {error}
-                </p>
+                </motion.p>
               )}
               <button
                 type="submit"
@@ -216,8 +259,9 @@ function ModalContent({
                 </a>
               </p>
             </form>
-          </>
+          </motion.div>
         )}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
   );

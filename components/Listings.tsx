@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight, MapPin } from "@phosphor-icons/react/dist/ssr";
 import type { Listing } from "@/lib/data";
 import { formatPrice } from "@/lib/data";
 import { site } from "@/lib/site";
+import { PhotoCarousel } from "./PhotoCarousel";
 import { Reveal } from "./Reveal";
 
 type Filter = "all" | "sale" | "rent" | "suburban";
@@ -26,28 +27,22 @@ function matches(l: Listing, f: Filter): boolean {
 
 function FeaturedCard({ listing }: { listing: Listing }) {
   return (
-    <a
-      href={listing.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface"
-    >
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
-        <Image
-          src={listing.photos[0]}
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface">
+      <div className="relative">
+        <PhotoCarousel
+          photos={listing.photos}
           alt={`${listing.title}, ${listing.address}`}
-          fill
           sizes="(min-width: 1024px) 55vw, 100vw"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+          className="aspect-[4/3] w-full"
         />
         {listing.badge && (
-          <span className="absolute left-4 top-4 rounded-full bg-surface/90 px-3 py-1.5 text-xs font-bold text-wine backdrop-blur-sm">
+          <span className="pointer-events-none absolute left-4 top-4 z-10 rounded-full bg-surface/90 px-3 py-1.5 text-xs font-bold text-wine backdrop-blur-sm">
             {listing.badge}
           </span>
         )}
       </div>
       <div className="flex flex-1 flex-col p-6">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <h3 className="text-xl font-bold leading-snug tracking-[-0.01em]">
             {listing.title}
           </h3>
@@ -62,35 +57,82 @@ function FeaturedCard({ listing }: { listing: Listing }) {
         <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-ink-soft">
           {listing.highlight}
         </p>
-        <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-semibold text-wine">
+        <a
+          href={listing.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group/link mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-semibold text-wine hover:text-wine-deep"
+        >
           Смотреть объект
           <ArrowUpRight
             size={14}
             weight="bold"
-            className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            className="transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
           />
-        </span>
+        </a>
       </div>
-    </a>
+    </article>
   );
 }
 
 function CompactCard({ listing }: { listing: Listing }) {
+  const reduce = useReducedMotion();
+  const [photoIdx, setPhotoIdx] = useState(0);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startCycle = () => {
+    if (reduce || listing.photos.length < 2 || timer.current) return;
+    timer.current = setInterval(
+      () => setPhotoIdx((v) => (v + 1) % listing.photos.length),
+      1000,
+    );
+  };
+  const stopCycle = () => {
+    if (timer.current) clearInterval(timer.current);
+    timer.current = null;
+    setPhotoIdx(0);
+  };
+  useEffect(() => stopCycle, []);
+
   return (
     <a
       href={listing.url}
       target="_blank"
       rel="noopener noreferrer"
+      onMouseEnter={startCycle}
+      onMouseLeave={stopCycle}
       className="group grid grid-cols-[140px_1fr] overflow-hidden rounded-2xl border border-line bg-surface sm:grid-cols-[180px_1fr]"
     >
       <div className="relative h-full min-h-[120px] overflow-hidden">
-        <Image
-          src={listing.photos[0]}
-          alt={`${listing.title}, ${listing.address}`}
-          fill
-          sizes="180px"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-        />
+        {/* при наведении фото перелистываются кроссфейдом */}
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={photoIdx}
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <Image
+              src={listing.photos[photoIdx]}
+              alt={`${listing.title}, ${listing.address}`}
+              fill
+              sizes="180px"
+              className="object-cover"
+            />
+          </motion.div>
+        </AnimatePresence>
+        {listing.photos.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            {listing.photos.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1 w-1 rounded-full ${i === photoIdx ? "bg-white" : "bg-white/50"}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
       <div className="flex flex-col p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">

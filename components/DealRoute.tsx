@@ -45,6 +45,33 @@ const STEPS: { title: string; text: string }[] = [
   },
 ];
 
+function StepFill({
+  progress,
+  threshold,
+  reduce,
+  num,
+}: {
+  progress: ReturnType<typeof useScroll>["scrollYProgress"];
+  threshold: number;
+  reduce: boolean;
+  num: number;
+}) {
+  const opacity = useTransform(
+    progress,
+    [Math.max(0, threshold - 0.05), Math.min(1, threshold + 0.02)],
+    [0, 1],
+  );
+  return (
+    <motion.span
+      aria-hidden
+      style={{ opacity: reduce ? 1 : opacity }}
+      className="absolute inset-0 z-20 flex items-center justify-center rounded-full bg-wine text-white"
+    >
+      {num}
+    </motion.span>
+  );
+}
+
 export function DealRoute() {
   const { openLead } = useLead();
   const reduce = useReducedMotion();
@@ -101,8 +128,17 @@ export function DealRoute() {
           <ol ref={listRef} className="space-y-9">
             {STEPS.map((step, i) => (
               <li key={step.title} className="relative flex gap-6">
-                <span className="tnum relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-[13px] font-bold text-wine">
-                  {i + 1}
+                <span className="tnum relative z-10 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-surface text-[13px] font-bold text-wine">
+                  {/* номер «заполняется» бордовым, когда линия доходит до шага */}
+                  {mounted && (
+                    <StepFill
+                      progress={scrollYProgress}
+                      threshold={i / (STEPS.length - 1)}
+                      reduce={Boolean(reduce)}
+                      num={i + 1}
+                    />
+                  )}
+                  <span className="relative z-10">{i + 1}</span>
                 </span>
                 <div className="pt-0.5">
                   <h3 className="text-lg font-bold tracking-[-0.01em]">

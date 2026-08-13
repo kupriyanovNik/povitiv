@@ -1,29 +1,56 @@
 "use client";
 
+import { useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+} from "motion/react";
 import { Phone } from "@phosphor-icons/react/dist/ssr";
 import { site } from "@/lib/site";
 import { useLead } from "./lead/LeadContext";
 
-/** Нижняя панель на мобильных: телефон + заявка всегда под рукой. */
+/**
+ * Нижняя панель на мобильных: телефон + заявка всегда под рукой.
+ * Появляется после первого экрана, чтобы не перекрывать hero.
+ */
 export function MobileBar() {
   const { openLead } = useLead();
+  const { scrollY } = useScroll();
+  const [visible, setVisible] = useState(false);
+
+  useMotionValueEvent(scrollY, "change", (v) => {
+    setVisible(v > window.innerHeight * 0.7);
+  });
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/90 p-3 backdrop-blur-xl sm:hidden">
-      <div className="flex gap-2.5">
-        <a
-          href={site.phoneHref}
-          aria-label={`Позвонить: ${site.phone}`}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-line text-wine"
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ y: "100%", opacity: 0.6 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: "100%", opacity: 0.6 }}
+          transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/90 p-3 backdrop-blur-xl sm:hidden"
         >
-          <Phone size={20} weight="bold" />
-        </a>
-        <button
-          onClick={() => openLead()}
-          className="h-12 flex-1 rounded-full bg-wine font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.99]"
-        >
-          Получить консультацию
-        </button>
-      </div>
-    </div>
+          <div className="flex gap-2.5">
+            <a
+              href={site.phoneHref}
+              aria-label={`Позвонить: ${site.phone}`}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-line text-wine"
+            >
+              <Phone size={20} weight="bold" />
+            </a>
+            <button
+              onClick={() => openLead()}
+              className="h-12 flex-1 rounded-full bg-wine font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.99]"
+            >
+              Получить консультацию
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -1,7 +1,14 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
 import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import type { Listing } from "@/lib/data";
 import { formatPrice } from "@/lib/data";
@@ -9,6 +16,26 @@ import { useLead } from "./lead/LeadContext";
 
 export function Hero({ featured }: { featured: Listing }) {
   const { openLead } = useLead();
+  const reduce = useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // лёгкий параллакс фото при прокрутке: создаёт глубину, не отвлекая
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const photoY = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
+
+  // медленный кроссфейд фотографий объекта
+  const [photoIdx, setPhotoIdx] = useState(0);
+  useEffect(() => {
+    if (reduce || featured.photos.length < 2) return;
+    const t = setInterval(
+      () => setPhotoIdx((v) => (v + 1) % featured.photos.length),
+      6000,
+    );
+    return () => clearInterval(t);
+  }, [reduce, featured.photos.length]);
 
   const enter = (delay: number) => ({
     initial: { opacity: 0, y: 24 },
@@ -21,7 +48,7 @@ export function Hero({ featured }: { featured: Listing }) {
   });
 
   return (
-    <section className="relative overflow-hidden">
+    <section ref={sectionRef} className="relative overflow-hidden">
       <div className="mx-auto grid max-w-[1280px] items-center gap-10 px-4 pb-14 pt-24 sm:px-6 lg:grid-cols-[11fr_9fr] lg:gap-14 lg:px-8 lg:pb-20 lg:pt-36">
         <div>
           <motion.p
@@ -68,14 +95,30 @@ export function Hero({ featured }: { featured: Listing }) {
           className="relative"
         >
           <div className="relative aspect-[4/5] max-h-[560px] w-full overflow-hidden rounded-2xl">
-            <Image
-              src={featured.photos[0]}
-              alt={`${featured.title}, ${featured.address}`}
-              fill
-              priority
-              sizes="(min-width: 1024px) 45vw, 100vw"
-              className="object-cover"
-            />
+            <motion.div
+              className="absolute -inset-y-[6%] inset-x-0"
+              style={{ y: reduce ? "0%" : photoY }}
+            >
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={photoIdx}
+                  className="absolute inset-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                >
+                  <Image
+                    src={featured.photos[photoIdx]}
+                    alt={`${featured.title}, ${featured.address}`}
+                    fill
+                    priority={photoIdx === 0}
+                    sizes="(min-width: 1024px) 45vw, 100vw"
+                    className="object-cover"
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
             <div
               aria-hidden
               className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-ink/60 to-transparent"

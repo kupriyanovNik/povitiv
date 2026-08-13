@@ -109,7 +109,7 @@ async function syncDomclick() {
       const slug = translit(a.name);
       const dest = path.join(PUBLIC_DIR, "team", `${slug}.png`);
       try {
-        await download(a.avatarUrl.replace("s200x200q80", "s400x400q80"), dest);
+        await download(a.avatarUrl.replace("s200x200q80", "s1200x1200q80"), dest);
         avatar = `/team/${slug}.png`;
       } catch (e) {
         console.warn("  не удалось скачать аватар:", a.name, e.message);

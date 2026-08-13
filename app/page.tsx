@@ -1,4 +1,9 @@
-import { getAgency, getListings, type Listing } from "@/lib/data";
+import {
+  getAgency,
+  getExternalReviews,
+  getListings,
+  type Listing,
+} from "@/lib/data";
 import { LeadProvider } from "@/components/lead/LeadContext";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
@@ -62,6 +67,7 @@ export default function Home() {
         <Team agents={agency.agents} />
         <Reviews
           reviews={agency.reviews}
+          external={getExternalReviews()}
           rating={agency.agency.domclickRating}
           votes={agency.agency.domclickReviewVotes}
         />
