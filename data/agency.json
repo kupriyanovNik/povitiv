@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-13",
+  "updatedAt": "2026-08-14",
   "sources": {
     "domclick": "https://agencies.domclick.ru/agency/269616",
     "cian": "https://www.cian.ru/company/211681"
@@ -26,16 +26,6 @@
   },
   "agents": [
     {
-      "name": "Екатерина Клименко",
-      "casId": 1144449,
-      "verified": true,
-      "avatar": "/team/ekaterina-klimenko.png",
-      "registeredAt": "2017-10-26",
-      "deals12m": 5,
-      "ratingAvg": 5,
-      "ratingVotes": 2
-    },
-    {
       "name": "Ольга Инкулец",
       "casId": 580905,
       "verified": true,
@@ -44,6 +34,16 @@
       "deals12m": 15,
       "ratingAvg": 5,
       "ratingVotes": 1
+    },
+    {
+      "name": "Екатерина Клименко",
+      "casId": 1144449,
+      "verified": true,
+      "avatar": "/team/ekaterina-klimenko.png",
+      "registeredAt": "2017-10-26",
+      "deals12m": 6,
+      "ratingAvg": 5,
+      "ratingVotes": 2
     },
     {
       "name": "Татьяна Чистякова",
@@ -61,7 +61,7 @@
       "verified": false,
       "avatar": null,
       "registeredAt": "2017-10-26",
-      "deals12m": 7,
+      "deals12m": 8,
       "ratingAvg": 5,
       "ratingVotes": 1
     },
