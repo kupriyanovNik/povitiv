@@ -98,6 +98,52 @@
       ]
     },
     {
+      "id": "cian-331063653",
+      "source": "cian",
+      "url": "https://www.cian.ru/sale/flat/331063653/",
+      "dealType": "sale",
+      "category": "flat",
+      "title": "2-комнатная квартира, 54 м²",
+      "badge": "Внесён аванс",
+      "price": 19300000,
+      "priceNote": null,
+      "area": 54,
+      "floor": "11 из 14",
+      "rooms": 2,
+      "address": "Москва, ЮЗАО, р-н Южное Бутово, м. Бульвар Адмирала Ушакова, улица Адмирала Лазарева, 16",
+      "metro": "Бульвар Адмирала Ушакова",
+      "highlight": "АВАНС! ! Уютная, светлая квартира в отличном состоянии. Встроенная мебель и техника остается. Дом 2002 года постройки, серии П-3М, до метро…",
+      "photos": [
+        "/listings/cian-331063653/1.jpg",
+        "/listings/cian-331063653/2.jpg",
+        "/listings/cian-331063653/3.jpg",
+        "/listings/cian-331063653/4.jpg"
+      ]
+    },
+    {
+      "id": "cian-332362492",
+      "source": "cian",
+      "url": "https://khimki.cian.ru/sale/flat/332362492/",
+      "dealType": "sale",
+      "category": "flat",
+      "title": "3-комнатная квартира, 82 м²",
+      "badge": null,
+      "price": 17300000,
+      "priceNote": null,
+      "area": 82,
+      "floor": "11 из 18",
+      "rooms": 3,
+      "address": "Химки, мкр. Новые Химки, ул. Молодёжная, 52",
+      "metro": null,
+      "highlight": "Свободная продажа. Просторная квартира с мебелью и техникой, комнаты 19, 14 и 12 м².",
+      "photos": [
+        "/listings/cian-332362492/1.jpg",
+        "/listings/cian-332362492/2.jpg",
+        "/listings/cian-332362492/3.jpg",
+        "/listings/cian-332362492/4.jpg"
+      ]
+    },
+    {
       "id": "domclick-1895331392",
       "source": "domclick",
       "url": "https://domclick.ru/card/sale__lot__1895331392",

@@ -16,7 +16,7 @@
  * Если какой-то источник недоступен, его прежние данные сохраняются как есть.
  */
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
@@ -363,6 +363,58 @@ function parseCianCard(card) {
   };
 }
 
+/** Проверяет по прямой ссылке, живо ли объявление, и собирает URL фото. */
+async function probeCianListings(urls) {
+  let chromium;
+  try {
+    ({ chromium } = await import("playwright-core"));
+  } catch {
+    return null;
+  }
+  let browser;
+  try {
+    browser = await chromium.launch({ channel: "chrome", headless: true });
+  } catch {
+    try {
+      browser = await chromium.launch({ headless: true });
+    } catch {
+      return null;
+    }
+  }
+  const result = new Map();
+  try {
+    const page = await browser.newPage({
+      userAgent: UA,
+      locale: "ru-RU",
+      viewport: { width: 1440, height: 900 },
+    });
+    for (const url of urls) {
+      try {
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 40000 });
+        await page.waitForTimeout(1500);
+        const info = await page.evaluate(() => {
+          const removed = /снято с публикации/i.test(document.body.innerText);
+          const photos = Array.from(
+            new Set(
+              Array.from(
+                document.querySelectorAll('img[src*="images.cdn-cian"]'),
+              ).map((im) => im.src.replace(/-\d\.jpg$/, "-1.jpg")),
+            ),
+          ).slice(0, 4);
+          return { removed, photos };
+        });
+        result.set(url, { alive: !info.removed, photoUrls: info.photos });
+      } catch {
+        // сомнение трактуем в пользу объявления: не удаляем при сбое
+        result.set(url, { alive: true, photoUrls: [] });
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+  return result;
+}
+
 /* ---------------------------------- main ----------------------------------- */
 
 async function main() {
@@ -398,6 +450,32 @@ async function main() {
 
   const cianFinal =
     cian ?? prev.listings.filter((l) => l.source === "cian");
+
+  // страница компании ЦИАН показывает не все объявления разом (ротация),
+  // поэтому «пропавшие» проверяем по прямой ссылке и удаляем только те,
+  // что реально сняты с публикации
+  if (cian) {
+    const parsedIds = new Set(cian.map((i) => i.id));
+    const missing = prev.listings.filter(
+      (l) => l.source === "cian" && !parsedIds.has(l.id),
+    );
+    if (missing.length) {
+      console.log(
+        `\nЦИАН: ${missing.length} объявлений нет в профиле, проверяю по прямым ссылкам…`,
+      );
+      const probe = await probeCianListings(missing.map((l) => l.url));
+      for (const l of missing) {
+        const res = probe?.get(l.url);
+        if (res && !res.alive) {
+          console.log("  снято с публикации:", l.id, `(${l.title})`);
+          continue;
+        }
+        console.log("  живо, оставляю:", l.id, `(${l.title})`);
+        cianFinal.push(res?.photoUrls?.length ? { ...l, photoUrls: res.photoUrls } : l);
+      }
+    }
+  }
+
   for (const item of cianFinal) {
     const photos = [];
     if (item.photoUrls) {
@@ -465,6 +543,24 @@ async function main() {
     path.join(DATA_DIR, "listings.json"),
     JSON.stringify(out, null, 2) + "\n",
   );
+
+  // подчищаем фото объявлений, снятых с публикации
+  const alive = new Set(listings.map((l) => l.id));
+  try {
+    const dirs = await readdir(path.join(PUBLIC_DIR, "listings"));
+    for (const dir of dirs) {
+      if (!alive.has(dir)) {
+        await rm(path.join(PUBLIC_DIR, "listings", dir), {
+          recursive: true,
+          force: true,
+        });
+        console.log("  удалены фото снятого объявления:", dir);
+      }
+    }
+  } catch (e) {
+    console.warn("не удалось почистить public/listings:", e.message);
+  }
+
   console.log(`\nГотово: ${listings.length} объектов в data/listings.json`);
   if (!cian) {
     console.log(
