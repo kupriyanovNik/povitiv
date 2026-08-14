@@ -234,9 +234,7 @@ export function Safety() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.4 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className={`flex items-start gap-5 sm:gap-6 md:w-[46%] ${
-                  i % 2 === 1 ? "md:ml-[54%]" : ""
-                }`}
+                className="mx-auto flex w-full max-w-xl items-start gap-5 sm:gap-6"
               >
                 <StopMarker
                   key={`m-${(geo?.thresholds[i] ?? i / (ANCHORS - 1)).toFixed(4)}`}
