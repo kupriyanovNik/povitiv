@@ -6,8 +6,17 @@ import { site } from "@/lib/site";
  * агентство недвижимости + актуальные объекты. Все цифры из реальных
  * данных (data/agency.json, data/listings.json).
  */
+/**
+ * Тексты объектов приходят с внешних площадок: экранируем «<», чтобы
+ * строка вида «</script>» в данных не вырвалась из тега (XSS).
+ */
+function safeJson(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
 export async function JsonLd() {
   const [agency, { listings }] = await Promise.all([getAgency(), getListings()]);
+  const { domclickRating, domclickReviewVotes } = agency.agency;
 
   const org = {
     "@context": "https://schema.org",
@@ -30,12 +39,17 @@ export async function JsonLd() {
     },
     openingHours: "Mo-Fr 10:00-18:00",
     areaServed: ["Москва", "Московская область"],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: agency.agency.domclickRating,
-      reviewCount: agency.agency.domclickReviewVotes,
-      bestRating: 5,
-    },
+    // рейтинг только когда он есть в данных: null сделал бы разметку невалидной
+    ...(domclickRating != null && domclickReviewVotes > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: domclickRating,
+            reviewCount: domclickReviewVotes,
+            bestRating: 5,
+          },
+        }
+      : {}),
   };
 
   const offers = {
@@ -66,11 +80,11 @@ export async function JsonLd() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(org) }}
+        dangerouslySetInnerHTML={{ __html: safeJson(org) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(offers) }}
+        dangerouslySetInnerHTML={{ __html: safeJson(offers) }}
       />
     </>
   );

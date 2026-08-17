@@ -9,7 +9,7 @@ import {
   Quotes,
   Star,
 } from "@phosphor-icons/react/dist/ssr";
-import { formatMonthYear } from "@/lib/format";
+import { formatMonthYear, plural } from "@/lib/format";
 import type { ExternalReview, QuoteReview, Review } from "@/lib/types";
 import { site } from "@/lib/site";
 import { Reveal } from "./Reveal";
@@ -99,7 +99,7 @@ export function Reviews({
 }: {
   reviews: Review[];
   external: ExternalReview[];
-  rating: number;
+  rating: number | null;
   votes: number;
 }) {
   const reduce = useReducedMotion();
@@ -146,6 +146,9 @@ export function Reviews({
     advance: () => goTo(index + 1),
     resetKey: index,
   });
+
+  // данные приходят из ночного синка: без цитат секция не рендерится
+  if (count === 0) return null;
 
   return (
     <section id="otzyvy" className="scroll-mt-20 bg-surface py-20 lg:py-28">
@@ -202,13 +205,12 @@ export function Reviews({
             </div>
 
             <div className="flex items-center justify-between px-7 pb-6 sm:px-9">
-              <div className="flex gap-1.5" role="tablist" aria-label="Отзывы">
+              <div className="flex gap-1.5" role="group" aria-label="Отзывы">
                 {quotes.map((q, i) => (
                   <button
                     key={q.id}
                     type="button"
-                    role="tab"
-                    aria-selected={index === i}
+                    aria-current={index === i || undefined}
                     aria-label={`Отзыв: ${q.author}`}
                     onClick={() => goTo(i)}
                     className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
@@ -250,22 +252,25 @@ export function Reviews({
 
           {/* сводка рейтинга и ссылки на источники */}
           <div className="flex flex-col gap-4">
-            <div className="flex flex-1 flex-col justify-center rounded-2xl bg-wine-ink p-7 text-white sm:p-8">
-              <div className="flex items-end gap-3">
-                <span className="font-display text-6xl font-bold leading-none">
-                  {rating.toFixed(1).replace(".", ",")}
-                </span>
-                <div className="mb-1 flex gap-0.5" aria-label="5 звёзд из 5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={18} weight="fill" className="text-white" />
-                  ))}
+            {rating != null && votes > 0 && (
+              <div className="flex flex-1 flex-col justify-center rounded-2xl bg-wine-ink p-7 text-white sm:p-8">
+                <div className="flex items-end gap-3">
+                  <span className="font-display text-6xl font-bold leading-none">
+                    {rating.toFixed(1).replace(".", ",")}
+                  </span>
+                  <div className="mb-1 flex gap-0.5" aria-label="5 звёзд из 5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} size={18} weight="fill" className="text-white" />
+                    ))}
+                  </div>
                 </div>
+                <p className="mt-3 text-[15px] leading-relaxed text-white/80">
+                  Общая оценка агентства на Домклик: {votes}{" "}
+                  {plural(votes, "оценка", "оценки", "оценок")} после
+                  проведённых сделок, и все они максимальные.
+                </p>
               </div>
-              <p className="mt-3 text-[15px] leading-relaxed text-white/80">
-                Общая оценка агентства на Домклик. Все {votes} оценок после
-                проведённых сделок максимальные.
-              </p>
-            </div>
+            )}
             <a
               href={site.profiles.domclick}
               target="_blank"

@@ -117,16 +117,24 @@ export function Safety() {
     const container = trackRef.current;
     if (!container) return;
     const build = () => {
-      const crect = container.getBoundingClientRect();
+      // считаем по layout-позициям (offset*), а не по getBoundingClientRect:
+      // строки в момент замера могут быть сдвинуты reveal-анимацией (y: 16),
+      // а offset-координаты трансформы не учитывают
+      const layoutCenter = (el: HTMLElement) => {
+        let x = el.offsetWidth / 2;
+        let y = el.offsetHeight / 2;
+        let node: HTMLElement | null = el;
+        while (node && node !== container) {
+          x += node.offsetLeft;
+          y += node.offsetTop;
+          node = node.offsetParent as HTMLElement | null;
+        }
+        return node === container ? { x, y } : null;
+      };
       const pts = markerEls.current
-        .filter(Boolean)
-        .map((el) => {
-          const r = el!.getBoundingClientRect();
-          return {
-            x: r.left - crect.left + r.width / 2,
-            y: r.top - crect.top + r.height / 2,
-          };
-        });
+        .filter((el): el is HTMLDivElement => Boolean(el))
+        .map(layoutCenter)
+        .filter((p): p is { x: number; y: number } => p !== null);
       if (pts.length < 2) return;
       // pathLength нормируется по фактической длине кривой, поэтому пороги
       // остановок считаем по длинам дуг сегментов, а не равными долями
@@ -172,8 +180,8 @@ export function Safety() {
       }
       const total = cumLen[cumLen.length - 1] || 1;
       setGeo({
-        w: crect.width,
-        h: crect.height,
+        w: container.offsetWidth,
+        h: container.offsetHeight,
         d,
         thresholds: cumLen.map((v) => v / total),
       });

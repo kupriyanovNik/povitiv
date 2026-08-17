@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useInView, useReducedMotion } from "motion/react";
+import { plural } from "@/lib/format";
 
 type Stat = {
   value: string;
@@ -50,7 +51,7 @@ export function TrustBar({
   updatedAt,
 }: {
   dealsCount: number;
-  rating: number;
+  rating: number | null;
   agentsCount: number;
   updatedAt: string;
 }) {
@@ -60,16 +61,21 @@ export function TrustBar({
     {
       value: String(dealsCount),
       numeric: dealsCount,
-      label: "сделок за последние 12 месяцев",
+      label: `${plural(dealsCount, "сделка", "сделки", "сделок")} за последние 12 месяцев`,
     },
-    {
-      value: rating.toFixed(1).replace(".", ","),
-      label: "рейтинг по оценкам сделок на Домклик",
-    },
+    // рейтинг из синка может пропасть: без значения ячейку не показываем
+    ...(rating != null
+      ? [
+          {
+            value: rating.toFixed(1).replace(".", ","),
+            label: "рейтинг по оценкам сделок на Домклик",
+          },
+        ]
+      : []),
     {
       value: String(agentsCount),
       numeric: agentsCount,
-      label: "специалистов в команде агентства",
+      label: `${plural(agentsCount, "специалист", "специалиста", "специалистов")} в команде агентства`,
     },
   ];
 

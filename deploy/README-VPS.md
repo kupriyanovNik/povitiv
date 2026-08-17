@@ -32,6 +32,13 @@ scp positiv-vt-dist.tar.gz root@SERVER:/tmp/
 ```bash
 ssh root@SERVER
 tar -xzf /tmp/positiv-vt-dist.tar.gz -C /var/www/positiv-vt
+# данные: сид копируется только если файла ещё нет — данные ночного синка
+# при обновлении версии сайта НЕ затираются; reviews-external.json
+# курируется руками, поэтому обновляется всегда
+cp /var/www/positiv-vt/data-seed/reviews-external.json /var/www/positiv-vt/data/
+for f in listings.json agency.json; do
+  [ -f /var/www/positiv-vt/data/$f ] || cp /var/www/positiv-vt/data-seed/$f /var/www/positiv-vt/data/
+done
 cp /var/www/positiv-vt/.env.example /var/www/positiv-vt/.env  # если ещё нет
 nano /var/www/positiv-vt/.env   # SMTP_*, MAX_*, LEADS_DIR=/var/lib/positiv-vt/leads
 chown -R www-data:www-data /var/www/positiv-vt
@@ -65,17 +72,22 @@ tail -f /var/lib/positiv-vt/leads/leads-*.jsonl  # журнал заявок
 
 ## Обновление версии сайта
 
-Повторить шаги 2-3 (build-artifact → scp → tar -xzf) и `systemctl restart positiv-vt`.
+Повторить шаги 2-3 (build-artifact → scp → tar -xzf → сид данных) и
+`systemctl restart positiv-vt`. Данные ночного синка (`data/listings.json`,
+`data/agency.json`) при этом не затираются: артефакт возит их в `data-seed/`,
+а копирование выше пропускает уже существующие файлы.
 
 ## Как это работает
 
 - **Сайт**: standalone-бандл Next.js, `node server.js` на 127.0.0.1:3000,
   nginx проксирует и отдаёт статику/фото напрямую с длинным кэшем.
 - **Ночной синк**: systemd-таймер в 00:00 МСК запускает
-  `scripts/sync-listings.mjs` (Домклик — fetch, ЦИАН — chromium) и
-  обновляет data/*.json и фото ПРЯМО НА ДИСКЕ. Сайт читает данные в
-  рантайме, поэтому изменения видны сразу: без пересборки, без
-  рестарта, без git. GitHub здесь не нужен.
+  `scripts/sync-listings.mjs` (Домклик — fetch, ЦИАН — chromium; путь до
+  браузера задаётся `CHROME_BIN=/usr/bin/chromium` в юните синка,
+  playwright-core приезжает в артефакте) и обновляет data/*.json и фото
+  ПРЯМО НА ДИСКЕ. JSON пишется атомарно (tmp + rename), поэтому запрос
+  никогда не увидит полузаписанный файл. Сайт читает данные в рантайме,
+  изменения видны сразу: без пересборки, без рестарта, без git.
 - **Заявки**: пишутся в `LEADS_DIR` (journal JSONL, персональные данные
   остаются на сервере в РФ), уведомления уходят по email (SMTP) и в MAX-бот.
 - **TLS**: Let's Encrypt через certbot (авто-продление). План Б, если LE

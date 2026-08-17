@@ -8,8 +8,10 @@ After=network-online.target
 Type=oneshot
 User=www-data
 WorkingDirectory=/var/www/positiv-vt
-# для парсинга ЦИАН нужен chromium: apt install chromium
+# для парсинга ЦИАН нужен браузер: apt install chromium,
+# путь до бинарника передаётся скрипту через CHROME_BIN
 Environment=NODE_ENV=production
+Environment=CHROME_BIN=/usr/bin/chromium
 ExecStart=/usr/bin/node scripts/sync-listings.mjs
 # рестарт сайта НЕ нужен: данные читаются с диска на каждый запрос,
 # обновлённые JSON и фото подхватываются сразу

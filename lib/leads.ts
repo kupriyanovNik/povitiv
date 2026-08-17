@@ -94,6 +94,10 @@ async function sendEmail(lead: LeadInput): Promise<DeliveryStatus> {
     port: Number(SMTP_PORT ?? 465),
     secure: (process.env.SMTP_SECURE ?? "true") !== "false",
     auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+    // без таймаутов зависший SMTP держал бы запрос заявки минутами
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
   });
   return withRetry(async () => {
     await transport.sendMail({

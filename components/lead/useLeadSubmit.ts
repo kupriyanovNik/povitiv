@@ -46,7 +46,10 @@ export function useLeadSubmit() {
           page: typeof window !== "undefined" ? window.location.pathname : "",
         }),
       });
-      const data = (await res.json()) as { ok: boolean; error?: string };
+      // сервер может ответить не-JSON (например, HTML от прокси): не падаем
+      const data = (await res
+        .json()
+        .catch(() => ({ ok: false }))) as { ok: boolean; error?: string };
       if (!res.ok || !data.ok) {
         setError(
           data.error ??

@@ -124,15 +124,14 @@ export function PhotoCarousel({
           </button>
           <div
             className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 rounded-full bg-ink/35 px-2.5 py-1.5 backdrop-blur-sm"
-            role="tablist"
+            role="group"
             aria-label="Фотографии"
           >
             {photos.map((_, i) => (
               <button
                 key={i}
                 type="button"
-                role="tab"
-                aria-selected={index === i}
+                aria-current={index === i || undefined}
                 aria-label={`Фото ${i + 1} из ${count}`}
                 onClick={(e) => {
                   e.preventDefault();

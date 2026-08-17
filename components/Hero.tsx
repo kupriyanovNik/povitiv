@@ -14,10 +14,11 @@ import { formatPrice } from "@/lib/format";
 import type { Listing } from "@/lib/types";
 import { useLead } from "./lead/LeadContext";
 
-export function Hero({ featured }: { featured: Listing }) {
+export function Hero({ featured }: { featured?: Listing }) {
   const { openLead } = useLead();
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
+  const photos = featured?.photos ?? [];
 
   // лёгкий параллакс фото при прокрутке: создаёт глубину, не отвлекая
   const { scrollYProgress } = useScroll({
@@ -29,13 +30,13 @@ export function Hero({ featured }: { featured: Listing }) {
   // медленный кроссфейд фотографий объекта
   const [photoIdx, setPhotoIdx] = useState(0);
   useEffect(() => {
-    if (reduce || featured.photos.length < 2) return;
+    if (reduce || photos.length < 2) return;
     const t = setInterval(
-      () => setPhotoIdx((v) => (v + 1) % featured.photos.length),
+      () => setPhotoIdx((v) => (v + 1) % photos.length),
       6000,
     );
     return () => clearInterval(t);
-  }, [reduce, featured.photos.length]);
+  }, [reduce, photos.length]);
 
   const enter = (delay: number) => ({
     initial: { opacity: 0, y: 24 },
@@ -88,6 +89,7 @@ export function Hero({ featured }: { featured: Listing }) {
           </motion.div>
         </div>
 
+        {featured && photos.length > 0 && (
         <motion.div
           initial={{ opacity: 0, scale: 0.97, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -109,7 +111,7 @@ export function Hero({ featured }: { featured: Listing }) {
                   transition={{ duration: 1.2, ease: "easeInOut" }}
                 >
                   <Image
-                    src={featured.photos[photoIdx]}
+                    src={photos[photoIdx]}
                     alt={`${featured.title}, ${featured.address}`}
                     fill
                     priority={photoIdx === 0}
@@ -156,6 +158,7 @@ export function Hero({ featured }: { featured: Listing }) {
             </a>
           </div>
         </motion.div>
+        )}
       </div>
     </section>
   );

@@ -50,12 +50,15 @@ export default async function Home() {
   ]);
 
   const ordered = displayOrder(listings);
+  // данные перезаписываются ночным синком: пустой или неполный список
+  // не должен ронять страницу, секции переживают отсутствие фото
   const heroListing =
     ordered.find((l) => l.category === "house" && l.photos.length > 0) ??
+    ordered.find((l) => l.photos.length > 0) ??
     ordered[0];
   const tasksPhoto =
     ordered.find((l) => l.category === "flat" && l.dealType === "sale")
-      ?.photos[1] ?? ordered[0].photos[0];
+      ?.photos[1] ?? heroListing?.photos[0];
 
   return (
     <LeadProvider>

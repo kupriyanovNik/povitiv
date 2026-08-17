@@ -46,7 +46,7 @@ export type AgencyData = {
     inn: string;
     ogrn: string;
     dealsCount12m: number;
-    domclickRating: number;
+    domclickRating: number | null;
     domclickReviewVotes: number;
     cianYears: string;
     worksSince: number;

@@ -10,6 +10,7 @@ import {
   Star,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Agent } from "@/lib/types";
+import { plural } from "@/lib/format";
 import { Reveal } from "./Reveal";
 import { useAutoplayProgress } from "./useAutoplayProgress";
 
@@ -45,15 +46,16 @@ function initials(name: string): string {
     .join("");
 }
 
-function yearsOn(registeredAt: string): string {
-  const years = Math.floor(
-    (Date.now() - new Date(registeredAt).getTime()) / (365.25 * 24 * 3600e3),
-  );
-  return `${years} лет на Домклик`;
+function yearsOn(registeredAt: string): string | null {
+  const t = new Date(registeredAt).getTime();
+  if (!Number.isFinite(t)) return null;
+  const years = Math.floor((Date.now() - t) / (365.25 * 24 * 3600e3));
+  if (years < 1) return "Первый год на Домклик";
+  return `${years} ${plural(years, "год", "года", "лет")} на Домклик`;
 }
 
 function dealsLabel(n: number): string {
-  return `${n} ${n === 1 ? "сделка" : n < 5 ? "сделки" : "сделок"} за 12 месяцев`;
+  return `${n} ${plural(n, "сделка", "сделки", "сделок")} за 12 месяцев`;
 }
 
 function AgentSlide({
@@ -113,14 +115,16 @@ function AgentSlide({
           {ROLES[agent.name] ?? "Риелтор"}
         </p>
         <div className="mt-3 space-y-1 border-t border-white/20 pt-3 text-sm">
-          <p className="tnum text-white/85">{yearsOn(agent.registeredAt)}</p>
+          {yearsOn(agent.registeredAt) && (
+            <p className="tnum text-white/85">{yearsOn(agent.registeredAt)}</p>
+          )}
           {agent.deals12m > 0 && (
             <p className="tnum font-semibold">{dealsLabel(agent.deals12m)}</p>
           )}
-          {agent.ratingVotes > 0 && (
+          {agent.ratingVotes > 0 && agent.ratingAvg != null && (
             <p className="tnum flex items-center gap-1.5 font-semibold">
               <Star size={13} weight="fill" className="text-gold" />
-              {agent.ratingAvg?.toFixed(1).replace(".", ",")} по оценкам сделок
+              {agent.ratingAvg.toFixed(1).replace(".", ",")} по оценкам сделок
             </p>
           )}
         </div>
@@ -141,9 +145,12 @@ function AgentSlide({
 
 export function Team({ agents }: { agents: Agent[] }) {
   const reduce = useReducedMotion();
-  const sorted = [...agents].sort(
-    (a, b) => ORDER.indexOf(a.name) - ORDER.indexOf(b.name),
-  );
+  // новые специалисты из синка, которых нет в ORDER, встают в конец, а не в начало
+  const orderOf = (name: string) => {
+    const i = ORDER.indexOf(name);
+    return i === -1 ? ORDER.length : i;
+  };
+  const sorted = [...agents].sort((a, b) => orderOf(a.name) - orderOf(b.name));
   const count = sorted.length;
 
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -274,15 +281,14 @@ export function Team({ agents }: { agents: Agent[] }) {
 
         <div
           className="mt-6 flex justify-center gap-1.5"
-          role="tablist"
+          role="group"
           aria-label="Специалисты"
         >
           {sorted.map((agent, i) => (
             <button
               key={agent.casId}
               type="button"
-              role="tab"
-              aria-selected={index === i}
+              aria-current={index === i || undefined}
               aria-label={agent.name}
               onClick={() => goTo(i)}
               className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${

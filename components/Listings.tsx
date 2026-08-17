@@ -103,26 +103,28 @@ function CompactCard({ listing }: { listing: Listing }) {
       onMouseLeave={stopCycle}
       className="group grid grid-cols-[140px_1fr] overflow-hidden rounded-2xl border border-line bg-surface sm:grid-cols-[180px_1fr]"
     >
-      <div className="relative h-full min-h-[120px] overflow-hidden">
-        {/* при наведении фото перелистываются кроссфейдом */}
-        <AnimatePresence initial={false}>
-          <motion.div
-            key={photoIdx}
-            className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <Image
-              src={listing.photos[photoIdx]}
-              alt={`${listing.title}, ${listing.address}`}
-              fill
-              sizes="180px"
-              className="object-cover"
-            />
-          </motion.div>
-        </AnimatePresence>
+      <div className="relative h-full min-h-[120px] overflow-hidden bg-wine-tint">
+        {/* при наведении фото перелистываются кроссфейдом; фото может не быть */}
+        {listing.photos.length > 0 && (
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={photoIdx}
+              className="absolute inset-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <Image
+                src={listing.photos[photoIdx]}
+                alt={`${listing.title}, ${listing.address}`}
+                fill
+                sizes="180px"
+                className="object-cover"
+              />
+            </motion.div>
+          </AnimatePresence>
+        )}
         {listing.photos.length > 1 && (
           <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
             {listing.photos.map((_, i) => (
@@ -196,14 +198,14 @@ export function Listings({ listings }: { listings: Listing[] }) {
 
         <div
           className="mt-8 flex flex-wrap gap-2"
-          role="tablist"
+          role="group"
           aria-label="Фильтр объектов"
         >
           {FILTERS.filter((f) => (counts.get(f.key) ?? 0) > 0).map((f) => (
             <button
               key={f.key}
-              role="tab"
-              aria-selected={filter === f.key}
+              type="button"
+              aria-pressed={filter === f.key}
               onClick={() => setFilter(f.key)}
               className={`tnum h-10 rounded-full border px-4 text-sm font-semibold transition-colors ${
                 filter === f.key

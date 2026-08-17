@@ -1,3 +1,13 @@
+/** Русские формы множественного числа: plural(n, "сделка", "сделки", "сделок"). */
+export function plural(n: number, one: string, few: string, many: string): string {
+  const abs = Math.abs(Math.trunc(n));
+  const d10 = abs % 10;
+  const d100 = abs % 100;
+  if (d10 === 1 && d100 !== 11) return one;
+  if (d10 >= 2 && d10 <= 4 && (d100 < 12 || d100 > 14)) return few;
+  return many;
+}
+
 export function formatPrice(price: number, note?: string | null): string {
   const formatted = new Intl.NumberFormat("ru-RU").format(price);
   return note ? `${formatted} ₽ ${note}` : `${formatted} ₽`;

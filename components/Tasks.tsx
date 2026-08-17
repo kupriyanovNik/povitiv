@@ -82,7 +82,7 @@ function CardShell({
   );
 }
 
-export function Tasks({ photo }: { photo: string }) {
+export function Tasks({ photo }: { photo?: string }) {
   const { openLead } = useLead();
 
   return (
@@ -104,13 +104,15 @@ export function Tasks({ photo }: { photo: string }) {
             label="Продать недвижимость"
             className="relative min-h-[280px] overflow-hidden bg-wine-ink text-white"
           >
-            <Image
-              src={photo}
-              alt=""
-              fill
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover opacity-35 transition-opacity duration-500 group-hover:opacity-45"
-            />
+            {photo && (
+              <Image
+                src={photo}
+                alt=""
+                fill
+                sizes="(min-width: 768px) 50vw, 100vw"
+                className="object-cover opacity-35 transition-opacity duration-500 group-hover:opacity-45"
+              />
+            )}
             <div
               aria-hidden
               className="absolute inset-0 bg-gradient-to-t from-wine-ink via-wine-ink/55 to-transparent"

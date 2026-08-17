@@ -152,7 +152,11 @@ export function LeadForm() {
 
               <fieldset>
                 <legend className="text-sm font-semibold">Что требуется?</legend>
-                <div className="mt-2.5 flex flex-wrap gap-2">
+                <div
+                  className="mt-2.5 flex flex-wrap gap-2"
+                  role="radiogroup"
+                  aria-label="Что требуется?"
+                >
                   {leadTasks.map((t) => (
                     <button
                       key={t}

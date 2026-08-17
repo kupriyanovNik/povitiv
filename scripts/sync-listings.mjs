@@ -16,7 +16,7 @@
  * Если какой-то источник недоступен, его прежние данные сохраняются как есть.
  */
 
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
@@ -31,7 +31,10 @@ const DOMCLICK_AGENCY_URL = `https://agencies.domclick.ru/agency/${DOMCLICK_AGEN
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
 
-const today = new Date().toISOString().slice(0, 10);
+// дата по Москве: синк стартует в 00:00 МСК, когда UTC ещё «вчера»
+const today = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Moscow",
+}).format(new Date());
 
 /* ---------------------------------- utils ---------------------------------- */
 
@@ -41,6 +44,17 @@ async function readJson(file, fallback) {
   } catch {
     return fallback;
   }
+}
+
+/**
+ * Атомарная запись: сайт читает эти файлы с диска на каждый запрос,
+ * поэтому пишем во временный файл и подменяем rename'ом. Запрос никогда
+ * не увидит наполовину записанный JSON.
+ */
+async function writeJsonAtomic(file, value) {
+  const tmp = `${file}.tmp`;
+  await writeFile(tmp, JSON.stringify(value, null, 2) + "\n");
+  await rename(tmp, file);
 }
 
 async function download(url, dest) {
@@ -65,7 +79,9 @@ const translit = (s) =>
       };
       return map[c] ?? c;
     })
-    .replace(/\s+/g, "-");
+    .replace(/\s+/g, "-")
+    // слаг уходит в путь файла: ничего кроме [a-z0-9-] не пропускаем
+    .replace(/[^a-z0-9-]/g, "");
 
 /* -------------------------------- ДОМКЛИК ---------------------------------- */
 
@@ -152,10 +168,7 @@ async function syncDomclick() {
     })),
   };
 
-  await writeFile(
-    path.join(DATA_DIR, "agency.json"),
-    JSON.stringify(out, null, 2) + "\n",
-  );
+  await writeJsonAtomic(path.join(DATA_DIR, "agency.json"), out);
   console.log(
     `Домклик: ок. Сделок за 12 мес: ${out.agency.dealsCount12m}, команда: ${agentsOut.length}, отзывов: ${out.reviews.length}`,
   );
@@ -184,17 +197,33 @@ function extractJson(raw) {
 
 async function fetchDomclickOffers() {
   const offers = [];
+  // запоминаем, какие типы сделок реально ответили: если упала только
+  // аренда, нельзя выкидывать прежние арендные объявления
+  const okTypes = new Set();
   for (const dealType of ["sale", "rent"]) {
     const url = `https://api.domclick.ru/pts/agencies/v1/offers?company_id=${DOMCLICK_AGENCY_ID}&deal_type=${dealType}&limit=9`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": UA, Accept: "application/json" },
-    });
-    if (!res.ok) {
-      console.warn(`Домклик offers ${dealType}: HTTP ${res.status}`);
+    let data;
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": UA, Accept: "application/json" },
+      });
+      if (!res.ok) {
+        console.warn(`Домклик offers ${dealType}: HTTP ${res.status}`);
+        continue;
+      }
+      data = await res.json();
+    } catch (e) {
+      console.warn(`Домклик offers ${dealType}: ${e.message}`);
       continue;
     }
-    const data = await res.json();
+    okTypes.add(dealType);
     for (const o of data.result ?? []) {
+      // id уходит в пути файловой системы (public/listings/<id>/),
+      // поэтому принимаем только числовые; цена обязана быть числом
+      if (!/^\d+$/.test(String(o.id ?? "")) || !Number.isFinite(o.price) || !o.link) {
+        console.warn("  Домклик: пропускаю сомнительный оффер:", o.id, o.price);
+        continue;
+      }
       const isLot = String(o.link ?? "").includes("__lot__");
       offers.push({
         id: `domclick-${o.id}`,
@@ -218,13 +247,17 @@ async function fetchDomclickOffers() {
       });
     }
   }
-  return offers;
+  return { offers, okTypes };
 }
 
 /* ----------------------------------- ЦИАН ---------------------------------- */
 
-async function fetchCianListings() {
-  console.log("\nЦИАН: пробую открыть страницу компании через Chrome…");
+/**
+ * Запуск браузера для ЦИАН: сначала системный Google Chrome, затем путь из
+ * CHROME_BIN (на VPS: apt install chromium + CHROME_BIN=/usr/bin/chromium),
+ * затем chromium из npx playwright install.
+ */
+async function launchBrowser() {
   let chromium;
   try {
     ({ chromium } = await import("playwright-core"));
@@ -232,19 +265,30 @@ async function fetchCianListings() {
     console.warn("ЦИАН: playwright-core не установлен (npm i -D playwright-core). Пропускаю.");
     return null;
   }
-
-  let browser;
-  try {
-    browser = await chromium.launch({ channel: "chrome", headless: true });
-  } catch (e) {
-    console.warn("ЦИАН: не удалось запустить Chrome:", e.message);
-    console.warn("Установите Google Chrome или запустите: npx playwright install chromium");
+  const attempts = [
+    { channel: "chrome" },
+    ...(process.env.CHROME_BIN
+      ? [{ executablePath: process.env.CHROME_BIN }]
+      : []),
+    {},
+  ];
+  for (const opts of attempts) {
     try {
-      browser = await chromium.launch({ headless: true });
+      return await chromium.launch({ ...opts, headless: true });
     } catch {
-      return null;
+      /* пробуем следующий вариант */
     }
   }
+  console.warn(
+    "ЦИАН: браузер не найден. Установите Google Chrome, задайте CHROME_BIN=/usr/bin/chromium или выполните: npx playwright install chromium",
+  );
+  return null;
+}
+
+async function fetchCianListings() {
+  console.log("\nЦИАН: пробую открыть страницу компании через Chrome…");
+  const browser = await launchBrowser();
+  if (!browser) return null;
 
   try {
     const page = await browser.newPage({
@@ -365,22 +409,8 @@ function parseCianCard(card) {
 
 /** Проверяет по прямой ссылке, живо ли объявление, и собирает URL фото. */
 async function probeCianListings(urls) {
-  let chromium;
-  try {
-    ({ chromium } = await import("playwright-core"));
-  } catch {
-    return null;
-  }
-  let browser;
-  try {
-    browser = await chromium.launch({ channel: "chrome", headless: true });
-  } catch {
-    try {
-      browser = await chromium.launch({ headless: true });
-    } catch {
-      return null;
-    }
-  }
+  const browser = await launchBrowser();
+  if (!browser) return null;
   const result = new Map();
   try {
     const page = await browser.newPage({
@@ -439,8 +469,10 @@ async function main() {
   }
 
   let domclickOffers = [];
+  let domclickOkTypes = new Set();
   try {
-    domclickOffers = await fetchDomclickOffers();
+    ({ offers: domclickOffers, okTypes: domclickOkTypes } =
+      await fetchDomclickOffers());
   } catch (e) {
     console.warn("Домклик offers: ошибка:", e.message);
   }
@@ -502,9 +534,15 @@ async function main() {
     });
   }
 
-  const domclickFinal = domclickOffers.length
-    ? domclickOffers
-    : prev.listings.filter((l) => l.source === "domclick");
+  // по каждому типу сделки отдельно: свежие данные, если тип ответил,
+  // иначе прежние объявления этого типа (не удаляем живое из-за сбоя API)
+  const domclickFinal = ["sale", "rent"].flatMap((dealType) =>
+    domclickOkTypes.has(dealType)
+      ? domclickOffers.filter((o) => o.dealType === dealType)
+      : prev.listings.filter(
+          (l) => l.source === "domclick" && l.dealType === dealType,
+        ),
+  );
   for (const item of domclickFinal) {
     // не дублируем объект, который уже есть на ЦИАН (совпадение цены и типа)
     if (
@@ -539,10 +577,7 @@ async function main() {
     sources: { cian: CIAN_COMPANY_URL, domclick: DOMCLICK_AGENCY_URL },
     listings,
   };
-  await writeFile(
-    path.join(DATA_DIR, "listings.json"),
-    JSON.stringify(out, null, 2) + "\n",
-  );
+  await writeJsonAtomic(path.join(DATA_DIR, "listings.json"), out);
 
   // подчищаем фото объявлений, снятых с публикации
   const alive = new Set(listings.map((l) => l.id));
