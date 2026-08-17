@@ -1,0 +1,16 @@
+# Разовый запуск синка данных: /etc/systemd/system/positiv-vt-sync.service
+# Запускается таймером positiv-vt-sync.timer каждый день в 00:00 МСК.
+[Unit]
+Description=Positiv VT: sync listings from Cian and DomClick
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+WorkingDirectory=/var/www/positiv-vt
+# для парсинга ЦИАН нужен chromium: apt install chromium
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node scripts/sync-listings.mjs
+# сайт читает JSON при старте процесса, поэтому после обновления данных
+# мягко перезапускаем сервис
+ExecStartPost=/usr/bin/systemctl restart positiv-vt.service

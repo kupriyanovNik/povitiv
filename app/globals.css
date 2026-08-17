@@ -33,9 +33,9 @@
   --color-wine-ink: var(--wine-ink);
   --color-wine-tint: var(--wine-tint);
   --color-gold: var(--gold);
-  --font-sans: var(--font-golos), "Golos Text", system-ui, -apple-system,
+  --font-sans: "Golos Text Variable", "Golos Text", system-ui, -apple-system,
     "Segoe UI", sans-serif;
-  --font-display: var(--font-geologica), "Geologica", var(--font-sans);
+  --font-display: "Geologica Variable", "Geologica", var(--font-sans);
 }
 
 html {

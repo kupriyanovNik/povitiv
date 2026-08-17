@@ -1,0 +1,21 @@
+# systemd-юнит сайта: /etc/systemd/system/positiv-vt.service
+[Unit]
+Description=Positiv VT landing (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/positiv-vt
+# standalone-бандл Next.js запускается обычным node
+ExecStart=/usr/bin/node server.js
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+# секреты и каналы уведомлений: см. .env.example
+EnvironmentFile=/var/www/positiv-vt/.env
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

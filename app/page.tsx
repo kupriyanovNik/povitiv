@@ -19,6 +19,7 @@ import { LeadForm } from "@/components/LeadForm";
 import { FAQ } from "@/components/FAQ";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
+import { JsonLd } from "@/components/JsonLd";
 import { MobileBar } from "@/components/MobileBar";
 
 const CATEGORY_ORDER: Record<Listing["category"], number> = {
@@ -51,6 +52,7 @@ export default function Home() {
 
   return (
     <LeadProvider>
+      <JsonLd />
       <Header />
       <main className="flex-1">
         <Hero featured={heroListing} />

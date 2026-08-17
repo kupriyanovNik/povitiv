@@ -6,6 +6,7 @@ export type LeadFields = {
   name: string;
   phone: string;
   task: string;
+  consent: boolean;
   object?: string;
   comment?: string;
   company?: string; // honeypot
@@ -18,6 +19,8 @@ export function validateLead(fields: LeadFields): string | null {
   const digits = fields.phone.replace(/\D/g, "");
   if (digits.length < 10 || digits.length > 15)
     return "Укажите корректный номер телефона";
+  if (!fields.consent)
+    return "Подтвердите согласие на обработку персональных данных";
   return null;
 }
 

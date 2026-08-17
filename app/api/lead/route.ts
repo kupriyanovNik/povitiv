@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { processLead } from "@/lib/leads";
 
 export const runtime = "nodejs";
 
@@ -9,6 +10,7 @@ type LeadPayload = {
   object?: string;
   comment?: string;
   page?: string;
+  consent?: boolean;
   company?: string; // honeypot: настоящие посетители это поле не видят
 };
 
@@ -19,6 +21,7 @@ const ALLOWED_TASKS = new Set([
   "Сдать",
   "Снять",
   "Сопровождение",
+  "Перезвоните мне",
   "Другое",
 ]);
 
@@ -39,13 +42,6 @@ function rateLimited(ip: string): boolean {
   return false;
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-}
-
 export async function POST(req: NextRequest) {
   let body: LeadPayload;
   try {
@@ -59,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   // Honeypot: боты заполняют скрытое поле, отвечаем «успехом» и выходим
   if (body.company && body.company.trim() !== "") {
-    return NextResponse.json({ ok: true, delivered: false });
+    return NextResponse.json({ ok: true });
   }
 
   const ip =
@@ -75,9 +71,6 @@ export async function POST(req: NextRequest) {
   const phoneRaw = (body.phone ?? "").trim().slice(0, 30);
   const phoneDigits = phoneRaw.replace(/\D/g, "");
   const task = ALLOWED_TASKS.has(body.task ?? "") ? body.task! : "Другое";
-  const object = (body.object ?? "").trim().slice(0, 200);
-  const comment = (body.comment ?? "").trim().slice(0, 1000);
-  const page = (body.page ?? "").trim().slice(0, 200);
 
   if (name.length < 2) {
     return NextResponse.json(
@@ -91,61 +84,32 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
-
-  const time = new Intl.DateTimeFormat("ru-RU", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "Europe/Moscow",
-  }).format(new Date());
-
-  const lines = [
-    "<b>Новая заявка с сайта</b>",
-    "",
-    `<b>Имя:</b> ${escapeHtml(name)}`,
-    `<b>Телефон:</b> ${escapeHtml(phoneRaw)}`,
-    `<b>Задача:</b> ${escapeHtml(task)}`,
-  ];
-  if (object) lines.push(`<b>Объект или район:</b> ${escapeHtml(object)}`);
-  if (comment) lines.push(`<b>Комментарий:</b> ${escapeHtml(comment)}`);
-  lines.push("", `${time} МСК${page ? ` · ${escapeHtml(page)}` : ""}`);
-
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!token || !chatId) {
-    // Telegram ещё не настроен: не теряем заявку молча, пишем в лог сервера
-    console.warn("[lead] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID не заданы.");
-    console.warn("[lead]", JSON.stringify({ name, phoneRaw, task, object, comment }));
-    return NextResponse.json({ ok: true, delivered: false });
+  if (body.consent !== true) {
+    return NextResponse.json(
+      { ok: false, error: "Подтвердите согласие на обработку данных" },
+      { status: 400 },
+    );
   }
 
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: lines.join("\n"),
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    const data = (await res.json()) as { ok?: boolean; description?: string };
-    if (!res.ok || !data.ok) {
-      console.error("[lead] Telegram API error:", data.description ?? res.status);
-      return NextResponse.json(
-        { ok: false, error: "Не удалось отправить заявку" },
-        { status: 502 },
-      );
-    }
-  } catch (e) {
-    console.error("[lead] Telegram request failed:", e);
+  const result = await processLead({
+    name,
+    phone: phoneRaw,
+    task,
+    object: (body.object ?? "").trim().slice(0, 200),
+    comment: (body.comment ?? "").trim().slice(0, 1000),
+    page: (body.page ?? "").trim().slice(0, 200),
+    ip,
+    consentAt: new Date().toISOString(),
+  });
+
+  // Заявка принята, если записана в журнал ИЛИ доставлена хоть одним каналом
+  const deliveredSomewhere = Object.values(result.delivery).includes("ok");
+  if (!result.journaled && !deliveredSomewhere) {
     return NextResponse.json(
       { ok: false, error: "Не удалось отправить заявку" },
       { status: 502 },
     );
   }
 
-  return NextResponse.json({ ok: true, delivered: true });
+  return NextResponse.json({ ok: true, delivery: result.delivery });
 }

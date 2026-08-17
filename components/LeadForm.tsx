@@ -9,6 +9,7 @@ import {
 } from "motion/react";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import { leadTasks, site, type LeadTask } from "@/lib/site";
+import { ConsentCheckbox } from "./lead/ConsentCheckbox";
 import { useLeadSubmit } from "./lead/useLeadSubmit";
 import { Reveal } from "./Reveal";
 
@@ -28,10 +29,11 @@ export function LeadForm() {
   const [task, setTask] = useState<LeadTask>("Продать");
   const [object, setObject] = useState("");
   const [comment, setComment] = useState("");
+  const [consent, setConsent] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await submit({ name, phone, task, object, comment });
+    const ok = await submit({ name, phone, task, object, comment, consent });
     // короткий «шейк» формы как телесная обратная связь об ошибке
     if (!ok && !reduce && scope.current) {
       animateEl(
@@ -225,6 +227,12 @@ export function LeadForm() {
                 </motion.p>
               )}
 
+              <ConsentCheckbox
+                id="lf-consent"
+                checked={consent}
+                onChange={setConsent}
+              />
+
               <button
                 type="submit"
                 disabled={status === "sending"}
@@ -233,11 +241,7 @@ export function LeadForm() {
                 {status === "sending" ? "Отправляем…" : "Отправить заявку"}
               </button>
               <p className="text-xs leading-relaxed text-ink-soft">
-                Нажимая кнопку, вы соглашаетесь с{" "}
-                <a href="/privacy" className="underline hover:text-ink">
-                  политикой обработки персональных данных
-                </a>
-                . Или позвоните:{" "}
+                Или позвоните:{" "}
                 <a href={site.phoneHref} className="tnum font-semibold text-ink">
                   {site.phone}
                 </a>

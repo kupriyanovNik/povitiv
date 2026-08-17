@@ -1,23 +1,13 @@
 import type { Metadata } from "next";
-import { Geologica, Golos_Text } from "next/font/google";
+// шрифты самохостом (fontsource): сборка не ходит в Google Fonts,
+// woff2 с кириллицей попадают в бандл из node_modules
+import "@fontsource-variable/golos-text";
+import "@fontsource-variable/geologica";
 import "./globals.css";
-
-const golos = Golos_Text({
-  variable: "--font-golos",
-  subsets: ["cyrillic", "latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-const geologica = Geologica({
-  variable: "--font-geologica",
-  subsets: ["cyrillic", "latin"],
-  weight: ["500", "600", "700", "800"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://positiv-vt.ru"),
+  alternates: { canonical: "/" },
   title: "Позитив ВТ: агентство недвижимости в Москве и Подмосковье",
   description:
     "Продажа, покупка, обмен и аренда жилой, загородной и коммерческой недвижимости. Ипотека, оценка и юридическое сопровождение сделок. Работаем с 2010 года.",
@@ -33,10 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="ru"
-      className={`${golos.variable} ${geologica.variable} h-full antialiased`}
-    >
+    <html lang="ru" className="h-full antialiased">
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

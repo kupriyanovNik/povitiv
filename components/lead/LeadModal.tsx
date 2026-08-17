@@ -9,6 +9,7 @@ import {
 } from "motion/react";
 import { CheckCircle, X } from "@phosphor-icons/react/dist/ssr";
 import { site, type LeadTask } from "@/lib/site";
+import { ConsentCheckbox } from "./ConsentCheckbox";
 import { useLeadSubmit } from "./useLeadSubmit";
 
 const MODAL_TASKS: LeadTask[] = [
@@ -51,6 +52,7 @@ function ModalContent({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [task, setTask] = useState<LeadTask>(initialTask ?? "Продать");
+  const [consent, setConsent] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -69,7 +71,7 @@ function ModalContent({
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await submit({ name, phone, task });
+    const ok = await submit({ name, phone, task, consent });
     // короткий «шейк» формы как телесная обратная связь об ошибке
     if (!ok && !reduce && formScope.current) {
       animateEl(
@@ -238,6 +240,11 @@ function ModalContent({
                   {error}
                 </motion.p>
               )}
+              <ConsentCheckbox
+                id="lead-modal-consent"
+                checked={consent}
+                onChange={setConsent}
+              />
               <button
                 type="submit"
                 disabled={status === "sending"}
@@ -246,11 +253,7 @@ function ModalContent({
                 {status === "sending" ? "Отправляем…" : "Обсудить задачу"}
               </button>
               <p className="text-xs leading-relaxed text-ink-soft">
-                Нажимая кнопку, вы соглашаетесь с{" "}
-                <a href="/privacy" className="underline hover:text-ink">
-                  политикой обработки персональных данных
-                </a>
-                . Или позвоните:{" "}
+                Или позвоните:{" "}
                 <a
                   href={site.phoneHref}
                   className="tnum font-medium text-ink underline"

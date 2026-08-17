@@ -43,3 +43,6 @@ next-env.d.ts
 # playwright-cli artifacts
 /.playwright-cli/
 /output/
+
+# журнал заявок (персональные данные, не для репозитория)
+/data/leads/
