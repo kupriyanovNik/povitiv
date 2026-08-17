@@ -9,6 +9,7 @@ import {
 } from "motion/react";
 import { CheckCircle, X } from "@phosphor-icons/react/dist/ssr";
 import { site, type LeadTask } from "@/lib/site";
+import { trapTabKey } from "../focusTrap";
 import { ConsentCheckbox } from "./ConsentCheckbox";
 import { useLeadSubmit } from "./useLeadSubmit";
 
@@ -64,25 +65,8 @@ function ModalContent({
         onClose();
         return;
       }
-      // ловушка фокуса: Tab не должен уводить на страницу под оверлеем
       if (e.key === "Tab" && dialogRef.current) {
-        const focusables = Array.from(
-          dialogRef.current.querySelectorAll<HTMLElement>(
-            'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])',
-          ),
-        ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
-        if (focusables.length === 0) return;
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-        const active = document.activeElement;
-        const inside = dialogRef.current.contains(active);
-        if (e.shiftKey && (active === first || !inside)) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && (active === last || !inside)) {
-          e.preventDefault();
-          first.focus();
-        }
+        trapTabKey(e, dialogRef.current);
       }
     };
     window.addEventListener("keydown", onKey);

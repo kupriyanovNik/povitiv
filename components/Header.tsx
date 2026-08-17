@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { List, Phone, X } from "@phosphor-icons/react/dist/ssr";
 import { site } from "@/lib/site";
+import { trapTabKey } from "./focusTrap";
 import { useLead } from "./lead/LeadContext";
 
 const NAV = [
@@ -19,6 +20,7 @@ export function Header() {
   const reduce = useReducedMotion();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -35,6 +37,17 @@ export function Header() {
     return () => {
       document.body.style.overflow = "";
     };
+  }, [menuOpen]);
+
+  // как и в модалке: Escape закрывает меню, Tab не уходит под оверлей
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+      else if (e.key === "Tab" && menuRef.current) trapTabKey(e, menuRef.current);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
   return (
@@ -110,6 +123,7 @@ export function Header() {
               tabIndex={-1}
             />
             <motion.div
+              ref={menuRef}
               className="absolute inset-x-0 top-0 rounded-b-2xl bg-surface p-6 pb-8 shadow-2xl shadow-ink/20"
               initial={reduce ? { opacity: 0 } : { y: -24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}

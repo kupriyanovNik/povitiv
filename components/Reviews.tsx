@@ -258,9 +258,19 @@ export function Reviews({
                   <span className="font-display text-6xl font-bold leading-none">
                     {rating.toFixed(1).replace(".", ",")}
                   </span>
-                  <div className="mb-1 flex gap-0.5" aria-label="5 звёзд из 5">
+                  <div
+                    className="mb-1 flex gap-0.5"
+                    aria-label={`${Math.round(rating)} из 5 звёзд`}
+                  >
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} size={18} weight="fill" className="text-white" />
+                      <Star
+                        key={i}
+                        size={18}
+                        weight="fill"
+                        className={
+                          i < Math.round(rating) ? "text-white" : "text-white/25"
+                        }
+                      />
                     ))}
                   </div>
                 </div>
