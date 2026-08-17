@@ -9,7 +9,7 @@ import {
   SealCheck,
   Star,
 } from "@phosphor-icons/react/dist/ssr";
-import type { Agent } from "@/lib/data";
+import type { Agent } from "@/lib/types";
 import { Reveal } from "./Reveal";
 import { useAutoplayProgress } from "./useAutoplayProgress";
 

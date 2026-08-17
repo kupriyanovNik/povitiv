@@ -22,6 +22,10 @@ import { Footer } from "@/components/Footer";
 import { JsonLd } from "@/components/JsonLd";
 import { MobileBar } from "@/components/MobileBar";
 
+// данные читаются с диска на каждый запрос: ночной синк на сервере
+// обновляет JSON, страница сразу свежая, без пересборки и рестартов
+export const dynamic = "force-dynamic";
+
 const CATEGORY_ORDER: Record<Listing["category"], number> = {
   flat: 0,
   house: 1,
@@ -38,9 +42,12 @@ function displayOrder(listings: Listing[]): Listing[] {
   });
 }
 
-export default function Home() {
-  const { listings } = getListings();
-  const agency = getAgency();
+export default async function Home() {
+  const [{ listings }, agency, externalReviews] = await Promise.all([
+    getListings(),
+    getAgency(),
+    getExternalReviews(),
+  ]);
 
   const ordered = displayOrder(listings);
   const heroListing =
@@ -69,7 +76,7 @@ export default function Home() {
         <Team agents={agency.agents} />
         <Reviews
           reviews={agency.reviews}
-          external={getExternalReviews()}
+          external={externalReviews}
           rating={agency.agency.domclickRating}
           votes={agency.agency.domclickReviewVotes}
         />

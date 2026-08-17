@@ -72,9 +72,10 @@ tail -f /var/lib/positiv-vt/leads/leads-*.jsonl  # журнал заявок
 - **Сайт**: standalone-бандл Next.js, `node server.js` на 127.0.0.1:3000,
   nginx проксирует и отдаёт статику/фото напрямую с длинным кэшем.
 - **Ночной синк**: systemd-таймер в 00:00 МСК запускает
-  `scripts/sync-listings.mjs` (Домклик — fetch, ЦИАН — chromium),
-  обновляет data/*.json и фото, затем перезапускает сайт.
-  GitHub здесь не нужен.
+  `scripts/sync-listings.mjs` (Домклик — fetch, ЦИАН — chromium) и
+  обновляет data/*.json и фото ПРЯМО НА ДИСКЕ. Сайт читает данные в
+  рантайме, поэтому изменения видны сразу: без пересборки, без
+  рестарта, без git. GitHub здесь не нужен.
 - **Заявки**: пишутся в `LEADS_DIR` (journal JSONL, персональные данные
   остаются на сервере в РФ), уведомления уходят по email (SMTP) и в MAX-бот.
 - **TLS**: Let's Encrypt через certbot (авто-продление). План Б, если LE

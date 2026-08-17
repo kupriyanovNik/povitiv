@@ -1,115 +1,35 @@
-import listingsJson from "@/data/listings.json";
-import agencyJson from "@/data/agency.json";
-import externalReviewsJson from "@/data/reviews-external.json";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { cache } from "react";
+import type { AgencyData, ExternalReview, Listing } from "./types";
 
-export type Listing = {
-  id: string;
-  source: "cian" | "domclick";
-  url: string;
-  dealType: "sale" | "rent";
-  category: "flat" | "room" | "house" | "land";
-  title: string;
-  badge: string | null;
-  price: number;
-  priceNote: string | null;
-  area: number | null;
-  floor: string | null;
-  rooms: number | null;
-  address: string;
-  metro: string | null;
-  highlight: string;
-  photos: string[];
-};
+export type * from "./types";
+export { formatMonthYear, formatPrice } from "./format";
 
-export type Agent = {
-  name: string;
-  casId: number;
-  verified: boolean;
-  avatar: string | null;
-  registeredAt: string;
-  deals12m: number;
-  ratingAvg: number | null;
-  ratingVotes: number;
-};
+/**
+ * Данные читаются с диска В РАНТАЙМЕ, а не вшиваются в сборку.
+ * Ночной синк на сервере просто перезаписывает JSON-файлы, и страница
+ * сразу отдаёт свежие данные: без пересборки, рестарта и коммитов в git.
+ * cache() дедуплицирует чтения в рамках одного рендера.
+ */
+const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 
-export type Review = {
-  id: number;
-  rating: number;
-  text: string | null;
-  createdAt: string;
-  dealAt: string | null;
-  agent: string;
-  author: string;
-};
-
-export type AgencyData = {
-  updatedAt: string;
-  agency: {
-    name: string;
-    nameLegal: string;
-    inn: string;
-    ogrn: string;
-    dealsCount12m: number;
-    domclickRating: number;
-    domclickReviewVotes: number;
-    cianYears: string;
-    worksSince: number;
-    address: string;
-    phone: string;
-    workHours: string;
-  };
-  agents: Agent[];
-  reviews: Review[];
-};
-
-export function getListings(): { updatedAt: string; listings: Listing[] } {
-  const { updatedAt, listings } = listingsJson as {
-    updatedAt: string;
-    listings: Listing[];
-  };
-  return { updatedAt, listings };
+async function readJson<T>(name: string): Promise<T> {
+  const raw = await readFile(path.join(DATA_DIR, name), "utf8");
+  return JSON.parse(raw) as T;
 }
 
-export function getAgency(): AgencyData {
-  return agencyJson as unknown as AgencyData;
-}
+export const getListings = cache(
+  async (): Promise<{ updatedAt: string; listings: Listing[] }> =>
+    readJson("listings.json"),
+);
 
-export type ExternalReview = {
-  source: string;
-  sourceLabel: string;
-  url: string;
-  author: string;
-  date: string;
-  rating: number;
-  agent: string | null;
-  text: string;
-};
+export const getAgency = cache(
+  async (): Promise<AgencyData> => readJson("agency.json"),
+);
 
-export function getExternalReviews(): ExternalReview[] {
-  return (externalReviewsJson as { reviews: ExternalReview[] }).reviews;
-}
-
-/** Единый формат цитаты для карусели отзывов. */
-export type QuoteReview = {
-  id: string;
-  text: string;
-  author: string;
-  date: string;
-  rating: number;
-  sourceLabel: string;
-  url: string;
-  agentNote: string | null;
-};
-
-export function formatPrice(price: number, note?: string | null): string {
-  const formatted = new Intl.NumberFormat("ru-RU").format(price);
-  return note ? `${formatted} ₽ ${note}` : `${formatted} ₽`;
-}
-
-export function formatMonthYear(iso: string): string {
-  const d = new Date(iso);
-  return new Intl.DateTimeFormat("ru-RU", {
-    month: "long",
-    year: "numeric",
-  }).format(d);
-}
+export const getExternalReviews = cache(
+  async (): Promise<ExternalReview[]> =>
+    (await readJson<{ reviews: ExternalReview[] }>("reviews-external.json"))
+      .reviews,
+);

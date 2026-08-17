@@ -10,8 +10,8 @@ import {
   useTransform,
 } from "motion/react";
 import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
-import type { Listing } from "@/lib/data";
-import { formatPrice } from "@/lib/data";
+import { formatPrice } from "@/lib/format";
+import type { Listing } from "@/lib/types";
 import { useLead } from "./lead/LeadContext";
 
 export function Hero({ featured }: { featured: Listing }) {

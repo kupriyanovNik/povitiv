@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 import { getListings } from "@/lib/data";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://positiv-vt.ru";
-  const { updatedAt } = getListings();
+  const { updatedAt } = await getListings();
   return [
     {
       url: base,

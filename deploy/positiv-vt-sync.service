@@ -11,6 +11,5 @@ WorkingDirectory=/var/www/positiv-vt
 # для парсинга ЦИАН нужен chromium: apt install chromium
 Environment=NODE_ENV=production
 ExecStart=/usr/bin/node scripts/sync-listings.mjs
-# сайт читает JSON при старте процесса, поэтому после обновления данных
-# мягко перезапускаем сервис
-ExecStartPost=/usr/bin/systemctl restart positiv-vt.service
+# рестарт сайта НЕ нужен: данные читаются с диска на каждый запрос,
+# обновлённые JSON и фото подхватываются сразу

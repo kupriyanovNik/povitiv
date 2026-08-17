@@ -9,8 +9,8 @@ import {
   Quotes,
   Star,
 } from "@phosphor-icons/react/dist/ssr";
-import type { ExternalReview, QuoteReview, Review } from "@/lib/data";
-import { formatMonthYear } from "@/lib/data";
+import { formatMonthYear } from "@/lib/format";
+import type { ExternalReview, QuoteReview, Review } from "@/lib/types";
 import { site } from "@/lib/site";
 import { Reveal } from "./Reveal";
 import { useAutoplayProgress } from "./useAutoplayProgress";

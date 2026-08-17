@@ -6,9 +6,8 @@ import { site } from "@/lib/site";
  * агентство недвижимости + актуальные объекты. Все цифры из реальных
  * данных (data/agency.json, data/listings.json).
  */
-export function JsonLd() {
-  const agency = getAgency();
-  const { listings } = getListings();
+export async function JsonLd() {
+  const [agency, { listings }] = await Promise.all([getAgency(), getListings()]);
 
   const org = {
     "@context": "https://schema.org",
