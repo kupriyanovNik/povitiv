@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-17",
+  "updatedAt": "2026-08-18",
   "sources": {
     "cian": "https://www.cian.ru/company/211681",
     "domclick": "https://agencies.domclick.ru/agency/269616"
@@ -52,26 +52,26 @@
       ]
     },
     {
-      "id": "cian-329166977",
+      "id": "cian-332362492",
       "source": "cian",
-      "url": "https://www.cian.ru/sale/flat/329166977/",
+      "url": "https://khimki.cian.ru/sale/flat/332362492/",
       "dealType": "sale",
       "category": "flat",
-      "title": "Пентхаус 250 м², 3 уровня",
+      "title": "3-комнатная квартира, 82 м²",
       "badge": null,
-      "price": 180000000,
+      "price": 17300000,
       "priceNote": null,
-      "area": 250,
-      "floor": "18 из 18",
-      "rooms": null,
-      "address": "Москва, Якиманка, ул. Шаболовка, 10к1",
-      "metro": "Октябрьская",
-      "highlight": "Трёхуровневый пентхаус в ЖК бизнес-класса «Созвездие Капитал-2». Панорамное остекление, потолки до 4,2 метра, верхний этаж.",
+      "area": 82,
+      "floor": "11 из 18",
+      "rooms": 3,
+      "address": "Химки, мкр. Новые Химки, ул. Молодёжная, 52",
+      "metro": "Молжаниново",
+      "highlight": "Свободная продажа. Просторная квартира с мебелью и техникой, комнаты 19, 14 и 12 м².",
       "photos": [
-        "/listings/cian-329166977/1.jpg",
-        "/listings/cian-329166977/2.jpg",
-        "/listings/cian-329166977/3.jpg",
-        "/listings/cian-329166977/4.jpg"
+        "/listings/cian-332362492/1.jpg",
+        "/listings/cian-332362492/2.jpg",
+        "/listings/cian-332362492/3.jpg",
+        "/listings/cian-332362492/4.jpg"
       ]
     },
     {
@@ -98,6 +98,29 @@
       ]
     },
     {
+      "id": "cian-329166977",
+      "source": "cian",
+      "url": "https://www.cian.ru/sale/flat/329166977/",
+      "dealType": "sale",
+      "category": "flat",
+      "title": "Пентхаус 250 м², 3 уровня",
+      "badge": null,
+      "price": 180000000,
+      "priceNote": null,
+      "area": 250,
+      "floor": "18 из 18",
+      "rooms": null,
+      "address": "Москва, Якиманка, ул. Шаболовка, 10к1",
+      "metro": "Октябрьская",
+      "highlight": "Трёхуровневый пентхаус в ЖК бизнес-класса «Созвездие Капитал-2». Панорамное остекление, потолки до 4,2 метра, верхний этаж.",
+      "photos": [
+        "/listings/cian-329166977/1.jpg",
+        "/listings/cian-329166977/2.jpg",
+        "/listings/cian-329166977/3.jpg",
+        "/listings/cian-329166977/4.jpg"
+      ]
+    },
+    {
       "id": "cian-331063653",
       "source": "cian",
       "url": "https://www.cian.ru/sale/flat/331063653/",
@@ -118,29 +141,6 @@
         "/listings/cian-331063653/2.jpg",
         "/listings/cian-331063653/3.jpg",
         "/listings/cian-331063653/4.jpg"
-      ]
-    },
-    {
-      "id": "cian-332362492",
-      "source": "cian",
-      "url": "https://khimki.cian.ru/sale/flat/332362492/",
-      "dealType": "sale",
-      "category": "flat",
-      "title": "3-комнатная квартира, 82 м²",
-      "badge": null,
-      "price": 17300000,
-      "priceNote": null,
-      "area": 82,
-      "floor": "11 из 18",
-      "rooms": 3,
-      "address": "Химки, мкр. Новые Химки, ул. Молодёжная, 52",
-      "metro": null,
-      "highlight": "Свободная продажа. Просторная квартира с мебелью и техникой, комнаты 19, 14 и 12 м².",
-      "photos": [
-        "/listings/cian-332362492/1.jpg",
-        "/listings/cian-332362492/2.jpg",
-        "/listings/cian-332362492/3.jpg",
-        "/listings/cian-332362492/4.jpg"
       ]
     },
     {
