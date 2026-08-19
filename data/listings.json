@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-18",
+  "updatedAt": "2026-08-19",
   "sources": {
     "cian": "https://www.cian.ru/company/211681",
     "domclick": "https://agencies.domclick.ru/agency/269616"
@@ -118,29 +118,6 @@
         "/listings/cian-329166977/2.jpg",
         "/listings/cian-329166977/3.jpg",
         "/listings/cian-329166977/4.jpg"
-      ]
-    },
-    {
-      "id": "cian-331063653",
-      "source": "cian",
-      "url": "https://www.cian.ru/sale/flat/331063653/",
-      "dealType": "sale",
-      "category": "flat",
-      "title": "2-комнатная квартира, 54 м²",
-      "badge": "Внесён аванс",
-      "price": 19300000,
-      "priceNote": null,
-      "area": 54,
-      "floor": "11 из 14",
-      "rooms": 2,
-      "address": "Москва, ЮЗАО, р-н Южное Бутово, м. Бульвар Адмирала Ушакова, улица Адмирала Лазарева, 16",
-      "metro": "Бульвар Адмирала Ушакова",
-      "highlight": "АВАНС! ! Уютная, светлая квартира в отличном состоянии. Встроенная мебель и техника остается. Дом 2002 года постройки, серии П-3М, до метро…",
-      "photos": [
-        "/listings/cian-331063653/1.jpg",
-        "/listings/cian-331063653/2.jpg",
-        "/listings/cian-331063653/3.jpg",
-        "/listings/cian-331063653/4.jpg"
       ]
     },
     {
