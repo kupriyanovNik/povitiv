@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-20",
+  "updatedAt": "2026-08-21",
   "sources": {
     "domclick": "https://agencies.domclick.ru/agency/269616",
     "cian": "https://www.cian.ru/company/211681"
@@ -46,6 +46,16 @@
       "ratingVotes": 2
     },
     {
+      "name": "Наталья Гречишникова",
+      "casId": 919050,
+      "verified": true,
+      "avatar": "/team/natalya-grechishnikova.png",
+      "registeredAt": "2017-09-15",
+      "deals12m": 14,
+      "ratingAvg": 5,
+      "ratingVotes": 2
+    },
+    {
       "name": "Татьяна Чистякова",
       "casId": 1148219,
       "verified": true,
@@ -64,16 +74,6 @@
       "deals12m": 8,
       "ratingAvg": 5,
       "ratingVotes": 1
-    },
-    {
-      "name": "Наталья Гречишникова",
-      "casId": 919050,
-      "verified": true,
-      "avatar": "/team/natalya-grechishnikova.png",
-      "registeredAt": "2017-09-15",
-      "deals12m": 14,
-      "ratingAvg": 5,
-      "ratingVotes": 2
     },
     {
       "name": "Надежда Аккуратнова",

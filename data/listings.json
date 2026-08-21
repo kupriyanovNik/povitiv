@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-20",
+  "updatedAt": "2026-08-21",
   "sources": {
     "cian": "https://www.cian.ru/company/211681",
     "domclick": "https://agencies.domclick.ru/agency/269616"
@@ -29,29 +29,6 @@
       ]
     },
     {
-      "id": "cian-329009582",
-      "source": "cian",
-      "url": "https://domodedovo.cian.ru/sale/flat/329009582/",
-      "dealType": "sale",
-      "category": "room",
-      "title": "Комната 18,3 м² с лоджией",
-      "badge": null,
-      "price": 3400000,
-      "priceNote": null,
-      "area": 18.3,
-      "floor": "7 из 17",
-      "rooms": null,
-      "address": "Домодедово, мкр. Северный, ул. Овражная, 1к2",
-      "metro": "Подольск",
-      "highlight": "Один взрослый собственник, никто не зарегистрирован, свободная продажа. Дом 2006 года.",
-      "photos": [
-        "/listings/cian-329009582/1.jpg",
-        "/listings/cian-329009582/2.jpg",
-        "/listings/cian-329009582/3.jpg",
-        "/listings/cian-329009582/4.jpg"
-      ]
-    },
-    {
       "id": "cian-333127974",
       "source": "cian",
       "url": "https://www.cian.ru/sale/flat/333127974/",
@@ -72,6 +49,29 @@
         "/listings/cian-333127974/2.jpg",
         "/listings/cian-333127974/3.jpg",
         "/listings/cian-333127974/4.jpg"
+      ]
+    },
+    {
+      "id": "cian-329009582",
+      "source": "cian",
+      "url": "https://domodedovo.cian.ru/sale/flat/329009582/",
+      "dealType": "sale",
+      "category": "room",
+      "title": "Комната 18,3 м² с лоджией",
+      "badge": null,
+      "price": 3400000,
+      "priceNote": null,
+      "area": 18.3,
+      "floor": "7 из 17",
+      "rooms": null,
+      "address": "Домодедово, мкр. Северный, ул. Овражная, 1к2",
+      "metro": "Подольск",
+      "highlight": "Один взрослый собственник, никто не зарегистрирован, свободная продажа. Дом 2006 года.",
+      "photos": [
+        "/listings/cian-329009582/1.jpg",
+        "/listings/cian-329009582/2.jpg",
+        "/listings/cian-329009582/3.jpg",
+        "/listings/cian-329009582/4.jpg"
       ]
     },
     {
