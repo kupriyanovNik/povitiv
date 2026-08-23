@@ -11,6 +11,7 @@ import { CheckCircle, X } from "@phosphor-icons/react/dist/ssr";
 import { site, type LeadTask } from "@/lib/site";
 import { trapTabKey } from "../focusTrap";
 import { ConsentCheckbox } from "./ConsentCheckbox";
+import { normalizePhoneInput } from "./phone";
 import { useLeadSubmit } from "./useLeadSubmit";
 
 const MODAL_TASKS: LeadTask[] = [
@@ -222,7 +223,7 @@ function ModalContent({
                 <input
                   id="lead-modal-phone"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(normalizePhoneInput(e.target.value))}
                   autoComplete="tel"
                   inputMode="tel"
                   placeholder="+7 900 000-00-00"

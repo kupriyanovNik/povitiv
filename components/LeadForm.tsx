@@ -10,6 +10,7 @@ import {
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import { leadTasks, site, type LeadTask } from "@/lib/site";
 import { ConsentCheckbox } from "./lead/ConsentCheckbox";
+import { normalizePhoneInput } from "./lead/phone";
 import { useLeadSubmit } from "./lead/useLeadSubmit";
 import { Reveal } from "./Reveal";
 
@@ -136,7 +137,7 @@ export function LeadForm() {
                   <input
                     id="lf-phone"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(normalizePhoneInput(e.target.value))}
                     autoComplete="tel"
                     inputMode="tel"
                     placeholder="+7 900 000-00-00"
