@@ -15,7 +15,9 @@ import type { Listing } from "@/lib/types";
 import { useLead } from "./lead/LeadContext";
 import { useAutoplayProgress } from "./useAutoplayProgress";
 
-const AUTOPLAY_S = 6;
+// чуть бодрее отзывов (6 с): карточка объекта читается за пару секунд,
+// а посетитель успевает увидеть больше объектов до скролла
+const AUTOPLAY_S = 4.5;
 
 /**
  * «Спокойно» дышит: небольшое увеличение перекатывается по буквам
@@ -105,27 +107,23 @@ export function Hero({ listings }: { listings: Listing[] }) {
     <section ref={sectionRef} className="relative overflow-hidden">
       <div className="mx-auto grid max-w-[1280px] items-center gap-10 px-4 pb-14 pt-24 sm:px-6 lg:grid-cols-[11fr_9fr] lg:gap-14 lg:px-8 lg:pb-20 lg:pt-36">
         <div>
-          <motion.p
-            {...enter(0)}
-            className="text-[13px] font-semibold uppercase tracking-[0.14em] text-wine"
-          >
-            Москва и Московская область, с 2010 года
-          </motion.p>
+          {/* география — в подзаголовке, «с 2010 года» — в TrustBar ниже:
+              строка-кикер над заголовком дублировала обе и выглядела шаблонно */}
           <motion.h1
-            {...enter(0.08)}
-            className="font-display mt-4 max-w-[14ch] text-[40px] font-bold leading-[1.07] sm:text-5xl sm:leading-[1.07] lg:text-[64px]"
+            {...enter(0)}
+            className="font-display max-w-[14ch] text-[40px] font-bold leading-[1.07] sm:text-5xl sm:leading-[1.07] lg:text-[64px]"
           >
             Недвижимость: <CalmWord /> и под&nbsp;контролем
           </motion.h1>
           <motion.p
-            {...enter(0.16)}
+            {...enter(0.08)}
             className="mt-5 max-w-[46ch] text-base leading-relaxed text-ink-soft sm:text-lg"
           >
-            Продаём, покупаем, обмениваем и сдаём жильё. Берём на себя оценку,
-            продвижение, показы, переговоры, документы и сопровождение до
-            передачи ключей.
+            Продаём, покупаем, обмениваем и сдаём жильё в Москве и Московской
+            области. Берём на себя оценку, продвижение, показы, переговоры,
+            документы и сопровождение до передачи ключей.
           </motion.p>
-          <motion.div {...enter(0.24)} className="mt-8 flex flex-wrap gap-3">
+          <motion.div {...enter(0.16)} className="mt-8 flex flex-wrap gap-3">
             <button
               onClick={() => openLead("Продать")}
               className="inline-flex h-13 items-center rounded-full bg-wine px-7 text-base font-semibold text-white shadow-[0_12px_30px_-12px_rgba(125,27,36,0.45)] transition-[background-color,transform] hover:bg-wine-deep active:scale-[0.98]"

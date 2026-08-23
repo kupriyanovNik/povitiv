@@ -11,22 +11,20 @@ type Stat = {
   suffix?: string;
 };
 
-function CountUp({ stat }: { stat: Stat }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
+function CountUp({ stat, start }: { stat: Stat; start: boolean }) {
   const reduce = useReducedMotion();
   // SSR и первый клиентский рендер всегда показывают итоговое значение,
   // иначе возможен hydration mismatch при reduced-motion
   const [display, setDisplay] = useState(stat.value);
 
   useEffect(() => {
-    if (reduce || stat.numeric === undefined || !inView) return;
+    if (reduce || stat.numeric === undefined || !start) return;
     const target = stat.numeric;
     const dur = 900;
     let raf = 0;
-    const start = performance.now();
+    const startedAt = performance.now();
     const tick = (now: number) => {
-      const p = Math.min(1, (now - start) / dur);
+      const p = Math.min(1, (now - startedAt) / dur);
       const eased = 1 - Math.pow(1 - p, 3);
       const v = Math.round(target * eased);
       setDisplay(`${v}${stat.suffix ?? ""}`);
@@ -35,13 +33,9 @@ function CountUp({ stat }: { stat: Stat }) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [inView, reduce, stat]);
+  }, [start, reduce, stat]);
 
-  return (
-    <span ref={ref} className="tnum">
-      {display}
-    </span>
-  );
+  return <span className="tnum">{display}</span>;
 }
 
 export function TrustBar({
@@ -55,6 +49,14 @@ export function TrustBar({
   agentsCount: number;
   updatedAt: string;
 }) {
+  // отсчёт стартует, когда блок цифр видen наполовину, а не когда его
+  // край задел низ экрана: иначе анимация отыгрывала бы до того, как
+  // пользователь реально увидел цифры. Один наблюдатель на все ячейки —
+  // цифры оживают одновременно. Если порог недостижим (экстремальный
+  // зум), цифры просто остаются финальными значениями.
+  const listRef = useRef<HTMLDListElement>(null);
+  const inView = useInView(listRef, { once: true, amount: 0.5 });
+
   const stats: Stat[] = [
     { value: "С 2010", label: "года на рынке недвижимости Москвы и области" },
     { value: "14 лет", numeric: 14, suffix: " лет", label: "профиль на ЦИАН, статус «Суперагент»" },
@@ -87,7 +89,10 @@ export function TrustBar({
   return (
     <section aria-label="Ключевые показатели" className="border-y border-line bg-surface">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-8 py-10 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-10 lg:py-12">
+        <dl
+          ref={listRef}
+          className="grid grid-cols-2 gap-x-6 gap-y-8 py-10 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-10 lg:py-12"
+        >
           {stats.map((s) => (
             <div
               key={s.label}
@@ -97,7 +102,7 @@ export function TrustBar({
                 {s.label}
               </dt>
               <dd className="font-display order-1 text-3xl font-bold lg:text-[38px] lg:leading-none">
-                <CountUp stat={s} />
+                <CountUp stat={s} start={inView} />
               </dd>
             </div>
           ))}
