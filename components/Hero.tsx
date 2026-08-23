@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import {
   AnimatePresence,
@@ -13,12 +13,58 @@ import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { formatPrice } from "@/lib/format";
 import type { Listing } from "@/lib/types";
 import { useLead } from "./lead/LeadContext";
+import { useAutoplayProgress } from "./useAutoplayProgress";
 
-export function Hero({ featured }: { featured?: Listing }) {
+const AUTOPLAY_S = 6;
+
+/**
+ * «Спокойно» дышит: небольшое увеличение перекатывается по буквам
+ * медленной волной, между волнами — долгая пауза. Буквы анимируются
+ * по отдельности (aria-hidden), для скринридеров слово продублировано.
+ */
+const CALM_WORD = "спокойно";
+const CALM_SCALE = 1.12; // «чуть больше»: заметно, но без крика
+const CALM_BUMP_S = 1.4; // подъём и спад одной буквы
+const CALM_STAGGER_S = 0.28; // шаг волны между соседними буквами
+const CALM_REST_S = 4.6; // тишина между волнами
+
+function CalmWord() {
+  const reduce = useReducedMotion();
+  if (reduce) return <span className="text-wine">{CALM_WORD}</span>;
+  return (
+    <>
+      <span className="sr-only">{CALM_WORD}</span>
+      {/* inline-block + nowrap: буквы-спаны не переносятся поодиночке,
+          слово ведёт себя как единое при переносе строк */}
+      <span className="inline-block whitespace-nowrap text-wine" aria-hidden>
+        {[...CALM_WORD].map((ch, i) => (
+          <motion.span
+            key={i}
+            className="inline-block origin-bottom"
+            animate={{ scale: [1, CALM_SCALE, 1] }}
+            transition={{
+              duration: CALM_BUMP_S,
+              // первая волна стартует после въезда заголовка
+              delay: 1.2 + i * CALM_STAGGER_S,
+              repeat: Infinity,
+              repeatDelay: CALM_REST_S,
+              ease: "easeInOut",
+            }}
+          >
+            {ch}
+          </motion.span>
+        ))}
+      </span>
+    </>
+  );
+}
+
+export function Hero({ listings }: { listings: Listing[] }) {
   const { openLead } = useLead();
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
-  const photos = featured?.photos ?? [];
+  const photoRef = useRef<HTMLDivElement>(null);
+  const count = listings.length;
 
   // лёгкий параллакс фото при прокрутке: создаёт глубину, не отвлекая
   const { scrollYProgress } = useScroll({
@@ -27,16 +73,23 @@ export function Hero({ featured }: { featured?: Listing }) {
   });
   const photoY = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
 
-  // медленный кроссфейд фотографий объекта
-  const [photoIdx, setPhotoIdx] = useState(0);
-  useEffect(() => {
-    if (reduce || photos.length < 2) return;
-    const t = setInterval(
-      () => setPhotoIdx((v) => (v + 1) % photos.length),
-      6000,
-    );
-    return () => clearInterval(t);
-  }, [reduce, photos.length]);
+  // карусель объектов: как в отзывах и команде — автопрокрутка с
+  // прогресс-точками, паузой при наведении и уважением к reduced motion
+  const [index, setIndex] = useState(0);
+  const goTo = useCallback(
+    (next: number) => setIndex(((next % count) + count) % count),
+    [count],
+  );
+  const { progress, setPaused } = useAutoplayProgress({
+    seconds: AUTOPLAY_S,
+    targetRef: photoRef,
+    advance: () => {
+      if (count > 1) goTo(index + 1);
+    },
+    resetKey: index,
+  });
+
+  const current = listings[index];
 
   const enter = (delay: number) => ({
     initial: { opacity: 0, y: 24 },
@@ -62,8 +115,7 @@ export function Hero({ featured }: { featured?: Listing }) {
             {...enter(0.08)}
             className="font-display mt-4 max-w-[14ch] text-[40px] font-bold leading-[1.07] sm:text-5xl sm:leading-[1.07] lg:text-[64px]"
           >
-            Недвижимость: <span className="text-wine">спокойно</span> и
-            под&nbsp;контролем
+            Недвижимость: <CalmWord /> и под&nbsp;контролем
           </motion.h1>
           <motion.p
             {...enter(0.16)}
@@ -89,32 +141,40 @@ export function Hero({ featured }: { featured?: Listing }) {
           </motion.div>
         </div>
 
-        {featured && photos.length > 0 && (
+        {current && (
         <motion.div
           initial={{ opacity: 0, scale: 0.97, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: "spring", duration: 0.8, bounce: 0, delay: 0.15 }}
           className="relative"
         >
-          <div className="relative aspect-[4/5] max-h-[560px] w-full overflow-hidden rounded-2xl">
+          <div
+            ref={photoRef}
+            role="group"
+            aria-roledescription="карусель"
+            aria-label="Объекты агентства в работе"
+            className="relative aspect-[4/5] max-h-[560px] w-full overflow-hidden rounded-2xl bg-ink/10"
+            onPointerEnter={() => setPaused(true)}
+            onPointerLeave={() => setPaused(false)}
+          >
             <motion.div
               className="absolute -inset-y-[6%] inset-x-0"
               style={{ y: reduce ? "0%" : photoY }}
             >
               <AnimatePresence initial={false}>
                 <motion.div
-                  key={photoIdx}
+                  key={current.id}
                   className="absolute inset-0"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  transition={{ duration: reduce ? 0 : 0.9, ease: "easeInOut" }}
                 >
                   <Image
-                    src={photos[photoIdx]}
-                    alt={`${featured.title}, ${featured.address}`}
+                    src={current.photos[0]}
+                    alt={`${current.title}, ${current.address}`}
                     fill
-                    priority={photoIdx === 0}
+                    priority={index === 0}
                     sizes="(min-width: 1024px) 45vw, 100vw"
                     className="object-cover"
                   />
@@ -125,36 +185,81 @@ export function Hero({ featured }: { featured?: Listing }) {
               aria-hidden
               className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-ink/60 to-transparent"
             />
+
+            {count > 1 && (
+              <div
+                className="absolute left-1/2 top-4 z-10 flex -translate-x-1/2 gap-1.5 rounded-full bg-ink/35 px-2.5 py-1.5 backdrop-blur-sm"
+                role="group"
+                aria-label="Объекты"
+              >
+                {listings.map((l, i) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    aria-current={index === i || undefined}
+                    aria-label={`Объект ${i + 1} из ${count}: ${l.title}`}
+                    onClick={() => goTo(i)}
+                    className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
+                      index === i
+                        ? "w-6 bg-white/35"
+                        : "w-1.5 bg-white/55 hover:bg-white/80"
+                    }`}
+                  >
+                    {index === i && (
+                      <motion.span
+                        aria-hidden
+                        style={{ scaleX: reduce ? 1 : progress }}
+                        className="absolute inset-0 origin-left rounded-full bg-white"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <a
-              href={featured.url}
+              href={current.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group absolute inset-x-4 bottom-4 flex items-center justify-between gap-4 rounded-xl border border-white/25 bg-white/85 p-4 backdrop-blur-md transition-transform hover:-translate-y-0.5 sm:inset-x-5 sm:bottom-5"
+              className="group absolute inset-x-4 bottom-4 block rounded-xl border border-white/25 bg-white/85 p-4 backdrop-blur-md transition-transform hover:-translate-y-0.5 sm:inset-x-5 sm:bottom-5"
             >
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-wine">
-                  Сейчас в работе
-                </p>
-                <p className="mt-1 truncate text-[15px] font-bold leading-snug">
-                  {featured.title}
-                </p>
-                <p className="truncate text-[13px] text-ink-soft">
-                  {featured.address}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="tnum text-[15px] font-extrabold">
-                  {formatPrice(featured.price, featured.priceNote)}
-                </span>
-                <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-wine">
-                  Смотреть
-                  <ArrowUpRight
-                    size={14}
-                    weight="bold"
-                    className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  />
-                </span>
-              </div>
+              {/* popLayout: старый контент растворяется поверх нового,
+                  карточка при смене слайда не пустеет ни на кадр */}
+              <AnimatePresence initial={false} mode="popLayout">
+              <motion.div
+                key={current.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.3, ease: "easeOut" }}
+                className="flex items-center justify-between gap-4"
+              >
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-wine">
+                    Сейчас в работе
+                  </p>
+                  <p className="mt-1 truncate text-[15px] font-bold leading-snug">
+                    {current.title}
+                  </p>
+                  <p className="truncate text-[13px] text-ink-soft">
+                    {current.address}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="tnum text-[15px] font-extrabold">
+                    {formatPrice(current.price, current.priceNote)}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-wine">
+                    Смотреть
+                    <ArrowUpRight
+                      size={14}
+                      weight="bold"
+                      className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </span>
+                </div>
+              </motion.div>
+              </AnimatePresence>
             </a>
           </div>
         </motion.div>

@@ -52,20 +52,23 @@ export default async function Home() {
   const ordered = displayOrder(listings);
   // данные перезаписываются ночным синком: пустой или неполный список
   // не должен ронять страницу, секции переживают отсутствие фото
-  const heroListing =
-    ordered.find((l) => l.category === "house" && l.photos.length > 0) ??
-    ordered.find((l) => l.photos.length > 0) ??
-    ordered[0];
+  const withPhotos = ordered.filter((l) => l.photos.length > 0);
+  // карусель хиро: дом первым кадром (самый выигрышный визуал),
+  // дальше остальные объекты в витринном порядке
+  const heroListings = [
+    ...withPhotos.filter((l) => l.category === "house"),
+    ...withPhotos.filter((l) => l.category !== "house"),
+  ].slice(0, 6);
   const tasksPhoto =
     ordered.find((l) => l.category === "flat" && l.dealType === "sale")
-      ?.photos[1] ?? heroListing?.photos[0];
+      ?.photos[1] ?? heroListings[0]?.photos[0];
 
   return (
     <LeadProvider>
       <JsonLd />
       <Header />
       <main className="flex-1">
-        <Hero featured={heroListing} />
+        <Hero listings={heroListings} />
         <TrustBar
           dealsCount={agency.agency.dealsCount12m}
           rating={agency.agency.domclickRating}
