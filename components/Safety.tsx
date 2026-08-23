@@ -136,46 +136,43 @@ export function Safety() {
         .map(layoutCenter)
         .filter((p): p is { x: number; y: number } => p !== null);
       if (pts.length < 2) return;
-      // pathLength нормируется по фактической длине кривой, поэтому пороги
-      // остановок считаем по длинам дуг сегментов, а не равными долями
-      const cubic = (
-        a: { x: number; y: number },
-        c1: { x: number; y: number },
-        c2: { x: number; y: number },
-        b: { x: number; y: number },
-        t: number,
-      ) => {
-        const u = 1 - t;
-        return {
-          x:
-            u * u * u * a.x +
-            3 * u * u * t * c1.x +
-            3 * u * t * t * c2.x +
-            t * t * t * b.x,
-          y:
-            u * u * u * a.y +
-            3 * u * u * t * c1.y +
-            3 * u * t * t * c2.y +
-            t * t * t * b.y,
-        };
-      };
+      // Маршрут идёт только по свободным коридорам, поэтому не может
+      // наехать на текст ни при какой ширине экрана: вертикаль — строго
+      // по оси маркеров (тексты всегда правее), горизонталь — на уровне
+      // центра следующего маркера (ниже текстов предыдущего шага),
+      // между ними — скруглённый поворот.
+      // pathLength нормируется по фактической длине пути, поэтому пороги
+      // остановок считаем по длинам сегментов, а не равными долями.
+      const R_MAX = 64;
       let d = `M ${pts[0].x} ${pts[0].y}`;
       const cumLen = [0];
       for (let i = 1; i < pts.length; i++) {
         const a = pts[i - 1];
         const b = pts[i];
-        // глубокие контрольные точки: линия дольше идёт вниз и огибает текст
-        const dip = (b.y - a.y) * 0.68;
-        const c1 = { x: a.x, y: a.y + dip };
-        const c2 = { x: b.x, y: b.y - dip };
-        d += ` C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`;
-        let seg = 0;
-        let prev = a;
-        for (let s = 1; s <= 32; s++) {
-          const p = cubic(a, c1, c2, b, s / 32);
-          seg += Math.hypot(p.x - prev.x, p.y - prev.y);
+        const dx = b.x - a.x;
+        if (Math.abs(dx) < 1) {
+          // маркеры на одной оси: обычная вертикаль
+          d += ` L ${b.x} ${b.y}`;
+          cumLen.push(cumLen[i - 1] + Math.hypot(dx, b.y - a.y));
+          continue;
+        }
+        const r = Math.min(R_MAX, Math.abs(dx) / 2, Math.abs(b.y - a.y) / 2);
+        const sx = Math.sign(dx);
+        d += ` L ${a.x} ${b.y - r}`;
+        d += ` Q ${a.x} ${b.y}, ${a.x + sx * r} ${b.y}`;
+        d += ` L ${b.x} ${b.y}`;
+        // длина: две прямые + четверть-дуга (сэмплируем квадратичную Безье)
+        let arc = 0;
+        let prev = { x: a.x, y: b.y - r };
+        for (let s = 1; s <= 16; s++) {
+          const t = s / 16;
+          const u = 1 - t;
+          const p = { x: a.x + sx * r * t * t, y: b.y - r * u * u };
+          arc += Math.hypot(p.x - prev.x, p.y - prev.y);
           prev = p;
         }
+        const seg =
+          Math.abs(b.y - r - a.y) + arc + Math.abs(b.x - (a.x + sx * r));
         cumLen.push(cumLen[i - 1] + seg);
       }
       const total = cumLen[cumLen.length - 1] || 1;

@@ -188,12 +188,13 @@ export function Listings({ listings }: { listings: Listing[] }) {
     <section id="obekty" className="scroll-mt-20 bg-surface py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-wine">
-            Актуальные объявления агентства
-          </p>
-          <h2 className="font-display mt-3 max-w-[26ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
+          <h2 className="font-display max-w-[26ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Недвижимость, с которой мы работаем
           </h2>
+          <p className="mt-4 max-w-[58ch] text-base leading-relaxed text-ink-soft sm:text-lg">
+            Живые объявления из наших профилей на ЦИАН и Домклик — цены и
+            статусы обновляются каждый день.
+          </p>
         </Reveal>
 
         <div

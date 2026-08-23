@@ -68,9 +68,6 @@ export function Manifesto() {
                 />
               ))}
         </p>
-        <p className="mt-6 text-[15px] font-semibold text-ink-soft">
-          Команда агентства «Позитив ВТ», Москва, Палиха
-        </p>
       </div>
     </section>
   );
