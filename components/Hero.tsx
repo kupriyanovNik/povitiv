@@ -143,28 +143,30 @@ export function Hero({ listings }: { listings: Listing[] }) {
           >
             Недвижимость: <CalmWord /> и под&nbsp;контролем
           </motion.h1>
-          <motion.p
-            {...enter(0.08)}
-            className="mt-5 max-w-[46ch] text-base leading-relaxed text-ink-soft sm:text-lg"
-          >
-            Продаём, покупаем, обмениваем и сдаём жильё в Москве и Московской
-            области. Берём на себя оценку, продвижение, показы, переговоры,
-            документы и сопровождение до передачи ключей.
-          </motion.p>
-          <motion.div {...enter(0.16)} className="mt-8 flex flex-wrap gap-3">
-            <button
-              onClick={() => openLead("Продать")}
-              className="inline-flex h-13 items-center rounded-full bg-wine px-7 text-base font-semibold text-white shadow-[0_12px_30px_-12px_rgba(125,27,36,0.45)] transition-[background-color,transform] hover:bg-wine-deep active:scale-[0.98]"
+          {/* max-w живёт на обёртке с типографикой абзаца, поэтому кнопка
+              и текст совпадают по ширине на любом брейкпоинте (ch зависит
+              от шрифта: у кнопки и абзаца он разный) */}
+          <div className="max-w-[46ch] text-base sm:text-lg">
+            <motion.p
+              {...enter(0.08)}
+              className="mt-5 leading-relaxed text-ink-soft"
             >
-              Оценить объект
-            </button>
-            <button
-              onClick={() => openLead("Купить")}
-              className="inline-flex h-13 items-center rounded-full border border-ink/15 bg-surface px-7 text-base font-semibold text-ink transition-colors hover:border-ink/35 active:scale-[0.98]"
-            >
-              Подобрать недвижимость
-            </button>
-          </motion.div>
+              Продаём, покупаем, обмениваем и сдаём жильё в Москве и Московской
+              области. Берём на себя оценку, продвижение, показы, переговоры,
+              документы и сопровождение до передачи ключей.
+            </motion.p>
+            {/* одна кнопка вместо пары «Оценить/Подобрать»: на узких экранах
+                и при крупном масштабе две разъезжались на строки; задачу
+                посетитель выбирает в модалке */}
+            <motion.div {...enter(0.16)} className="mt-8">
+              <button
+                onClick={() => openLead()}
+                className="flex h-13 w-full items-center justify-center rounded-full bg-wine px-8 text-base font-semibold text-white shadow-[0_12px_30px_-12px_rgba(125,27,36,0.45)] transition-[background-color,transform] hover:bg-wine-deep active:scale-[0.98]"
+              >
+                Получить консультацию
+              </button>
+            </motion.div>
+          </div>
         </div>
 
         {count > 0 && (
