@@ -4,10 +4,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { animate, motion, useMotionValue, useReducedMotion } from "motion/react";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { useAutoplayProgress } from "./useAutoplayProgress";
+
+// хук автопрокрутки нельзя вызывать условно, поэтому в «ручном» режиме он
+// просто крутит суточный таймер, чей advance ни на что не влияет
+const AUTOPLAY_OFF_S = 86_400;
 
 /**
  * Фото-карусель с 1:1 перетаскиванием и пружинной доводкой.
  * Свайп учитывает скорость отпускания: слайд «добрасывается» по инерции.
+ * autoplaySeconds включает автопрокрутку; когда круг фотографий пройден,
+ * зовётся onLoop — вернув true, родитель сообщает, что сменил контент
+ * (карусель размонтируется по key), иначе она сама вернётся к первому фото.
  */
 export function PhotoCarousel({
   photos,
@@ -15,12 +23,16 @@ export function PhotoCarousel({
   sizes,
   priority = false,
   className = "",
+  autoplaySeconds,
+  onLoop,
 }: {
   photos: string[];
   alt: string;
   sizes?: string;
   priority?: boolean;
   className?: string;
+  autoplaySeconds?: number;
+  onLoop?: () => boolean | void;
 }) {
   const reduce = useReducedMotion();
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -58,6 +70,27 @@ export function PhotoCarousel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [width]);
 
+  // автоплей: пауза при наведении и перетаскивании; cycle в resetKey
+  // перезапускает таймер и когда индекс не изменился (одно фото по кругу)
+  const [cycle, setCycle] = useState(0);
+  const autoAdvance = useCallback(() => {
+    if (autoplaySeconds == null) return;
+    setCycle((c) => c + 1);
+    if (index < count - 1) {
+      goTo(index + 1);
+      return;
+    }
+    // круг пройден: родитель либо меняет объект, либо крутим сначала
+    if (!onLoop?.()) goTo(0);
+  }, [autoplaySeconds, index, count, goTo, onLoop]);
+
+  const { progress, setPaused } = useAutoplayProgress({
+    seconds: autoplaySeconds ?? AUTOPLAY_OFF_S,
+    targetRef: viewportRef,
+    advance: autoAdvance,
+    resetKey: cycle * 100 + index,
+  });
+
   if (count === 0) return null;
 
   return (
@@ -66,6 +99,8 @@ export function PhotoCarousel({
       role="group"
       aria-roledescription="карусель"
       aria-label={alt}
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
       className={`group/carousel relative overflow-hidden ${className}`}
     >
       <motion.div
@@ -75,10 +110,12 @@ export function PhotoCarousel({
         dragConstraints={{ left: -(count - 1) * width, right: 0 }}
         dragElastic={0.12}
         dragMomentum={false}
+        onDragStart={() => setPaused(true)}
         onDragEnd={(_, info) => {
           // проекция точки остановки по скорости, затем ближайший слайд
           const projected = -x.get() - info.velocity.x * 0.18;
           goTo(Math.round(projected / width), info.velocity.x);
+          setPaused(false);
         }}
       >
         {photos.map((src, i) => (
@@ -137,10 +174,23 @@ export function PhotoCarousel({
                   e.preventDefault();
                   goTo(i);
                 }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === i ? "w-5 bg-white" : "w-1.5 bg-white/55 hover:bg-white/80"
+                className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
+                  index === i
+                    ? autoplaySeconds != null
+                      ? "w-6 bg-white/35"
+                      : "w-5 bg-white"
+                    : "w-1.5 bg-white/55 hover:bg-white/80"
                 }`}
-              />
+              >
+                {/* при автоплее активная точка заполняется ходом таймера */}
+                {index === i && autoplaySeconds != null && (
+                  <motion.span
+                    aria-hidden
+                    style={{ scaleX: reduce ? 1 : progress }}
+                    className="absolute inset-0 origin-left rounded-full bg-white"
+                  />
+                )}
+              </button>
             ))}
           </div>
         </>

@@ -1,4 +1,5 @@
 import { getAgency, getListings } from "@/lib/data";
+import { FAQ_ITEMS } from "@/lib/faq";
 import { site } from "@/lib/site";
 
 /**
@@ -76,6 +77,17 @@ export async function JsonLd() {
     })),
   };
 
+  // FAQPage: те же вопросы, что в секции FAQ — шанс на сниппет в поиске
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ_ITEMS.map((i) => ({
+      "@type": "Question",
+      name: i.q,
+      acceptedAnswer: { "@type": "Answer", text: i.a },
+    })),
+  };
+
   return (
     <>
       <script
@@ -85,6 +97,10 @@ export async function JsonLd() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJson(offers) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJson(faq) }}
       />
     </>
   );

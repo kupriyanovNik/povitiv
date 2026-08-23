@@ -72,7 +72,12 @@ export default async function Home() {
       <main className="flex-1">
         <Hero listings={heroListings} />
         <TrustBar
-          dealsCount={agency.agency.dealsCount12m}
+          // сумма сделок по карточкам команды: та же методика, что в секции
+          // «Команда» — иначе TrustBar противоречил цифрам агентов (20 vs 53)
+          dealsCount={
+            agency.agents.reduce((s, a) => s + a.deals12m, 0) ||
+            agency.agency.dealsCount12m
+          }
           rating={agency.agency.domclickRating}
           agentsCount={agency.agents.length}
           // страница рендерится на каждый запрос: стаж сам вырастет в апреле

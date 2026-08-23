@@ -20,48 +20,6 @@ import { useAutoplayProgress } from "./useAutoplayProgress";
 // а посетитель успевает увидеть больше объектов до скролла
 const AUTOPLAY_S = 4.5;
 
-/**
- * «Спокойно» дышит: небольшое увеличение перекатывается по буквам
- * медленной волной, между волнами — долгая пауза. Буквы анимируются
- * по отдельности (aria-hidden), для скринридеров слово продублировано.
- */
-const CALM_WORD = "спокойно";
-const CALM_SCALE = 1.12; // «чуть больше»: заметно, но без крика
-const CALM_BUMP_S = 1.4; // подъём и спад одной буквы
-const CALM_STAGGER_S = 0.28; // шаг волны между соседними буквами
-const CALM_REST_S = 4.6; // тишина между волнами
-
-function CalmWord() {
-  const reduce = useReducedMotion();
-  if (reduce) return <span className="text-wine">{CALM_WORD}</span>;
-  return (
-    <>
-      <span className="sr-only">{CALM_WORD}</span>
-      {/* inline-block + nowrap: буквы-спаны не переносятся поодиночке,
-          слово ведёт себя как единое при переносе строк */}
-      <span className="inline-block whitespace-nowrap text-wine" aria-hidden>
-        {[...CALM_WORD].map((ch, i) => (
-          <motion.span
-            key={i}
-            className="inline-block origin-bottom"
-            animate={{ scale: [1, CALM_SCALE, 1] }}
-            transition={{
-              duration: CALM_BUMP_S,
-              // первая волна стартует после въезда заголовка
-              delay: 1.2 + i * CALM_STAGGER_S,
-              repeat: Infinity,
-              repeatDelay: CALM_REST_S,
-              ease: "easeInOut",
-            }}
-          >
-            {ch}
-          </motion.span>
-        ))}
-      </span>
-    </>
-  );
-}
-
 export function Hero({ listings }: { listings: Listing[] }) {
   const { openLead } = useLead();
   const reduce = useReducedMotion();
@@ -141,7 +99,8 @@ export function Hero({ listings }: { listings: Listing[] }) {
             {...enter(0)}
             className="font-display max-w-[14ch] text-[40px] font-bold leading-[1.07] sm:text-5xl sm:leading-[1.07] lg:text-[64px]"
           >
-            Недвижимость: <CalmWord /> и под&nbsp;контролем
+            Недвижимость: <span className="text-wine">спокойно</span> и
+            под&nbsp;контролем
           </motion.h1>
           {/* max-w живёт на обёртке с типографикой абзаца, поэтому кнопка
               и текст совпадают по ширине на любом брейкпоинте (ch зависит

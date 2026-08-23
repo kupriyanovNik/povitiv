@@ -21,6 +21,7 @@ const MODAL_TASKS: LeadTask[] = [
   "Сдать",
   "Снять",
   "Сопровождение",
+  "Другое",
 ];
 
 export function LeadModal({
@@ -54,6 +55,7 @@ function ModalContent({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [task, setTask] = useState<LeadTask>(initialTask ?? "Продать");
+  const [comment, setComment] = useState("");
   const [consent, setConsent] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -80,7 +82,15 @@ function ModalContent({
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await submit({ name, phone, task, consent });
+    // комментарий уходит только вместе с «Другое»: для остальных задач
+    // поле скрыто и его содержимое не должно утекать в заявку
+    const ok = await submit({
+      name,
+      phone,
+      task,
+      comment: task === "Другое" ? comment : "",
+      consent,
+    });
     // короткий «шейк» формы как телесная обратная связь об ошибке
     if (!ok && !reduce && formScope.current) {
       animateEl(
@@ -196,6 +206,45 @@ function ModalContent({
                   </button>
                 ))}
               </div>
+              {/* «Другое» без места для рассказа оставляло бы заявку пустой:
+                  поле мягко раскрывается только для этой задачи */}
+              <AnimatePresence initial={false}>
+                {task === "Другое" && (
+                  <motion.div
+                    key="modal-comment"
+                    initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                    animate={
+                      reduce ? { opacity: 1 } : { height: "auto", opacity: 1 }
+                    }
+                    exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    // -mx/px: фокус-обводка (outline 2px + offset 2px из
+                    // globals.css) рисуется за границей поля — даём ей 6px
+                    // внутри overflow-hidden, иначе она режется по краям
+                    className="-mx-1.5 overflow-hidden"
+                  >
+                    <div className="space-y-2 px-1.5 pb-1.5">
+                      <label
+                        htmlFor="lead-modal-comment"
+                        className="block text-sm font-semibold"
+                      >
+                        Расскажите о ситуации{" "}
+                        <span className="font-normal text-ink-soft">
+                          (необязательно)
+                        </span>
+                      </label>
+                      <textarea
+                        id="lead-modal-comment"
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        rows={3}
+                        placeholder="Кратко опишите задачу своими словами"
+                        className="w-full resize-none rounded-xl border border-line bg-surface px-4 py-3 text-[15px] placeholder:text-ink-soft/70 focus:border-wine"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div className="space-y-2">
                 <label
                   htmlFor="lead-modal-name"
@@ -260,7 +309,7 @@ function ModalContent({
                 disabled={status === "sending"}
                 className="h-12 w-full rounded-full bg-wine font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98] disabled:opacity-60"
               >
-                {status === "sending" ? "Отправляем…" : "Обсудить задачу"}
+                {status === "sending" ? "Отправляем…" : "Отправить заявку"}
               </button>
               <p className="text-xs leading-relaxed text-ink-soft">
                 Или позвоните:{" "}

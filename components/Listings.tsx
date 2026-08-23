@@ -25,7 +25,13 @@ function matches(l: Listing, f: Filter): boolean {
   return l.dealType === f;
 }
 
-function FeaturedCard({ listing }: { listing: Listing }) {
+function FeaturedCard({
+  listing,
+  onPhotosLoop,
+}: {
+  listing: Listing;
+  onPhotosLoop?: () => boolean | void;
+}) {
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface">
       <div className="relative">
@@ -34,6 +40,8 @@ function FeaturedCard({ listing }: { listing: Listing }) {
           alt={`${listing.title}, ${listing.address}`}
           sizes="(min-width: 1024px) 55vw, 100vw"
           className="aspect-[4/3] w-full"
+          autoplaySeconds={5}
+          onLoop={onPhotosLoop}
         />
         {listing.badge && (
           <span className="pointer-events-none absolute left-4 top-4 z-10 rounded-full bg-surface/90 px-3 py-1.5 text-xs font-bold text-wine backdrop-blur-sm">
@@ -168,13 +176,89 @@ function CompactCard({ listing }: { listing: Listing }) {
   );
 }
 
+// витрина не пересменивается чаще, чем раз в 15 секунд, даже если у
+// объекта одна фотография (круг фотографий тогда «проходится» мгновенно)
+const FEATURED_MIN_MS = 15_000 - 200;
+
+/**
+ * Витрина + список. Живёт отдельным компонентом внутри motion.div с
+ * key={filter}: смена фильтра размонтирует его и состояние ротации
+ * сбрасывается само, без эффектов с setState.
+ */
+function Showcase({
+  filtered,
+  startIdx,
+}: {
+  filtered: Listing[];
+  startIdx: number;
+}) {
+  // очередь витрины: первый — большая карточка, дальше — правая колонка.
+  // При смене верхний из колонки «переезжает» в витрину (layoutId ведёт
+  // карточку через экран), бывшая витрина отъезжает в конец очереди
+  const [order, setOrder] = useState<Listing[]>(() =>
+    filtered.map((_, i) => filtered[(startIdx + i) % filtered.length]),
+  );
+  const shownAt = useRef(0);
+  useEffect(() => {
+    shownAt.current = Date.now();
+  }, []);
+
+  // круг фотографий пройден: если объект провисел минимум 15 с — следующий
+  const nextFeatured = () => {
+    if (order.length < 2) return false;
+    if (Date.now() - shownAt.current < FEATURED_MIN_MS) return false;
+    shownAt.current = Date.now();
+    setOrder((o) => [...o.slice(1), o[0]]);
+    return true;
+  };
+
+  const [featured, ...rest] = order;
+  const morph = { type: "spring" as const, duration: 0.7, bounce: 0 };
+
+  return (
+    <>
+      {featured && (
+        <motion.div
+          key={featured.id}
+          layoutId={featured.id}
+          layout
+          transition={morph}
+          className="h-full"
+        >
+          <FeaturedCard listing={featured} onPhotosLoop={nextFeatured} />
+        </motion.div>
+      )}
+      {rest.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {rest.map((l) => (
+            <motion.div key={l.id} layoutId={l.id} layout transition={morph}>
+              <CompactCard listing={l} />
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 export function Listings({ listings }: { listings: Listing[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const filtered = useMemo(
     () => listings.filter((l) => matches(l, filter)),
     [listings, filter],
   );
-  const [featured, ...rest] = filtered;
+
+  // витрина открывается объектом со «средней» ценой: не самым дорогим и
+  // не самым дешёвым — с ним посетителю проще себя соотнести. Берём
+  // медиану, а не среднее: один пентхаус-выброс не должен перетягивать
+  // витрину к дорогому краю. Логика привязана к цене, а не к названиям:
+  // данные приходят из синка
+  const startIdx = useMemo(() => {
+    if (filtered.length === 0) return 0;
+    const sorted = [...filtered].sort((a, b) => a.price - b.price);
+    return filtered.indexOf(sorted[Math.floor(sorted.length / 2)]);
+  }, [filtered]);
+
 
   const counts = useMemo(() => {
     const map = new Map<Filter, number>();
@@ -239,14 +323,7 @@ export function Listings({ listings }: { listings: Listing[] }) {
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="mt-10 grid items-start gap-4 lg:grid-cols-[11fr_9fr]"
           >
-            {featured && <FeaturedCard listing={featured} />}
-            {rest.length > 0 && (
-              <div className="flex flex-col gap-4">
-                {rest.map((l) => (
-                  <CompactCard key={l.id} listing={l} />
-                ))}
-              </div>
-            )}
+            <Showcase filtered={filtered} startIdx={startIdx} />
           </motion.div>
         )}
 

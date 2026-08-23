@@ -9,6 +9,7 @@ import { useLead } from "./lead/LeadContext";
 
 const NAV = [
   { href: "#uslugi", label: "Услуги" },
+  { href: "#process", label: "Этапы" },
   { href: "#obekty", label: "Объекты" },
   { href: "#komanda", label: "Команда" },
   { href: "#otzyvy", label: "Отзывы" },
