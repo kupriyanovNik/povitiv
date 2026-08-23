@@ -46,6 +46,10 @@ npm run sync
 
 Если ЦИАН недоступен, прежние данные остаются как есть.
 
+Сбои источников не молчат: скрипт шлёт алерт теми же каналами, что и
+уведомления о заявках (email + MAX + Telegram, какие настроены в env).
+Проверить каналы: `node scripts/sync-listings.mjs --test-notify`.
+
 ## Заявки: журнал + email + MAX (+ Telegram как опция)
 
 `POST /api/lead` принимает `{ name, phone, task, consent, object?, comment? }`.

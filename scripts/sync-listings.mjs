@@ -83,6 +83,120 @@ const translit = (s) =>
     // слаг уходит в путь файла: ничего кроме [a-z0-9-] не пропускаем
     .replace(/[^a-z0-9-]/g, "");
 
+/* --------------------------- алерты о сбоях -------------------------------- */
+/*
+ * Источники падают «мягко»: скрипт логирует ошибку, оставляет прежние
+ * данные и выходит с кодом 0 — systemd/Action сбоя не видят. Поэтому о
+ * сломавшемся источнике сообщаем сами, теми же каналами и env, что и
+ * уведомления о заявках (lib/leads.ts): email + MAX (+ Telegram).
+ * Проверка каналов: node scripts/sync-listings.mjs --test-notify
+ */
+
+async function tryChannel(name, attempt, tries = 2, backoffMs = 3000) {
+  for (let i = 0; i < tries; i++) {
+    try {
+      await attempt();
+      return `${name}: ok`;
+    } catch (e) {
+      if (i === tries - 1) return `${name}: failed (${e.message})`;
+      await new Promise((r) => setTimeout(r, backoffMs));
+    }
+  }
+  return `${name}: failed`;
+}
+
+async function alertEmail(subject, text) {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, LEAD_EMAIL_TO } =
+    process.env;
+  if (!SMTP_HOST || !LEAD_EMAIL_TO) return "email: skipped";
+  let nodemailer;
+  try {
+    ({ default: nodemailer } = await import("nodemailer"));
+  } catch {
+    return "email: skipped (nodemailer недоступен)";
+  }
+  const transport = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT ?? 465),
+    secure: (process.env.SMTP_SECURE ?? "true") !== "false",
+    auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
+  });
+  return tryChannel("email", () =>
+    transport.sendMail({
+      from: process.env.LEAD_EMAIL_FROM ?? SMTP_USER,
+      to: LEAD_EMAIL_TO,
+      subject,
+      text,
+    }),
+  );
+}
+
+async function alertMax(text) {
+  const token = process.env.MAX_BOT_TOKEN;
+  const chatId = process.env.MAX_CHAT_ID;
+  if (!token || !chatId) return "max: skipped";
+  return tryChannel("max", async () => {
+    const res = await fetch(
+      `https://platform-api2.max.ru/messages?chat_id=${encodeURIComponent(chatId)}`,
+      {
+        method: "POST",
+        headers: { Authorization: token, "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+    if (!res.ok) throw new Error(`MAX API ${res.status}`);
+  });
+}
+
+async function alertTelegram(text) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return "telegram: skipped";
+  const base = process.env.TELEGRAM_API_BASE ?? "https://api.telegram.org";
+  return tryChannel("telegram", async () => {
+    const res = await fetch(`${base}/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        disable_web_page_preview: true,
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok)
+      throw new Error(`Telegram API ${data.description ?? res.status}`);
+  });
+}
+
+async function notifyFailures(failures) {
+  if (!failures.length) return;
+  const subject = `Синк Позитив ВТ: сбой (${failures.map((f) => f.source).join(", ")})`;
+  const text = [
+    "Ночной синк данных positiv-vt.ru: часть источников не обновилась.",
+    "",
+    ...failures.map((f) => `— ${f.source}: ${f.message}`),
+    "",
+    `Дата: ${today} (МСК). Сайт продолжает показывать прежние данные.`,
+    "Лог: journalctl -u positiv-vt-sync на VPS или лог GitHub Action.",
+  ].join("\n");
+  try {
+    const results = await Promise.all([
+      alertEmail(subject, text),
+      alertMax(text),
+      alertTelegram(text),
+    ]);
+    console.warn("Алерт о сбое:", results.join(", "));
+  } catch (e) {
+    console.warn("Алерт о сбое не отправился:", e.message);
+  }
+}
+
 /* -------------------------------- ДОМКЛИК ---------------------------------- */
 
 async function syncDomclick() {
@@ -453,11 +567,15 @@ async function main() {
     listings: [],
   });
 
+  // сбои источников копим и в конце шлём один алерт на все каналы
+  const failures = [];
+
   // 1. Домклик: агентство, команда, отзывы
   try {
     await syncDomclick();
   } catch (e) {
     console.warn("Домклик: не удалось обновить данные агентства:", e.message);
+    failures.push({ source: "Домклик, агентство", message: e.message });
   }
 
   // 2. Объявления
@@ -466,6 +584,7 @@ async function main() {
     cian = await fetchCianListings();
   } catch (e) {
     console.warn("ЦИАН: ошибка:", e.message);
+    failures.push({ source: "ЦИАН, объявления", message: e.message });
   }
 
   let domclickOffers = [];
@@ -475,6 +594,7 @@ async function main() {
       await fetchDomclickOffers());
   } catch (e) {
     console.warn("Домклик offers: ошибка:", e.message);
+    failures.push({ source: "Домклик, объявления", message: e.message });
   }
 
   const prevById = new Map(prev.listings.map((l) => [l.id, l]));
@@ -602,9 +722,23 @@ async function main() {
       "ЦИАН не обновился, использованы прежние данные. Для обновления нужен установленный Chrome.",
     );
   }
+
+  await notifyFailures(failures);
 }
 
-main().catch((e) => {
+// проверка каналов алертов при настройке сервера: шлёт тестовое сообщение
+if (process.argv.includes("--test-notify")) {
+  await notifyFailures([
+    { source: "проверка каналов", message: "тестовое сообщение (--test-notify)" },
+  ]);
+  process.exit(0);
+}
+
+main().catch(async (e) => {
   console.error(e);
+  // тотальный крах (не дошли даже до записи данных) — тоже сигналим
+  await notifyFailures([
+    { source: "синк целиком", message: String(e?.message ?? e) },
+  ]);
   process.exit(1);
 });
