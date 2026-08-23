@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
-  AnimatePresence,
+  animate,
   motion,
+  useMotionValue,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -75,13 +76,42 @@ export function Hero({ listings }: { listings: Listing[] }) {
   });
   const photoY = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
 
-  // карусель объектов: как в отзывах и команде — автопрокрутка с
-  // прогресс-точками, паузой при наведении и уважением к reduced motion
+  // настоящая карусель объектов, как PhotoCarousel и отзывы: слайды
+  // (фото + карточка едины) тянутся мышью или пальцем со свайп-инерцией,
+  // автопрокрутка с прогресс-точками, пауза при наведении и перетаскивании
   const [index, setIndex] = useState(0);
+  const [width, setWidth] = useState(0);
+  const x = useMotionValue(0);
+
+  useEffect(() => {
+    const el = photoRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setWidth(el.clientWidth));
+    setWidth(el.clientWidth);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const goTo = useCallback(
-    (next: number) => setIndex(((next % count) + count) % count),
-    [count],
+    (next: number, velocity = 0) => {
+      const clamped = ((next % count) + count) % count;
+      setIndex(clamped);
+      animate(x, -clamped * width, {
+        type: "spring",
+        duration: reduce ? 0 : 0.55,
+        bounce: 0,
+        velocity,
+      });
+    },
+    [count, width, x, reduce],
   );
+
+  // при ресайзе держим текущий слайд на месте
+  useEffect(() => {
+    x.set(-index * width);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [width]);
+
   const { progress, setPaused } = useAutoplayProgress({
     seconds: AUTOPLAY_S,
     targetRef: photoRef,
@@ -90,8 +120,6 @@ export function Hero({ listings }: { listings: Listing[] }) {
     },
     resetKey: index,
   });
-
-  const current = listings[index];
 
   const enter = (delay: number) => ({
     initial: { opacity: 0, y: 24 },
@@ -139,7 +167,7 @@ export function Hero({ listings }: { listings: Listing[] }) {
           </motion.div>
         </div>
 
-        {current && (
+        {count > 0 && (
         <motion.div
           initial={{ opacity: 0, scale: 0.97, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -156,33 +184,87 @@ export function Hero({ listings }: { listings: Listing[] }) {
             onPointerLeave={() => setPaused(false)}
           >
             <motion.div
-              className="absolute -inset-y-[6%] inset-x-0"
-              style={{ y: reduce ? "0%" : photoY }}
+              className="flex h-full cursor-grab active:cursor-grabbing"
+              style={{ x }}
+              drag={count > 1 ? "x" : false}
+              dragConstraints={{ left: -(count - 1) * width, right: 0 }}
+              dragElastic={0.12}
+              dragMomentum={false}
+              onDragStart={() => setPaused(true)}
+              onDragEnd={(_, info) => {
+                // проекция точки остановки по скорости, затем ближайший слайд
+                const projected = -x.get() - info.velocity.x * 0.18;
+                goTo(
+                  Math.max(
+                    0,
+                    Math.min(count - 1, Math.round(projected / width)),
+                  ),
+                  info.velocity.x,
+                );
+                setPaused(false);
+              }}
             >
-              <AnimatePresence initial={false}>
-                <motion.div
-                  key={current.id}
-                  className="absolute inset-0"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: reduce ? 0 : 0.9, ease: "easeInOut" }}
-                >
-                  <Image
-                    src={current.photos[0]}
-                    alt={`${current.title}, ${current.address}`}
-                    fill
-                    priority={index === 0}
-                    sizes="(min-width: 1024px) 45vw, 100vw"
-                    className="object-cover"
+              {listings.map((l, i) => (
+                <div key={l.id} className="relative h-full w-full shrink-0">
+                  {/* параллакс — внутри слайда, чтобы карточка не уезжала
+                      вместе с фото при прокрутке страницы */}
+                  <motion.div
+                    className="absolute -inset-y-[6%] inset-x-0"
+                    style={{ y: reduce ? "0%" : photoY }}
+                  >
+                    <Image
+                      src={l.photos[0]}
+                      alt={`${l.title}, ${l.address}`}
+                      fill
+                      priority={i === 0}
+                      // соседние слайды спрятаны за overflow: ленивую
+                      // загрузку выключаем, чтобы свайп не показывал пустоту
+                      loading="eager"
+                      sizes="(min-width: 1024px) 45vw, 100vw"
+                      draggable={false}
+                      className="pointer-events-none select-none object-cover"
+                    />
+                  </motion.div>
+                  <div
+                    aria-hidden
+                    className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-ink/60 to-transparent"
                   />
-                </motion.div>
-              </AnimatePresence>
+                  <a
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group absolute inset-x-4 bottom-4 block rounded-xl border border-white/25 bg-white/85 p-4 backdrop-blur-md transition-transform hover:-translate-y-0.5 sm:inset-x-5 sm:bottom-5"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-wine">
+                          Сейчас в работе
+                        </p>
+                        <p className="mt-1 truncate text-[15px] font-bold leading-snug">
+                          {l.title}
+                        </p>
+                        <p className="truncate text-[13px] text-ink-soft">
+                          {l.address}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="tnum text-[15px] font-extrabold">
+                          {formatPrice(l.price, l.priceNote)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-wine">
+                          Смотреть
+                          <ArrowUpRight
+                            size={14}
+                            weight="bold"
+                            className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          />
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              ))}
             </motion.div>
-            <div
-              aria-hidden
-              className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-ink/60 to-transparent"
-            />
 
             {count > 1 && (
               <div
@@ -215,50 +297,6 @@ export function Hero({ listings }: { listings: Listing[] }) {
               </div>
             )}
 
-            <a
-              href={current.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group absolute inset-x-4 bottom-4 block rounded-xl border border-white/25 bg-white/85 p-4 backdrop-blur-md transition-transform hover:-translate-y-0.5 sm:inset-x-5 sm:bottom-5"
-            >
-              {/* popLayout: старый контент растворяется поверх нового,
-                  карточка при смене слайда не пустеет ни на кадр */}
-              <AnimatePresence initial={false} mode="popLayout">
-              <motion.div
-                key={current.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: reduce ? 0 : 0.3, ease: "easeOut" }}
-                className="flex items-center justify-between gap-4"
-              >
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-wine">
-                    Сейчас в работе
-                  </p>
-                  <p className="mt-1 truncate text-[15px] font-bold leading-snug">
-                    {current.title}
-                  </p>
-                  <p className="truncate text-[13px] text-ink-soft">
-                    {current.address}
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="tnum text-[15px] font-extrabold">
-                    {formatPrice(current.price, current.priceNote)}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-wine">
-                    Смотреть
-                    <ArrowUpRight
-                      size={14}
-                      weight="bold"
-                      className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    />
-                  </span>
-                </div>
-              </motion.div>
-              </AnimatePresence>
-            </a>
           </div>
         </motion.div>
         )}
