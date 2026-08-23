@@ -25,6 +25,11 @@ const DATA_DIR = path.join(ROOT, "data");
 const PUBLIC_DIR = path.join(ROOT, "public");
 
 const CIAN_COMPANY_URL = "https://www.cian.ru/company/211681";
+// официальный ЦИАН API (public-api.cian.ru): включается, когда в env задан
+// CIAN_API_KEY (клиент запрашивает ключ в ЛК). База переопределяется для
+// тестов через CIAN_API_BASE
+const CIAN_API_BASE =
+  process.env.CIAN_API_BASE ?? "https://public-api.cian.ru";
 const DOMCLICK_AGENCY_ID = 269616;
 const DOMCLICK_AGENCY_URL = `https://agencies.domclick.ru/agency/${DOMCLICK_AGENCY_ID}`;
 
@@ -366,6 +371,68 @@ async function fetchDomclickOffers() {
 
 /* ----------------------------------- ЦИАН ---------------------------------- */
 
+/* ------------------------------ ЦИАН API ----------------------------------- */
+/*
+ * Официальный API кабинета (public-api.cian.ru, Bearer-ключ из ЛК агентства).
+ * Контента объявлений (цены, адреса, фото) в API нет — он отдаёт СОСТАВ:
+ * какие объявления опубликованы и их канонические ссылки. Этим он заменяет
+ * самую хрупкую часть парсинга: список карточек со страницы компании
+ * (с ротацией) и проверку снятых объявлений по прямым ссылкам.
+ * Проверка ключа без полного синка: node scripts/sync-listings.mjs --test-cian-api
+ */
+
+async function cianApi(pathname, params) {
+  const url = new URL(pathname, CIAN_API_BASE);
+  for (const [k, v] of Object.entries(params ?? {})) {
+    // списки передаются повтором параметра: ?offerIds=1&offerIds=2 (см. доку)
+    if (Array.isArray(v)) for (const item of v) url.searchParams.append(k, item);
+    else if (v != null) url.searchParams.set(k, String(v));
+  }
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${process.env.CIAN_API_KEY}` },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (res.status === 401) {
+    throw new Error(`ЦИАН API: ключ не принят (401) на ${pathname}`);
+  }
+  if (!res.ok) {
+    throw new Error(`ЦИАН API ${pathname}: HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data?.result ?? null;
+}
+
+/**
+ * Опубликованные объявления агентства по официальному API:
+ * /v2/get-my-offers (пагинация, statuses=published) + /v1/get-my-offers-detail
+ * (канонические ссылки, батчи до 50 id). Возвращает [{ num, url }].
+ */
+async function fetchCianPublishedViaApi() {
+  const PAGE_SIZE = 50;
+  const ids = [];
+  for (let page = 1; page <= 20; page++) {
+    const result = await cianApi("/v2/get-my-offers", {
+      page,
+      pageSize: PAGE_SIZE,
+      statuses: ["published"],
+    });
+    const anns = result?.announcements ?? [];
+    ids.push(...anns.map((a) => a.id));
+    const total = Number(result?.totalCount ?? 0);
+    if (anns.length === 0 || page * PAGE_SIZE >= total) break;
+  }
+
+  const urlById = new Map();
+  for (let i = 0; i < ids.length; i += 50) {
+    const result = await cianApi("/v1/get-my-offers-detail", {
+      offerIds: ids.slice(i, i + 50),
+    });
+    for (const o of result?.offers ?? []) urlById.set(o.id, o.url ?? null);
+  }
+
+  return ids.map((num) => ({ num, url: urlById.get(num) ?? null }));
+}
+
 /**
  * Запуск браузера для ЦИАН: сначала системный Google Chrome, затем путь из
  * CHROME_BIN (на VPS: apt install chromium + CHROME_BIN=/usr/bin/chromium),
@@ -522,6 +589,51 @@ function parseCianCard(card) {
 }
 
 /** Проверяет по прямой ссылке, живо ли объявление, и собирает URL фото. */
+/**
+ * Контент новых объявлений точечно с их страниц (когда состав пришёл из
+ * API, а карточки на странице компании не оказалось): фото + текст в
+ * |-формате для parseCianCard. Текст обрезаем до блока похожих объявлений,
+ * чтобы не зацепить чужие цены.
+ */
+async function fetchCianOfferPages(urls) {
+  const browser = await launchBrowser();
+  if (!browser) return null;
+  const result = new Map();
+  try {
+    const page = await browser.newPage({
+      userAgent: UA,
+      locale: "ru-RU",
+      viewport: { width: 1440, height: 900 },
+    });
+    for (const url of urls) {
+      try {
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 40000 });
+        await page.waitForTimeout(1500);
+        const info = await page.evaluate(() => {
+          const photos = Array.from(
+            new Set(
+              Array.from(
+                document.querySelectorAll('img[src*="images.cdn-cian"]'),
+              ).map((im) => im.src.replace(/-\d\.jpg$/, "-1.jpg")),
+            ),
+          ).slice(0, 4);
+          const raw = document.body.innerText.split(/Похожие|Похожих/)[0];
+          return { photos, raw: raw.slice(0, 6000) };
+        });
+        result.set(url, {
+          photoUrls: info.photos,
+          text: info.raw.replace(/\n+/g, " | "),
+        });
+      } catch (e) {
+        console.warn("  страница объявления не открылась:", url, e.message);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+  return result;
+}
+
 async function probeCianListings(urls) {
   const browser = await launchBrowser();
   if (!browser) return null;
@@ -578,13 +690,39 @@ async function main() {
     failures.push({ source: "Домклик, агентство", message: e.message });
   }
 
-  // 2. Объявления
+  // 2. Объявления ЦИАН. Если задан CIAN_API_KEY, состав (что опубликовано,
+  //    что снято) берётся из официального API — страница компании остаётся
+  //    только источником контента (цены, фото), и её сбой не критичен.
+  let cianApiSet = null;
+  if (process.env.CIAN_API_KEY) {
+    try {
+      cianApiSet = await fetchCianPublishedViaApi();
+      console.log(`ЦИАН API: опубликованных объявлений: ${cianApiSet.length}`);
+    } catch (e) {
+      console.warn("ЦИАН API: ошибка:", e.message);
+      failures.push({
+        source: "ЦИАН API, состав объявлений",
+        message: e.message,
+      });
+    }
+  }
+
   let cian = null;
   try {
     cian = await fetchCianListings();
   } catch (e) {
     console.warn("ЦИАН: ошибка:", e.message);
-    failures.push({ source: "ЦИАН, объявления", message: e.message });
+    if (!cianApiSet)
+      failures.push({ source: "ЦИАН, объявления", message: e.message });
+  }
+  // капча и отсутствие браузера не бросают исключение, а возвращают null —
+  // без алерта такой сбой оставался бы тихим (данные просто «замерзали»)
+  if (!cian && !cianApiSet && !failures.some((f) => f.source.startsWith("ЦИАН"))) {
+    failures.push({
+      source: "ЦИАН, объявления",
+      message:
+        "карточки не получены (нет браузера или показана капча) — оставлены прежние данные",
+    });
   }
 
   let domclickOffers = [];
@@ -600,30 +738,82 @@ async function main() {
   const prevById = new Map(prev.listings.map((l) => [l.id, l]));
   const listings = [];
 
-  const cianFinal =
-    cian ?? prev.listings.filter((l) => l.source === "cian");
-
-  // страница компании ЦИАН показывает не все объявления разом (ротация),
-  // поэтому «пропавшие» проверяем по прямой ссылке и удаляем только те,
-  // что реально сняты с публикации
-  if (cian) {
-    const parsedIds = new Set(cian.map((i) => i.id));
-    const missing = prev.listings.filter(
-      (l) => l.source === "cian" && !parsedIds.has(l.id),
-    );
-    if (missing.length) {
+  let cianFinal;
+  if (cianApiSet) {
+    // API — истина состава: карточки страницы компании и прежние данные —
+    // только источники контента; новое объявление без карточки добираем
+    // с его собственной страницы. Снятые определяются отсутствием в API,
+    // проверка по прямым ссылкам (probe) не нужна.
+    const cardById = new Map((cian ?? []).map((c) => [c.id, c]));
+    cianFinal = [];
+    const needPages = [];
+    for (const { num, url } of cianApiSet) {
+      const id = `cian-${num}`;
+      const card = cardById.get(id);
+      if (card) {
+        cianFinal.push(url ? { ...card, url } : card);
+      } else if (prevById.has(id)) {
+        cianFinal.push(prevById.get(id));
+      } else if (url) {
+        needPages.push({ id, url });
+      } else {
+        failures.push({
+          source: "ЦИАН API",
+          message: `объявление ${num} не отдало ссылку — пропущено`,
+        });
+      }
+    }
+    if (needPages.length) {
       console.log(
-        `\nЦИАН: ${missing.length} объявлений нет в профиле, проверяю по прямым ссылкам…`,
+        `\nЦИАН: ${needPages.length} новых объявлений, забираю контент с их страниц…`,
       );
-      const probe = await probeCianListings(missing.map((l) => l.url));
-      for (const l of missing) {
-        const res = probe?.get(l.url);
-        if (res && !res.alive) {
-          console.log("  снято с публикации:", l.id, `(${l.title})`);
-          continue;
+      const pages = await fetchCianOfferPages(needPages.map((n) => n.url));
+      for (const { url } of needPages) {
+        const info = pages?.get(url);
+        const parsed = info?.text
+          ? parseCianCard({ href: url, text: info.text, imgs: info.photoUrls })
+          : null;
+        if (parsed && parsed.price > 0) {
+          cianFinal.push(parsed);
+        } else {
+          // консервативно: полупустой объект не публикуем, но и не молчим
+          failures.push({
+            source: "ЦИАН, новое объявление",
+            message: `${url}: контент не добыт, объект пока не показан на сайте`,
+          });
         }
-        console.log("  живо, оставляю:", l.id, `(${l.title})`);
-        cianFinal.push(res?.photoUrls?.length ? { ...l, photoUrls: res.photoUrls } : l);
+      }
+    }
+    for (const l of prev.listings) {
+      if (l.source === "cian" && !cianFinal.some((c) => c.id === l.id)) {
+        console.log("  снято с публикации (по API):", l.id, `(${l.title})`);
+      }
+    }
+  } else {
+    cianFinal = cian ?? prev.listings.filter((l) => l.source === "cian");
+
+    // без ключа API: страница компании показывает не все объявления разом
+    // (ротация), поэтому «пропавшие» проверяем по прямой ссылке и удаляем
+    // только те, что реально сняты с публикации
+    if (cian) {
+      const parsedIds = new Set(cian.map((i) => i.id));
+      const missing = prev.listings.filter(
+        (l) => l.source === "cian" && !parsedIds.has(l.id),
+      );
+      if (missing.length) {
+        console.log(
+          `\nЦИАН: ${missing.length} объявлений нет в профиле, проверяю по прямым ссылкам…`,
+        );
+        const probe = await probeCianListings(missing.map((l) => l.url));
+        for (const l of missing) {
+          const res = probe?.get(l.url);
+          if (res && !res.alive) {
+            console.log("  снято с публикации:", l.id, `(${l.title})`);
+            continue;
+          }
+          console.log("  живо, оставляю:", l.id, `(${l.title})`);
+          cianFinal.push(res?.photoUrls?.length ? { ...l, photoUrls: res.photoUrls } : l);
+        }
       }
     }
   }
@@ -724,6 +914,23 @@ async function main() {
   }
 
   await notifyFailures(failures);
+}
+
+// проверка ЦИАН API без полного синка: список опубликованных объявлений
+if (process.argv.includes("--test-cian-api")) {
+  if (!process.env.CIAN_API_KEY) {
+    console.error("CIAN_API_KEY не задан (env или .env на сервере)");
+    process.exit(1);
+  }
+  try {
+    const list = await fetchCianPublishedViaApi();
+    console.log(`ЦИАН API: опубликованных объявлений: ${list.length}`);
+    for (const { num, url } of list) console.log(`  ${num}  ${url ?? "(без ссылки)"}`);
+    process.exit(0);
+  } catch (e) {
+    console.error("ЦИАН API: ошибка:", e.message);
+    process.exit(1);
+  }
 }
 
 // проверка каналов алертов при настройке сервера: шлёт тестовое сообщение
