@@ -48,15 +48,14 @@ export function LeadForm() {
     <section id="zayavka" className="scroll-mt-20 bg-wine-ink py-20 lg:py-28">
       <div className="mx-auto grid max-w-[1280px] items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
         <Reveal>
-          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-wine-tint">
-            Бесплатная консультация
-          </p>
-          <h2 className="font-display mt-3 max-w-[20ch] text-3xl font-bold text-white sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
+          <h2 className="font-display max-w-[20ch] text-3xl font-bold text-white sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Получите предварительную оценку и план сделки
           </h2>
+          {/* «бесплатная консультация» из бывшего кикера — в подзаголовке */}
           <p className="mt-4 max-w-[50ch] text-base leading-relaxed text-white/75 sm:text-lg">
             Расскажите об объекте или желаемой покупке. Мы уточним детали,
-            оценим ситуацию и предложим последовательность действий.
+            оценим ситуацию и предложим последовательность действий — это
+            бесплатная консультация.
           </p>
           <ul className="mt-8 space-y-3.5">
             {RESULTS.map((r) => (
@@ -70,10 +69,6 @@ export function LeadForm() {
               </li>
             ))}
           </ul>
-          <p className="mt-8 text-sm text-white/60">
-            Это не автоматический расчёт: ситуацию разбирает специалист
-            агентства. Документы заранее готовить не нужно.
-          </p>
         </Reveal>
 
         <div className="rounded-2xl bg-surface p-6 shadow-2xl shadow-black/25 sm:p-8">
