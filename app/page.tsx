@@ -4,6 +4,8 @@ import {
   getListings,
   type Listing,
 } from "@/lib/data";
+import { fullYearsSince } from "@/lib/format";
+import { site } from "@/lib/site";
 import { LeadProvider } from "@/components/lead/LeadContext";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
@@ -73,7 +75,8 @@ export default async function Home() {
           dealsCount={agency.agency.dealsCount12m}
           rating={agency.agency.domclickRating}
           agentsCount={agency.agents.length}
-          updatedAt={agency.updatedAt}
+          // страница рендерится на каждый запрос: стаж сам вырастет в апреле
+          cianYears={fullYearsSince(site.cianSince)}
         />
         <Tasks photo={tasksPhoto} />
         <DealRoute />

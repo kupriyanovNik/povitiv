@@ -42,12 +42,12 @@ export function TrustBar({
   dealsCount,
   rating,
   agentsCount,
-  updatedAt,
+  cianYears,
 }: {
   dealsCount: number;
   rating: number | null;
   agentsCount: number;
-  updatedAt: string;
+  cianYears: number;
 }) {
   // отсчёт стартует, когда блок цифр видen наполовину, а не когда его
   // край задел низ экрана: иначе анимация отыгрывала бы до того, как
@@ -57,9 +57,18 @@ export function TrustBar({
   const listRef = useRef<HTMLDListElement>(null);
   const inView = useInView(listRef, { once: true, amount: 0.5 });
 
+  // все цифры либо константы, либо ночной синк (Домклик), либо вычисляются
+  // от даты регистрации на ЦИАН — сноска «по данным на такой-то месяц»
+  // не нужна: данные не сталеют
+  const yearsWord = plural(cianYears, "год", "года", "лет");
   const stats: Stat[] = [
     { value: "С 2010", label: "года на рынке недвижимости Москвы и области" },
-    { value: "14 лет", numeric: 14, suffix: " лет", label: "профиль на ЦИАН, статус «Суперагент»" },
+    {
+      value: `${cianYears} ${yearsWord}`,
+      numeric: cianYears,
+      suffix: ` ${yearsWord}`,
+      label: "профиль на ЦИАН, статус «Суперагент»",
+    },
     {
       value: String(dealsCount),
       numeric: dealsCount,
@@ -80,11 +89,6 @@ export function TrustBar({
       label: `${plural(agentsCount, "специалист", "специалиста", "специалистов")} в команде агентства`,
     },
   ];
-
-  const updated = new Intl.DateTimeFormat("ru-RU", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(updatedAt));
 
   return (
     <section aria-label="Ключевые показатели" className="border-y border-line bg-surface">
@@ -107,9 +111,6 @@ export function TrustBar({
             </div>
           ))}
         </dl>
-        <p className="border-t border-line py-3.5 text-xs text-ink-soft">
-          По данным открытых профилей агентства на ЦИАН и Домклик, {updated}.
-        </p>
       </div>
     </section>
   );

@@ -16,6 +16,10 @@ export const site = {
     cian: "https://www.cian.ru/company/211681",
     domclick: "https://agencies.domclick.ru/agency/269616",
   },
+  // регистрация профиля на ЦИАН: «14 лет 4 мес» на августе 2026
+  // (research/01-agency-dossier.md) -> апрель 2012. Стаж на площадке
+  // вычисляется от этой даты и не сталеет.
+  cianSince: "2012-04-01",
 } as const;
 
 export type LeadTask =
