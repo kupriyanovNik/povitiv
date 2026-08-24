@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-23",
+  "updatedAt": "2026-08-24",
   "sources": {
     "cian": "https://www.cian.ru/company/211681",
     "domclick": "https://agencies.domclick.ru/agency/269616"
@@ -29,29 +29,6 @@
       ]
     },
     {
-      "id": "cian-333127974",
-      "source": "cian",
-      "url": "https://www.cian.ru/sale/flat/333127974/",
-      "dealType": "sale",
-      "category": "flat",
-      "title": "3-комнатная квартира, 74 м²",
-      "badge": null,
-      "price": 21700000,
-      "priceNote": null,
-      "area": 74,
-      "floor": "9 из 12",
-      "rooms": 3,
-      "address": "Москва, ВАО, р-н Новокосино, м. Новокосино, Суздальская улица, 10К1",
-      "metro": "Новокосино",
-      "highlight": "Просторная, светлая квартира! Функциональная планировка, большая кухня 11 кв. метров, комнаты изолированные, лоджия. два сан/узла. Рядом с д…",
-      "photos": [
-        "/listings/cian-333127974/1.jpg",
-        "/listings/cian-333127974/2.jpg",
-        "/listings/cian-333127974/3.jpg",
-        "/listings/cian-333127974/4.jpg"
-      ]
-    },
-    {
       "id": "cian-329009582",
       "source": "cian",
       "url": "https://domodedovo.cian.ru/sale/flat/329009582/",
@@ -72,6 +49,29 @@
         "/listings/cian-329009582/2.jpg",
         "/listings/cian-329009582/3.jpg",
         "/listings/cian-329009582/4.jpg"
+      ]
+    },
+    {
+      "id": "cian-333127974",
+      "source": "cian",
+      "url": "https://www.cian.ru/sale/flat/333127974/",
+      "dealType": "sale",
+      "category": "flat",
+      "title": "3-комнатная квартира, 74 м²",
+      "badge": null,
+      "price": 21700000,
+      "priceNote": null,
+      "area": 74,
+      "floor": "9 из 12",
+      "rooms": 3,
+      "address": "Москва, ВАО, р-н Новокосино, м. Новокосино, Суздальская улица, 10К1",
+      "metro": "Новокосино",
+      "highlight": "Просторная, светлая квартира! Функциональная планировка, большая кухня 11 кв. метров, комнаты изолированные, лоджия. два сан/узла. Рядом с д…",
+      "photos": [
+        "/listings/cian-333127974/1.jpg",
+        "/listings/cian-333127974/2.jpg",
+        "/listings/cian-333127974/3.jpg",
+        "/listings/cian-333127974/4.jpg"
       ]
     },
     {
