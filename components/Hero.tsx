@@ -144,8 +144,11 @@ export function Hero({ listings }: { listings: Listing[] }) {
             onPointerEnter={() => setPaused(true)}
             onPointerLeave={() => setPaused(false)}
           >
+            {/* absolute inset-0, а не h-full: в Safari проценты высоты внутри
+                aspect-ratio + max-height считаются от aspect-высоты без учёта
+                клампа — трек вырастал выше контейнера и карточки срезались */}
             <motion.div
-              className="flex h-full cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 flex cursor-grab active:cursor-grabbing"
               style={{ x }}
               drag={count > 1 ? "x" : false}
               dragConstraints={{ left: -(count - 1) * width, right: 0 }}

@@ -155,10 +155,11 @@ export function Team({ agents }: { agents: Agent[] }) {
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewportW, setViewportW] = useState(0);
-  const [index, setIndex] = useState(0);
+  // бесконечная карусель: лента отрисована в три копии, index —
+  // «виртуальная» позиция, живущая в средней копии [count, 2*count).
+  // Слева от первого специалиста всегда виден последний, и наоборот.
+  const [index, setIndex] = useState(count);
   const x = useMotionValue(0);
-
-
 
   // ширина карточки: до 400px, на мобильных с «выглядыванием» соседей
   const cardW = Math.min(400, Math.max(240, viewportW - 88));
@@ -180,16 +181,28 @@ export function Team({ agents }: { agents: Agent[] }) {
 
   const goTo = useCallback(
     (next: number, velocity = 0) => {
-      const clamped = Math.max(0, Math.min(count - 1, next));
-      setIndex(clamped);
-      animate(x, xFor(clamped), {
+      // цель возвращаем в среднюю копию, сдвинув текущую позицию на целую
+      // ленту: копии одинаковы, поэтому телепорт на ±count*step невидим
+      let target = next;
+      let shift = 0;
+      while (target < count) {
+        target += count;
+        shift += 1;
+      }
+      while (target >= 2 * count) {
+        target -= count;
+        shift -= 1;
+      }
+      if (shift !== 0) x.set(x.get() - shift * count * step);
+      setIndex(target);
+      animate(x, xFor(target), {
         type: "spring",
         duration: reduce ? 0 : 0.55,
         bounce: 0,
         velocity,
       });
     },
-    [count, x, xFor, reduce],
+    [count, step, x, xFor, reduce],
   );
 
   // держим активный слайд по центру при ресайзе
@@ -198,13 +211,30 @@ export function Team({ agents }: { agents: Agent[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewportW]);
 
-  // автопрокрутка: 4 секунды на специалиста, индикатор-прогресс
+  // автопрокрутка: 4 секунды на специалиста, индикатор-прогресс;
+  // без модуло — нормализация в goTo делает движение бесшовным по кругу
   const { progress, setPaused } = useAutoplayProgress({
     seconds: AUTOPLAY_S,
     targetRef: viewportRef,
-    advance: () => goTo((index + 1) % count),
+    advance: () => goTo(index + 1),
     resetKey: index,
   });
+
+  // логический индекс для точек-индикаторов
+  const logical = count ? ((index % count) + count) % count : 0;
+  // клик по точке — кратчайшей дугой (через край, если так ближе)
+  const goToLogical = useCallback(
+    (i: number) => {
+      let d = (i - logical) % count;
+      if (d > count / 2) d -= count;
+      if (d < -count / 2) d += count;
+      goTo(index + d);
+    },
+    [logical, count, index, goTo],
+  );
+
+  // три копии ленты: средняя — рабочая, крайние дают соседей у краёв
+  const extended = [...sorted, ...sorted, ...sorted];
 
   return (
     <section id="komanda" className="scroll-mt-20 overflow-hidden py-20 lg:py-28">
@@ -225,18 +255,16 @@ export function Team({ agents }: { agents: Agent[] }) {
               <button
                 type="button"
                 onClick={() => goTo(index - 1)}
-                disabled={index === 0}
                 aria-label="Предыдущий специалист"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-surface text-ink transition-colors hover:border-ink/35 disabled:opacity-35"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-surface text-ink transition-colors hover:border-ink/35"
               >
                 <CaretLeft size={17} weight="bold" />
               </button>
               <button
                 type="button"
                 onClick={() => goTo(index + 1)}
-                disabled={index === count - 1}
                 aria-label="Следующий специалист"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-surface text-ink transition-colors hover:border-ink/35 disabled:opacity-35"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-surface text-ink transition-colors hover:border-ink/35"
               >
                 <CaretRight size={17} weight="bold" />
               </button>
@@ -259,7 +287,7 @@ export function Team({ agents }: { agents: Agent[] }) {
           className="flex cursor-grab items-center active:cursor-grabbing"
           style={{ x, gap: GAP }}
           drag="x"
-          dragConstraints={{ left: xFor(count - 1), right: xFor(0) }}
+          dragConstraints={{ left: xFor(extended.length - 1), right: xFor(0) }}
           dragElastic={0.12}
           dragMomentum={false}
           onDragStart={() => setPaused(true)}
@@ -269,9 +297,9 @@ export function Team({ agents }: { agents: Agent[] }) {
             setPaused(false);
           }}
         >
-          {sorted.map((agent, i) => (
+          {extended.map((agent, i) => (
             <AgentSlide
-              key={agent.casId}
+              key={`${agent.casId}-${Math.floor(i / count)}`}
               agent={agent}
               active={i === index}
               onSelect={() => goTo(i)}
@@ -288,17 +316,17 @@ export function Team({ agents }: { agents: Agent[] }) {
             <button
               key={agent.casId}
               type="button"
-              aria-current={index === i || undefined}
+              aria-current={logical === i || undefined}
               aria-label={agent.name}
-              onClick={() => goTo(i)}
+              onClick={() => goToLogical(i)}
               className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
-                index === i
+                logical === i
                   ? "w-8 bg-ink/15"
                   : "w-1.5 bg-ink/20 hover:bg-ink/40"
               }`}
             >
               {/* активный индикатор заполняется за время автопрокрутки */}
-              {index === i && (
+              {logical === i && (
                 <motion.span
                   aria-hidden
                   style={{ scaleX: reduce ? 1 : progress }}
