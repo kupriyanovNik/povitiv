@@ -36,7 +36,7 @@ npm run sync
    (официальный [ЦИАН API](https://public-api.cian.ru), ключ выдаётся
    агентству в ЛК бесплатно), список опубликованных и снятых объявлений
    берётся из API — без браузера и антибот-рисков. Проверка ключа:
-   `node scripts/sync-listings.mjs --test-cian-api`.
+   `npm run sync:test-api` (ключ кладётся в `.env.local`).
 3. **ЦИАН, контент** — цены, адреса и фото в API не отдаются, поэтому
    страница компании [cian.ru/company/211681](https://www.cian.ru/company/211681)
    открывается через `playwright-core` + установленный Google Chrome

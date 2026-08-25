@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync": "node scripts/sync-listings.mjs"
+    "sync": "node scripts/sync-listings.mjs",
+    "sync:test-api": "node --env-file=.env.local scripts/sync-listings.mjs --test-cian-api"
   },
   "dependencies": {
     "@fontsource-variable/geologica": "^5.3.0",
