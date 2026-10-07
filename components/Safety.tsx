@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   motion,
+  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -18,6 +19,7 @@ import {
   Signature,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
+import { burstConfetti } from "./confetti";
 import { Reveal } from "./Reveal";
 
 const POINTS: { icon: Icon; title: string; text: string }[] = [
@@ -63,6 +65,7 @@ function StopMarker({
   reduce,
   big = false,
   markerRef,
+  burstRef,
 }: {
   icon: Icon;
   progress: MotionValue<number>;
@@ -70,6 +73,8 @@ function StopMarker({
   reduce: boolean;
   big?: boolean;
   markerRef: (el: HTMLDivElement | null) => void;
+  /** точка в центре маркера, откуда вылетает конфетти */
+  burstRef?: React.Ref<HTMLSpanElement>;
 }) {
   const fill = useTransform(
     progress,
@@ -91,6 +96,13 @@ function StopMarker({
       >
         <IconCmp size={iconSize} weight="duotone" className="text-white" />
       </motion.span>
+      {burstRef && (
+        <span
+          ref={burstRef}
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 z-20"
+        />
+      )}
     </div>
   );
 }
@@ -110,6 +122,21 @@ export function Safety() {
   const { scrollYProgress } = useScroll({
     target: trackRef,
     offset: ["start 0.72", "end 0.72"],
+  });
+
+  // маршрут дошёл до ключей: небольшой салют, один раз за визит. Только
+  // когда точка на экране: прыжок по якорю мимо секции салют не тратит
+  const burstRef = useRef<HTMLSpanElement>(null);
+  const celebrated = useRef(false);
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (reduce || celebrated.current || v < 0.999) return;
+    if ((scrollYProgress.getPrevious() ?? 0) >= 0.999) return;
+    const host = burstRef.current;
+    if (!host) return;
+    const { top } = host.getBoundingClientRect();
+    if (top < 0 || top > window.innerHeight) return;
+    celebrated.current = true;
+    burstConfetti(host);
   });
 
   // строим SVG-змейку по реальным позициям остановок (и перестраиваем при ресайзе)
@@ -279,6 +306,7 @@ export function Safety() {
                 markerRef={(el) => {
                   markerEls.current[POINTS.length] = el;
                 }}
+                burstRef={burstRef}
               />
               <div>
                 <p className="font-display text-xl font-bold">Ключи у вас</p>

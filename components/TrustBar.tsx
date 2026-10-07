@@ -8,17 +8,24 @@ type Stat = {
   value: string;
   label: string;
   numeric?: number;
-  suffix?: string;
+  /** промежуточные значения отсчёта: склонение меняется с числом */
+  format?: (v: number) => string;
 };
 
-function CountUp({ stat, start }: { stat: Stat; start: boolean }) {
-  const reduce = useReducedMotion();
-  // SSR и первый клиентский рендер всегда показывают итоговое значение,
-  // иначе возможен hydration mismatch при reduced-motion
-  const [display, setDisplay] = useState(stat.value);
+const yearsWord = (n: number) => plural(n, "год", "года", "лет");
+
+/**
+ * static — показываем итог без анимации (цифры уже были на экране при
+ * загрузке или включено уменьшение движения); armed — блок ниже экрана,
+ * цифры заранее стоят на нуле; run — блок показался, идёт отсчёт.
+ */
+type Phase = "static" | "armed" | "run";
+
+function CountUp({ stat, phase }: { stat: Stat; phase: Phase }) {
+  const [current, setCurrent] = useState<number | null>(null);
 
   useEffect(() => {
-    if (reduce || stat.numeric === undefined || !start) return;
+    if (phase !== "run" || stat.numeric === undefined) return;
     const target = stat.numeric;
     const dur = 900;
     let raf = 0;
@@ -26,15 +33,18 @@ function CountUp({ stat, start }: { stat: Stat; start: boolean }) {
     const tick = (now: number) => {
       const p = Math.min(1, (now - startedAt) / dur);
       const eased = 1 - Math.pow(1 - p, 3);
-      const v = Math.round(target * eased);
-      setDisplay(`${v}${stat.suffix ?? ""}`);
+      setCurrent(Math.round(target * eased));
       if (p < 1) raf = requestAnimationFrame(tick);
-      else setDisplay(stat.value);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [start, reduce, stat]);
+  }, [phase, stat]);
 
+  let display = stat.value;
+  if (stat.numeric !== undefined && phase !== "static") {
+    const v = phase === "armed" ? 0 : (current ?? 0);
+    display = v >= stat.numeric ? stat.value : (stat.format?.(v) ?? String(v));
+  }
   return <span className="tnum">{display}</span>;
 }
 
@@ -45,24 +55,34 @@ export function TrustBar({
   rating: number | null;
   cianYears: number;
 }) {
-  // отсчёт стартует, когда блок цифр видen наполовину, а не когда его
-  // край задел низ экрана: иначе анимация отыгрывала бы до того, как
-  // пользователь реально увидел цифры. Один наблюдатель на все ячейки —
-  // цифры оживают одновременно. Если порог недостижим (экстремальный
-  // зум), цифры просто остаются финальными значениями.
+  // SSR и первый клиентский рендер показывают итоговые цифры (иначе
+  // hydration mismatch). Сброс до нуля пользователь видеть не должен:
+  // если блок хоть краем виден при загрузке, анимации нет вовсе; если он
+  // ниже экрана, цифры обнуляются заранее, пока их не видно, и отсчёт
+  // идёт, как только блок показался снизу. Один наблюдатель на все
+  // ячейки — цифры оживают одновременно.
+  const reduce = useReducedMotion();
   const listRef = useRef<HTMLDListElement>(null);
-  const inView = useInView(listRef, { once: true, amount: 0.5 });
+  const [armed, setArmed] = useState(false);
+  const inView = useInView(listRef, { once: true, margin: "0px 0px -10% 0px" });
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (reduce || !el) return;
+    if (el.getBoundingClientRect().top >= window.innerHeight) setArmed(true);
+  }, [reduce]);
+
+  const phase: Phase = !armed ? "static" : inView ? "run" : "armed";
 
   // все цифры либо константы, либо ночной синк (рейтинг Домклик), либо
   // вычисляются от даты регистрации на ЦИАН — сноска «по данным на
   // такой-то месяц» не нужна: данные не сталеют
-  const yearsWord = plural(cianYears, "год", "года", "лет");
   const stats: Stat[] = [
     { value: "С 2010", label: "года на рынке недвижимости Москвы и области" },
     {
-      value: `${cianYears} ${yearsWord}`,
+      value: `${cianYears} ${yearsWord(cianYears)}`,
       numeric: cianYears,
-      suffix: ` ${yearsWord}`,
+      format: (v) => `${v} ${yearsWord(v)}`,
       label: "профиль на ЦИАН, статус «Суперагент»",
     },
     // рейтинг из синка может пропасть: без значения ячейку не показываем
@@ -78,7 +98,7 @@ export function TrustBar({
     {
       value: "20+ лет",
       numeric: 20,
-      suffix: "+ лет",
+      format: (v) => `${v}+ ${yearsWord(v)}`,
       label: "опыт профессиональной команды риелторов",
     },
   ];
@@ -101,7 +121,7 @@ export function TrustBar({
                 {s.label}
               </dt>
               <dd className="font-display order-1 text-3xl font-bold lg:text-[38px] lg:leading-none">
-                <CountUp stat={s} start={inView} />
+                <CountUp stat={s} phase={phase} />
               </dd>
             </div>
           ))}

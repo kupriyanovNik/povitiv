@@ -58,7 +58,8 @@ function Item({
 }
 
 export function FAQ() {
-  const [openIdx, setOpenIdx] = useState<number | null>(0);
+  // все вопросы изначально свёрнуты: список читается целиком с одного взгляда
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
   return (
     <section id="faq" className="scroll-mt-20 bg-surface py-20 lg:py-28">
       <div className="mx-auto max-w-[880px] px-4 sm:px-6">
