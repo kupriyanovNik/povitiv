@@ -5,8 +5,15 @@ import "@fontsource-variable/golos-text";
 import "@fontsource-variable/geologica";
 import "./globals.css";
 
+// адрес, с которого отдаётся страница: картинка превью ссылки (og:image)
+// должна открываться там же. На демо — домен Vercel (на positiv-vt.ru до
+// переезда старый сайт без https), на VPS — боевой домен
+const SITE_URL = process.env.VERCEL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL}`
+  : "https://positiv-vt.ru";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://positiv-vt.ru"),
+  metadataBase: new URL(SITE_URL),
   alternates: { canonical: "/" },
   // демо на Vercel не индексируется (см. app/robots.ts), прод — да
   robots: process.env.VERCEL ? { index: false, follow: false } : undefined,
@@ -20,8 +27,16 @@ export const metadata: Metadata = {
       "Продажа, покупка, обмен и аренда недвижимости в Москве и области. Работаем с 2010 года.",
     locale: "ru_RU",
     type: "website",
-    // отдельный файл, а не фото объявления: те удаляются ночным синком
-    images: ["/og.jpg"],
+    // фирменная карточка (npm run og): не устаревает, как фото объекта,
+    // и читается в квадратной обрезке превью Telegram
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Позитив ВТ — агентство недвижимости в Москве и Подмосковье",
+      },
+    ],
   },
 };
 

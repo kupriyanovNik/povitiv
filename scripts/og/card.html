@@ -1,0 +1,81 @@
+<!doctype html>
+<!--
+  Карточка превью ссылки (og:image) 1200×630. Рендер: npm run og.
+  Telegram в компактном превью режет картинку до квадрата по центру,
+  поэтому всё содержимое живёт в центральном квадрате 630×630.
+  Шрифты, эмблему и телефон подставляет scripts/og/render.mjs.
+-->
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      {{FONTS}}
+      * { margin: 0; box-sizing: border-box; }
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background: #f8f6f4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .frame {
+        position: absolute;
+        left: 307px;
+        top: 22px;
+        width: 586px;
+        height: 586px;
+        border: 1.5px solid #e4d6d0;
+        border-radius: 24px;
+        background: #fbf9f7;
+      }
+      .stack { position: relative; display: flex; flex-direction: column; align-items: center; }
+      .emblem {
+        width: 264px;
+        height: 133px;
+        background: #7d1b24;
+        -webkit-mask: url("{{EMBLEM}}") center / contain no-repeat;
+        mask: url("{{EMBLEM}}") center / contain no-repeat;
+      }
+      .slogan {
+        margin-top: 28px;
+        max-width: 500px;
+        font-family: Geologica;
+        font-weight: 700;
+        font-size: 48px;
+        line-height: 1.07;
+        letter-spacing: -0.02em;
+        color: #211d1c;
+      }
+      .slogan b { color: #7d1b24; font-weight: 800; text-transform: uppercase; }
+      .sub {
+        margin-top: 18px;
+        max-width: 440px;
+        font-family: Golos;
+        font-weight: 500;
+        font-size: 21px;
+        line-height: 1.35;
+        color: #6b625e;
+      }
+      .phone {
+        margin-top: 24px;
+        font-family: Golos;
+        font-weight: 700;
+        font-size: 24px;
+        letter-spacing: 0.01em;
+        color: #7d1b24;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame"></div>
+    <div class="stack">
+      <div class="emblem"></div>
+      <div class="slogan"><b>Позитив</b>ное решение любого жилищного вопроса</div>
+      <div class="sub">Агентство недвижимости в&nbsp;Москве и&nbsp;Подмосковье с&nbsp;2010&nbsp;года</div>
+      <div class="phone">{{PHONE}}</div>
+    </div>
+  </body>
+</html>
