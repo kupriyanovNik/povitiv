@@ -20,6 +20,8 @@ cp -R public dist/public
 # скрипт синка нужен на сервере для ночного обновления
 mkdir -p dist/scripts dist/data
 cp scripts/sync-listings.mjs dist/scripts/
+# утилита бота MAX (запуск через deploy/max-bot.sh)
+cp scripts/max-bot.mjs dist/scripts/
 # данные кладём в data-seed/, а НЕ в data/: на сервере data/ живёт своей
 # жизнью (ночной синк), и распаковка нового артефакта не должна затирать
 # свежие данные старым снапшотом. Исключение — reviews-external.json,

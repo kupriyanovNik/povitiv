@@ -2,6 +2,7 @@ import { appendFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import nodemailer from "nodemailer";
+import { maxChatIds, maxSend } from "./max";
 
 /**
  * Лид-пайплайн: заявка = запись, а не сообщение.
@@ -26,7 +27,8 @@ export type LeadInput = {
   consentAt: string; // ISO-время отметки чекбокса согласия
 };
 
-export type DeliveryStatus = "ok" | "failed" | "skipped";
+// partial — канал с несколькими получателями (чаты MAX) дошёл не до всех
+export type DeliveryStatus = "ok" | "partial" | "failed" | "skipped";
 
 const LEADS_DIR =
   process.env.LEADS_DIR ?? path.join(process.cwd(), "data", "leads");
@@ -110,26 +112,18 @@ async function sendEmail(lead: LeadInput): Promise<DeliveryStatus> {
 }
 
 async function sendMax(lead: LeadInput): Promise<DeliveryStatus> {
-  const token = process.env.MAX_BOT_TOKEN;
-  const chatId = process.env.MAX_CHAT_ID;
-  if (!token || !chatId) return "skipped";
-  return withRetry(async () => {
-    const res = await fetch(
-      `https://platform-api2.max.ru/messages?chat_id=${encodeURIComponent(chatId)}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: formatLeadText(lead) }),
-        signal: AbortSignal.timeout(10_000),
-      },
-    );
-    if (!res.ok) {
-      throw new Error(`MAX API ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    }
-  });
+  const chatIds = maxChatIds();
+  if (!process.env.MAX_BOT_TOKEN || chatIds.length === 0) return "skipped";
+  const text = formatLeadText(lead, true);
+  // повтор у каждого чата свой: иначе сбой в одном чате дублировал бы
+  // заявку в тех, куда она уже дошла
+  const results = await Promise.all(
+    chatIds.map((chatId) =>
+      withRetry(() => maxSend(chatId, { text, format: "html" })),
+    ),
+  );
+  if (results.every((r) => r === "ok")) return "ok";
+  return results.includes("ok") ? "partial" : "failed";
 }
 
 async function sendTelegram(lead: LeadInput): Promise<DeliveryStatus> {

@@ -70,6 +70,70 @@ systemctl start positiv-vt-sync      # ручной прогон синка
 tail -f /var/lib/positiv-vt/leads/leads-*.jsonl  # журнал заявок
 ```
 
+## Бот MAX
+
+Бота создаёт заказчик на business.max.ru: нужна верифицированная организация,
+модерация до 48 часов. Логотип для бота (500×500): `deploy/max-bot-avatar.png`.
+После модерации токен лежит в настройках бота. Дальше
+всё делается на сервере после certbot: вебхук MAX принимает только https.
+
+**1. Сертификат для API MAX.** API ботов (`platform-api2.max.ru`) работает на
+сертификате корневого центра Минцифры. Node его не знает и без него к MAX не
+подключится. Сертификат подключается только сайту и синку через
+`NODE_EXTRA_CA_CERTS`. В системное хранилище (`/usr/local/share/ca-certificates`,
+`update-ca-certificates`) его **не** ставим: тогда ему доверяли бы все
+программы на сервере.
+
+```bash
+mkdir -p /etc/positiv-vt
+# официальный источник, страница https://www.gosuslugi.ru/crt
+curl -o /etc/positiv-vt/russian_trusted_root_ca.pem \
+  https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt
+# subject: CN=Russian Trusted Root CA, O=The Ministry of Digital Development and Communications
+openssl x509 -in /etc/positiv-vt/russian_trusted_root_ca.pem -noout -subject -enddate
+# это корень именно цепочки MAX: ожидается «Verify return code: 0 (ok)»
+openssl s_client -connect platform-api2.max.ru:443 -servername platform-api2.max.ru \
+  -CAfile /etc/positiv-vt/russian_trusted_root_ca.pem </dev/null 2>/dev/null | grep "Verify return code"
+```
+
+**2. Переменные в `/var/www/positiv-vt/.env`:**
+
+```bash
+NODE_EXTRA_CA_CERTS=/etc/positiv-vt/russian_trusted_root_ca.pem
+MAX_BOT_TOKEN=<токен из настроек бота>
+```
+
+Затем `/var/www/positiv-vt/deploy/max-bot.sh secret`: вставить выданные
+`MAX_WEBHOOK_SECRET` и `MAX_CONNECT_CODE` в тот же `.env` и выполнить
+`systemctl restart positiv-vt`.
+
+**3. Проверка и вебхук.** Ручные команды бота идут через обёртку
+`deploy/max-bot.sh`: она передаёт Node путь к сертификату из `.env`, через
+`--env-file` Node его не применяет.
+
+```bash
+cd /var/www/positiv-vt
+deploy/max-bot.sh check     # «токен работает» и ссылка подключения сотрудника
+deploy/max-bot.sh webhook   # события бота -> https://positiv-vt.ru/api/max/webhook
+```
+
+**4. Подключение получателя.** Ссылку подключения из `check` отправить
+Татьяне Викторовне. Она открывает её в MAX и нажимает «Начать», бот отвечает
+кодом чата. Тот же код виден в логе: `journalctl -u positiv-vt | grep "\[max\]"`.
+Код вписать в `MAX_CHAT_ID`, несколько чатов через запятую, и сделать
+`systemctl restart positiv-vt`. Вариант для нескольких человек: создать в MAX
+групповой чат и добавить в него бота, он сам пришлёт в чат его код.
+
+```bash
+deploy/max-bot.sh test      # проверочное сообщение во все чаты из MAX_CHAT_ID
+```
+
+Последняя проверка: заявка с формы на сайте. В журнале
+`/var/lib/positiv-vt/leads/` у неё должна быть строка доставки с `"max":"ok"`.
+Чтобы отключить чат, уберите его код из `MAX_CHAT_ID` и перезапустите сайт.
+Ссылка подключения сама никого не подключает: заявки получают только чаты
+из `MAX_CHAT_ID`.
+
 ## Обновление версии сайта
 
 Повторить шаги 2-3 (build-artifact → scp → tar -xzf → сид данных) и

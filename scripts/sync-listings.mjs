@@ -141,20 +141,29 @@ async function alertEmail(subject, text) {
 
 async function alertMax(text) {
   const token = process.env.MAX_BOT_TOKEN;
-  const chatId = process.env.MAX_CHAT_ID;
-  if (!token || !chatId) return "max: skipped";
-  return tryChannel("max", async () => {
-    const res = await fetch(
-      `https://platform-api2.max.ru/messages?chat_id=${encodeURIComponent(chatId)}`,
-      {
-        method: "POST",
-        headers: { Authorization: token, "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-        signal: AbortSignal.timeout(10_000),
-      },
+  // MAX_CHAT_ID: один или несколько чатов через запятую (как в lib/max.ts)
+  const chatIds = (process.env.MAX_CHAT_ID ?? "")
+    .split(/[\s,]+/)
+    .filter((id) => /^-?\d+$/.test(id));
+  if (!token || !chatIds.length) return "max: skipped";
+  const results = [];
+  for (const chatId of chatIds) {
+    results.push(
+      await tryChannel(`max ${chatId}`, async () => {
+        const res = await fetch(
+          `https://platform-api2.max.ru/messages?chat_id=${encodeURIComponent(chatId)}`,
+          {
+            method: "POST",
+            headers: { Authorization: token, "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+            signal: AbortSignal.timeout(10_000),
+          },
+        );
+        if (!res.ok) throw new Error(`MAX API ${res.status}`);
+      }),
     );
-    if (!res.ok) throw new Error(`MAX API ${res.status}`);
-  });
+  }
+  return results.join(", ");
 }
 
 async function alertTelegram(text) {

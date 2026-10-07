@@ -31,6 +31,7 @@ export const phonesInline = phones.map((p) => p.display).join(" или ");
 
 export const site = {
   name: "Позитив ВТ",
+  url: "https://positiv-vt.ru",
   welcome: "Ждём Вас и Ваших близких на территории Позитива",
   address: "Москва, ул. Палиха, 14/33, стр. 2, офис 26",
   addressShort: "ул. Палиха, 14/33, стр. 2",
