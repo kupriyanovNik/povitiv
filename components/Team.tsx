@@ -1,341 +1,94 @@
-"use client";
-
-import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { animate, motion, useMotionValue, useReducedMotion } from "motion/react";
-import {
-  CaretLeft,
-  CaretRight,
-  SealCheck,
-  Star,
-} from "@phosphor-icons/react/dist/ssr";
 import type { Agent } from "@/lib/types";
-import { plural } from "@/lib/format";
+import { team } from "@/lib/site";
 import { Reveal } from "./Reveal";
-import { useAutoplayProgress } from "./useAutoplayProgress";
 
-const ROLES: Record<string, string> = {
-  "Ольга Инкулец": "Генеральный директор, риелтор",
-  "Татьяна Чистякова": "Руководитель агентства, риелтор",
-  "Наталья Гречишникова": "Риелтор, вторичное жильё",
-  "Екатерина Клименко": "Риелтор, вторичное и загородное жильё",
-  "Ирина Лисовская": "Риелтор",
-  "Надежда Аккуратнова": "Риелтор",
-  "Вера Тарасенкова": "Риелтор",
-};
+type Member = { name: string; role: string; avatar: string | null };
 
-// самые активные — первыми
-const ORDER = [
-  "Ольга Инкулец",
-  "Наталья Гречишникова",
-  "Татьяна Чистякова",
-  "Екатерина Клименко",
-  "Ирина Лисовская",
-  "Надежда Аккуратнова",
-  "Вера Тарасенкова",
-];
-
-const GAP = 24;
-const AUTOPLAY_S = 4;
-
-function initials(name: string): string {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("");
-}
-
-function yearsOn(registeredAt: string): string | null {
-  const t = new Date(registeredAt).getTime();
-  if (!Number.isFinite(t)) return null;
-  const years = Math.floor((Date.now() - t) / (365.25 * 24 * 3600e3));
-  if (years < 1) return "Первый год на Домклик";
-  return `${years} ${plural(years, "год", "года", "лет")} на Домклик`;
-}
-
-function dealsLabel(n: number): string {
-  return `${n} ${plural(n, "сделка", "сделки", "сделок")} за 12 месяцев`;
-}
-
-function AgentSlide({
-  agent,
-  active,
-  onSelect,
-}: {
-  agent: Agent;
-  active: boolean;
-  onSelect: () => void;
-}) {
+function MemberCard({ member }: { member: Member }) {
   return (
-    <motion.div
-      animate={{ scale: active ? 1 : 0.88, opacity: active ? 1 : 0.45 }}
-      transition={{ type: "spring", duration: 0.55, bounce: 0 }}
-      className="relative aspect-[3/4] shrink-0 overflow-hidden rounded-2xl bg-wine-ink"
-      style={{ width: "var(--team-card-w)" }}
-    >
-      {agent.avatar ? (
+    <figure className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-wine-ink">
+      {member.avatar ? (
         <Image
-          src={agent.avatar}
-          alt={agent.name}
+          src={member.avatar}
+          alt={member.name}
           fill
-          sizes="420px"
-          draggable={false}
-          className="pointer-events-none select-none object-cover object-top"
+          sizes="(min-width: 768px) 33vw, 80vw"
+          className="object-cover object-top"
         />
       ) : (
+        // фото ещё не прислали: фирменная эмблема вместо пустого силуэта
         <div
           aria-hidden
-          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-wine to-wine-ink"
+          className="absolute inset-0 bg-gradient-to-br from-wine to-wine-ink"
         >
-          <span className="font-display -mt-16 text-[120px] font-bold text-white/15">
-            {initials(agent.name)}
-          </span>
+          <span
+            className="absolute inset-x-[14%] top-[18%] block aspect-[335/169] bg-white/12"
+            style={{
+              maskImage: "url(/brand/emblem.svg)",
+              maskSize: "contain",
+              maskRepeat: "no-repeat",
+              WebkitMaskImage: "url(/brand/emblem.svg)",
+              WebkitMaskSize: "contain",
+              WebkitMaskRepeat: "no-repeat",
+            }}
+          />
         </div>
       )}
 
-      {/* скрим и информация поверх фото */}
+      {/* скрим и подпись поверх фото */}
       <div
         aria-hidden
-        className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-ink/90 via-ink/45 to-transparent"
+        className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-ink/85 via-ink/40 to-transparent"
       />
-      <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-6">
-        <p className="flex items-center gap-1.5 text-xl font-bold tracking-[-0.01em]">
-          {agent.name}
-          {agent.verified && (
-            <SealCheck
-              size={18}
-              weight="fill"
-              className="shrink-0 text-white/90"
-              aria-label="Профиль подтверждён"
-            />
-          )}
+      <figcaption className="absolute inset-x-0 bottom-0 p-5 text-white lg:p-6">
+        <p className="text-lg font-bold tracking-[-0.01em] lg:text-xl">
+          {member.name}
         </p>
-        <p className="mt-0.5 text-sm text-white/75">
-          {ROLES[agent.name] ?? "Риелтор"}
-        </p>
-        <div className="mt-3 space-y-1 border-t border-white/20 pt-3 text-sm">
-          {yearsOn(agent.registeredAt) && (
-            <p className="tnum text-white/85">{yearsOn(agent.registeredAt)}</p>
-          )}
-          {agent.deals12m > 0 && (
-            <p className="tnum font-semibold">{dealsLabel(agent.deals12m)}</p>
-          )}
-          {agent.ratingVotes > 0 && agent.ratingAvg != null && (
-            <p className="tnum flex items-center gap-1.5 font-semibold">
-              <Star size={13} weight="fill" className="text-gold" />
-              {agent.ratingAvg.toFixed(1).replace(".", ",")} по оценкам сделок
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* боковые карточки кликабельны целиком */}
-      {!active && (
-        <button
-          type="button"
-          onClick={onSelect}
-          aria-label={`Показать: ${agent.name}`}
-          className="absolute inset-0 z-10 cursor-pointer"
-        />
-      )}
-    </motion.div>
+        <p className="mt-0.5 text-sm text-white/80">{member.role}</p>
+      </figcaption>
+    </figure>
   );
 }
 
 export function Team({ agents }: { agents: Agent[] }) {
-  const reduce = useReducedMotion();
-  // новые специалисты из синка, которых нет в ORDER, встают в конец, а не в начало
-  const orderOf = (name: string) => {
-    const i = ORDER.indexOf(name);
-    return i === -1 ? ORDER.length : i;
-  };
-  const sorted = [...agents].sort((a, b) => orderOf(a.name) - orderOf(b.name));
-  const count = sorted.length;
-
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const [viewportW, setViewportW] = useState(0);
-  // бесконечная карусель: лента отрисована в три копии, index —
-  // «виртуальная» позиция, живущая в средней копии [count, 2*count).
-  // Слева от первого специалиста всегда виден последний, и наоборот.
-  const [index, setIndex] = useState(count);
-  const x = useMotionValue(0);
-
-  // ширина карточки: до 400px, на мобильных с «выглядыванием» соседей
-  const cardW = Math.min(400, Math.max(240, viewportW - 88));
-  const step = cardW + GAP;
-  const centerOffset = (viewportW - cardW) / 2;
-  const xFor = useCallback(
-    (i: number) => centerOffset - i * step,
-    [centerOffset, step],
-  );
-
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setViewportW(el.clientWidth));
-    setViewportW(el.clientWidth);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  const goTo = useCallback(
-    (next: number, velocity = 0) => {
-      // цель возвращаем в среднюю копию, сдвинув текущую позицию на целую
-      // ленту: копии одинаковы, поэтому телепорт на ±count*step невидим
-      let target = next;
-      let shift = 0;
-      while (target < count) {
-        target += count;
-        shift += 1;
-      }
-      while (target >= 2 * count) {
-        target -= count;
-        shift -= 1;
-      }
-      if (shift !== 0) x.set(x.get() - shift * count * step);
-      setIndex(target);
-      animate(x, xFor(target), {
-        type: "spring",
-        duration: reduce ? 0 : 0.55,
-        bounce: 0,
-        velocity,
-      });
-    },
-    [count, step, x, xFor, reduce],
-  );
-
-  // держим активный слайд по центру при ресайзе
-  useEffect(() => {
-    x.set(xFor(index));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewportW]);
-
-  // автопрокрутка: 4 секунды на специалиста, индикатор-прогресс;
-  // без модуло — нормализация в goTo делает движение бесшовным по кругу
-  const { progress, setPaused } = useAutoplayProgress({
-    seconds: AUTOPLAY_S,
-    targetRef: viewportRef,
-    advance: () => goTo(index + 1),
-    resetKey: index,
-  });
-
-  // логический индекс для точек-индикаторов
-  const logical = count ? ((index % count) + count) % count : 0;
-  // клик по точке — кратчайшей дугой (через край, если так ближе)
-  const goToLogical = useCallback(
-    (i: number) => {
-      let d = (i - logical) % count;
-      if (d > count / 2) d -= count;
-      if (d < -count / 2) d += count;
-      goTo(index + d);
-    },
-    [logical, count, index, goTo],
-  );
-
-  // три копии ленты: средняя — рабочая, крайние дают соседей у краёв
-  const extended = [...sorted, ...sorted, ...sorted];
+  // состав и должности фиксированы (lib/site.ts), из синка Домклик
+  // берутся только фото: специалист без профиля остаётся на сайте
+  const members: Member[] = team.map((m) => ({
+    ...m,
+    avatar: agents.find((a) => a.name === m.name)?.avatar ?? null,
+  }));
 
   return (
-    <section id="komanda" className="scroll-mt-20 overflow-hidden py-20 lg:py-28">
+    <section id="komanda" className="scroll-mt-20 py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <div className="flex items-end justify-between gap-6">
-            <div>
-              <h2 className="font-display max-w-[24ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
-                Специалисты, которые ведут сделку
-              </h2>
-              <p className="mt-4 max-w-[54ch] text-base leading-relaxed text-ink-soft sm:text-lg">
-                Вся команда из семи риелторов. На каждом этапе у клиента есть
-                конкретный человек, который отвечает за процесс. Показатели
-                видны в открытых профилях на Домклик.
-              </p>
-            </div>
-            <div className="hidden shrink-0 gap-2 sm:flex">
-              <button
-                type="button"
-                onClick={() => goTo(index - 1)}
-                aria-label="Предыдущий специалист"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-surface text-ink transition-colors hover:border-ink/35"
-              >
-                <CaretLeft size={17} weight="bold" />
-              </button>
-              <button
-                type="button"
-                onClick={() => goTo(index + 1)}
-                aria-label="Следующий специалист"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-surface text-ink transition-colors hover:border-ink/35"
-              >
-                <CaretRight size={17} weight="bold" />
-              </button>
-            </div>
-          </div>
+          <h2 className="font-display max-w-[24ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
+            Специалисты, которые ведут сделку
+          </h2>
+          <p className="mt-4 max-w-[54ch] text-base leading-relaxed text-ink-soft sm:text-lg">
+            Профессиональная команда риелторов. На каждом этапе у клиента есть
+            конкретный человек, который отвечает за процесс.
+          </p>
         </Reveal>
-      </div>
 
-      <div
-        ref={viewportRef}
-        role="group"
-        aria-roledescription="карусель"
-        aria-label="Команда агентства"
-        className="mt-10 overflow-hidden lg:mt-12"
-        style={{ "--team-card-w": `${cardW}px` } as React.CSSProperties}
-        onPointerEnter={() => setPaused(true)}
-        onPointerLeave={() => setPaused(false)}
-      >
-        <motion.div
-          className="flex cursor-grab items-center active:cursor-grabbing"
-          style={{ x, gap: GAP }}
-          drag="x"
-          dragConstraints={{ left: xFor(extended.length - 1), right: xFor(0) }}
-          dragElastic={0.12}
-          dragMomentum={false}
-          onDragStart={() => setPaused(true)}
-          onDragEnd={(_, info) => {
-            const projected = centerOffset - x.get() - info.velocity.x * 0.2;
-            goTo(Math.round(projected / step), info.velocity.x);
-            setPaused(false);
-          }}
-        >
-          {extended.map((agent, i) => (
-            <AgentSlide
-              key={`${agent.casId}-${Math.floor(i / count)}`}
-              agent={agent}
-              active={i === index}
-              onSelect={() => goTo(i)}
-            />
-          ))}
-        </motion.div>
-
-        <div
-          className="mt-6 flex justify-center gap-1.5"
-          role="group"
-          aria-label="Специалисты"
-        >
-          {sorted.map((agent, i) => (
-            <button
-              key={agent.casId}
-              type="button"
-              aria-current={logical === i || undefined}
-              aria-label={agent.name}
-              onClick={() => goToLogical(i)}
-              className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
-                logical === i
-                  ? "w-8 bg-ink/15"
-                  : "w-1.5 bg-ink/20 hover:bg-ink/40"
-              }`}
-            >
-              {/* активный индикатор заполняется за время автопрокрутки */}
-              {logical === i && (
-                <motion.span
-                  aria-hidden
-                  style={{ scaleX: reduce ? 1 : progress }}
-                  className="absolute inset-0 origin-left rounded-full bg-wine"
-                />
-              )}
-            </button>
-          ))}
-        </div>
+        {/* мобильные: лента с прокруткой и выглядывающей соседней карточкой;
+            от md три карточки в ряд */}
+        <Reveal y={28} delay={0.08}>
+          <ul
+            aria-label="Команда агентства"
+            className="-mx-4 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-2 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0 lg:mt-12 [&::-webkit-scrollbar]:hidden"
+          >
+            {members.map((m) => (
+              <li
+                key={m.name}
+                className="w-[78%] max-w-[340px] shrink-0 snap-start md:w-auto md:max-w-none"
+              >
+                <MemberCard member={m} />
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
     </section>
   );

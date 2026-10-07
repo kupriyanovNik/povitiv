@@ -1,6 +1,6 @@
 import { getAgency, getListings } from "@/lib/data";
 import { FAQ_ITEMS } from "@/lib/faq";
-import { site } from "@/lib/site";
+import { phones, site } from "@/lib/site";
 
 /**
  * Микроразметка Schema.org для Яндекса и поисковиков:
@@ -25,7 +25,7 @@ export async function JsonLd() {
     name: "Агентство недвижимости «Позитив ВТ»",
     legalName: site.legal.name,
     url: "https://positiv-vt.ru",
-    telephone: "+74956092864",
+    telephone: phones.map((p) => p.e164),
     foundingDate: "2010-04-12",
     address: {
       "@type": "PostalAddress",
@@ -35,10 +35,10 @@ export async function JsonLd() {
     },
     geo: {
       "@type": "GeoCoordinates",
-      latitude: 55.784417,
-      longitude: 37.600359,
+      latitude: site.geo.lat,
+      longitude: site.geo.lon,
     },
-    openingHours: "Mo-Fr 10:00-18:00",
+    openingHours: "Mo-Th 10:00-18:00",
     areaServed: ["Москва", "Московская область"],
     // рейтинг только когда он есть в данных: null сделал бы разметку невалидной
     ...(domclickRating != null && domclickReviewVotes > 0

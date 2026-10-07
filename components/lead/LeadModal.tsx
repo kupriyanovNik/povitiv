@@ -8,7 +8,7 @@ import {
   useReducedMotion,
 } from "motion/react";
 import { CheckCircle, X } from "@phosphor-icons/react/dist/ssr";
-import { site, type LeadTask } from "@/lib/site";
+import { phones, type LeadTask } from "@/lib/site";
 import { trapTabKey } from "../focusTrap";
 import { ConsentCheckbox } from "./ConsentCheckbox";
 import { normalizePhoneInput } from "./phone";
@@ -313,12 +313,17 @@ function ModalContent({
               </button>
               <p className="text-xs leading-relaxed text-ink-soft">
                 Или позвоните:{" "}
-                <a
-                  href={site.phoneHref}
-                  className="tnum font-medium text-ink underline"
-                >
-                  {site.phone}
-                </a>
+                {phones.map((p, i) => (
+                  <span key={p.href}>
+                    {i > 0 && " или "}
+                    <a
+                      href={p.href}
+                      className="tnum font-medium whitespace-nowrap text-ink underline"
+                    >
+                      {p.display}
+                    </a>
+                  </span>
+                ))}
               </p>
             </form>
           </motion.div>

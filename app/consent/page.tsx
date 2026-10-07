@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { site } from "@/lib/site";
+import { phonesInline, site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Согласие на обработку персональных данных: Позитив ВТ",
@@ -37,7 +37,7 @@ export default function ConsentPage() {
         </p>
         <p>
           Согласие действует до момента его отзыва. Отозвать согласие можно по
-          телефону {site.phone} или письменным обращением по адресу офиса.
+          телефонам {phonesInline} либо письменным обращением по адресу офиса.
         </p>
       </div>
     </main>

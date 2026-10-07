@@ -39,14 +39,10 @@ function CountUp({ stat, start }: { stat: Stat; start: boolean }) {
 }
 
 export function TrustBar({
-  dealsCount,
   rating,
-  agentsCount,
   cianYears,
 }: {
-  dealsCount: number;
   rating: number | null;
-  agentsCount: number;
   cianYears: number;
 }) {
   // отсчёт стартует, когда блок цифр видen наполовину, а не когда его
@@ -57,9 +53,9 @@ export function TrustBar({
   const listRef = useRef<HTMLDListElement>(null);
   const inView = useInView(listRef, { once: true, amount: 0.5 });
 
-  // все цифры либо константы, либо ночной синк (Домклик), либо вычисляются
-  // от даты регистрации на ЦИАН — сноска «по данным на такой-то месяц»
-  // не нужна: данные не сталеют
+  // все цифры либо константы, либо ночной синк (рейтинг Домклик), либо
+  // вычисляются от даты регистрации на ЦИАН — сноска «по данным на
+  // такой-то месяц» не нужна: данные не сталеют
   const yearsWord = plural(cianYears, "год", "года", "лет");
   const stats: Stat[] = [
     { value: "С 2010", label: "года на рынке недвижимости Москвы и области" },
@@ -68,11 +64,6 @@ export function TrustBar({
       numeric: cianYears,
       suffix: ` ${yearsWord}`,
       label: "профиль на ЦИАН, статус «Суперагент»",
-    },
-    {
-      value: String(dealsCount),
-      numeric: dealsCount,
-      label: `${plural(dealsCount, "сделка", "сделки", "сделок")} за последние 12 месяцев`,
     },
     // рейтинг из синка может пропасть: без значения ячейку не показываем
     ...(rating != null
@@ -83,10 +74,12 @@ export function TrustBar({
           },
         ]
       : []),
+    // формулировка клиента (04.10.2026) вместо числа сделок и размера команды
     {
-      value: String(agentsCount),
-      numeric: agentsCount,
-      label: `${plural(agentsCount, "специалист", "специалиста", "специалистов")} в команде агентства`,
+      value: "20+ лет",
+      numeric: 20,
+      suffix: "+ лет",
+      label: "опыт профессиональной команды риелторов",
     },
   ];
 
@@ -95,7 +88,9 @@ export function TrustBar({
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <dl
           ref={listRef}
-          className="grid grid-cols-2 gap-x-6 gap-y-8 py-10 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-10 lg:py-12"
+          className={`grid grid-cols-2 gap-x-6 gap-y-8 py-10 lg:gap-x-10 lg:py-12 ${
+            stats.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"
+          }`}
         >
           {stats.map((s) => (
             <div

@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { List, Phone, X } from "@phosphor-icons/react/dist/ssr";
-import { site } from "@/lib/site";
+import { List, X } from "@phosphor-icons/react/dist/ssr";
+import { phones } from "@/lib/site";
 import { trapTabKey } from "./focusTrap";
 import { useLead } from "./lead/LeadContext";
+import { Logo } from "./Logo";
+import { PhoneIcon } from "./PhoneIcon";
 
 const NAV = [
   { href: "#uslugi", label: "Услуги" },
@@ -62,13 +64,12 @@ export function Header() {
         }`}
       >
         <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-8 px-4 sm:px-6 lg:h-[72px] lg:px-8">
-          <a href="#" className="flex shrink-0 flex-col leading-tight">
-            <span className="font-display text-[19px] font-extrabold leading-none">
-              Позитив ВТ
-            </span>
-            <span className="hidden text-[11px] font-medium text-ink-soft sm:block">
-              агентство недвижимости
-            </span>
+          <a
+            href="#"
+            aria-label="Позитив ВТ, агентство недвижимости: в начало страницы"
+            className="shrink-0 text-wine"
+          >
+            <Logo />
           </a>
 
           <nav className="hidden flex-1 items-center justify-center gap-7 lg:flex">
@@ -83,14 +84,21 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3 lg:ml-0">
-            <a
-              href={site.phoneHref}
-              className="tnum hidden items-center gap-2 text-sm font-semibold text-ink transition-colors hover:text-wine md:flex"
-            >
-              <Phone size={16} weight="bold" className="text-wine" />
-              {site.phone}
-            </a>
+          <div className="ml-auto flex items-center gap-5 lg:ml-0">
+            {/* два номера столбиком: высота шапки вмещает обе строки */}
+            <div className="hidden flex-col items-end md:flex">
+              {phones.map((p) => (
+                <a
+                  key={p.href}
+                  href={p.href}
+                  aria-label={`${p.label}: ${p.display}`}
+                  className="tnum flex items-center gap-2 text-sm font-semibold leading-[22px] text-ink transition-colors hover:text-wine"
+                >
+                  <PhoneIcon kind={p.kind} size={14} className="text-wine" />
+                  {p.display}
+                </a>
+              ))}
+            </div>
             <button
               onClick={() => openLead("Продать")}
               className="hidden h-10 items-center rounded-full bg-wine px-4 text-sm font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98] sm:inline-flex"
@@ -132,7 +140,9 @@ export function Header() {
               transition={{ type: "spring", duration: 0.4, bounce: 0 }}
             >
               <div className="flex items-center justify-between">
-                <span className="font-display text-[19px] font-extrabold">Позитив ВТ</span>
+                <span className="text-wine">
+                  <Logo />
+                </span>
                 <button
                   onClick={() => setMenuOpen(false)}
                   aria-label="Закрыть меню"
@@ -163,13 +173,23 @@ export function Header() {
                 >
                   Оценить объект
                 </button>
-                <a
-                  href={site.phoneHref}
-                  className="tnum flex h-12 items-center justify-center gap-2 rounded-xl border border-line font-semibold"
-                >
-                  <Phone size={18} weight="bold" className="text-wine" />
-                  {site.phone}
-                </a>
+                <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
+                  {phones.map((p) => (
+                    <a
+                      key={p.href}
+                      href={p.href}
+                      className="flex h-14 flex-col items-center justify-center rounded-xl border border-line leading-tight transition-colors active:bg-paper"
+                    >
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-ink-soft">
+                        <PhoneIcon kind={p.kind} size={13} className="text-wine" />
+                        {p.label}
+                      </span>
+                      <span className="tnum mt-0.5 text-[15px] font-semibold">
+                        {p.display}
+                      </span>
+                    </a>
+                  ))}
+                </div>
               </div>
             </motion.div>
           </motion.div>

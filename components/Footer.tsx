@@ -1,44 +1,57 @@
-import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
-import { site } from "@/lib/site";
+import { ArrowUpRight, Clock, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { phones, site } from "@/lib/site";
+import { Logo } from "./Logo";
+import { OfficeMap } from "./OfficeMap";
+import { PhoneIcon } from "./PhoneIcon";
 
-export function Footer() {
+export function Footer({ mapApiKey }: { mapApiKey?: string }) {
   return (
     <footer id="kontakty" className="scroll-mt-20 border-t border-line bg-surface">
       <div className="mx-auto max-w-[1280px] px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-        <div className="grid gap-10 lg:grid-cols-[5fr_4fr_3fr]">
+        <div className="grid gap-10 lg:grid-cols-[5fr_7fr] lg:gap-14">
           <div>
-            <p className="font-display text-xl font-extrabold">
-              Позитив ВТ
+            <div className="text-wine">
+              <Logo size="lg" />
+            </div>
+            <p className="font-display mt-7 max-w-[24ch] text-2xl font-semibold leading-[1.25] text-balance sm:text-[28px]">
+              {site.welcome}
             </p>
-            <p className="mt-1 text-sm text-ink-soft">{site.tagline}</p>
-            <address className="mt-6 space-y-2 not-italic">
-              <p className="font-semibold">{site.address}</p>
-              <p className="text-sm text-ink-soft">{site.workHours}</p>
-              <p>
-                <a
-                  href={site.phoneHref}
-                  className="tnum text-lg font-bold transition-colors hover:text-wine"
-                >
-                  {site.phone}
-                </a>
+
+            <address className="mt-8 space-y-4 not-italic">
+              <p className="flex gap-3">
+                <MapPin size={20} weight="bold" className="mt-0.5 shrink-0 text-wine" />
+                <span className="font-semibold">{site.address}</span>
               </p>
+              <p className="flex gap-3">
+                <Clock size={20} weight="bold" className="mt-0.5 shrink-0 text-wine" />
+                <span className="tnum">{site.workHours}</span>
+              </p>
+              <ul className="space-y-2 pt-1">
+                {phones.map((p) => (
+                  <li key={p.href} className="flex items-center gap-3">
+                    <PhoneIcon kind={p.kind} size={20} className="shrink-0 text-wine" />
+                    <a
+                      href={p.href}
+                      className="tnum text-lg font-bold transition-colors hover:text-wine"
+                    >
+                      {p.display}
+                    </a>
+                    <span className="text-sm text-ink-soft">{p.label}</span>
+                  </li>
+                ))}
+              </ul>
             </address>
-            <a
-              href={site.routeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-flex h-10 items-center gap-1.5 rounded-full border border-ink/15 px-4 text-sm font-semibold transition-colors hover:border-ink/35"
-            >
-              Построить маршрут
-              <ArrowUpRight size={14} weight="bold" />
-            </a>
           </div>
 
+          <OfficeMap apiKey={mapApiKey} />
+        </div>
+
+        <div className="mt-14 grid gap-10 border-t border-line pt-10 sm:grid-cols-2 lg:grid-cols-[5fr_3fr_4fr] lg:gap-14">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">
               Разделы
             </p>
-            <nav className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 text-[15px]">
+            <nav className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 text-[15px] sm:max-w-[360px]">
               <a href="#uslugi" className="font-medium transition-colors hover:text-wine">
                 Услуги
               </a>
@@ -58,7 +71,10 @@ export function Footer() {
                 Оставить заявку
               </a>
             </nav>
-            <p className="mt-8 text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">
+          </div>
+
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">
               Мы на площадках
             </p>
             <nav className="mt-4 flex gap-6 text-[15px]">
@@ -93,7 +109,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-line pt-6 text-[13px] text-ink-soft sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Агентство недвижимости «Позитив ВТ»</p>
-          <nav className="flex gap-5">
+          <nav className="flex flex-wrap gap-x-5 gap-y-2">
             <a href="/privacy" className="transition-colors hover:text-ink">
               Политика конфиденциальности
             </a>

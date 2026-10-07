@@ -95,12 +95,15 @@ export function Hero({ listings }: { listings: Listing[] }) {
         <div>
           {/* география — в подзаголовке, «с 2010 года» — в TrustBar ниже:
               строка-кикер над заголовком дублировала обе и выглядела шаблонно */}
+          {/* слоган клиента со старого сайта (замечания 02.10.2026, п. 3):
+              «ПОЗИТИВ» — игра слов с названием агентства. Заглавные даёт
+              CSS, в тексте «Позитивное»: скринридер читает слово, а не буквы */}
           <motion.h1
             {...enter(0)}
-            className="font-display max-w-[14ch] text-[40px] font-bold leading-[1.07] sm:text-5xl sm:leading-[1.07] lg:text-[64px]"
+            className="font-display max-w-[17ch] text-[38px] font-bold leading-[1.08] text-balance sm:text-5xl sm:leading-[1.07] lg:text-[52px] xl:text-[60px]"
           >
-            Недвижимость: <span className="text-wine">спокойно</span> и
-            под&nbsp;контролем
+            <span className="uppercase text-wine">Позитив</span>ное решение
+            любого жилищного вопроса
           </motion.h1>
           {/* max-w живёт на обёртке с типографикой абзаца, поэтому кнопка
               и текст совпадают по ширине на любом брейкпоинте (ch зависит

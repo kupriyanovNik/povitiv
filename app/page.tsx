@@ -19,6 +19,7 @@ import { Reviews } from "@/components/Reviews";
 import { Safety } from "@/components/Safety";
 import { LeadForm } from "@/components/LeadForm";
 import { FAQ } from "@/components/FAQ";
+import { BankPartners } from "@/components/BankPartners";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
 import { JsonLd } from "@/components/JsonLd";
@@ -72,14 +73,7 @@ export default async function Home() {
       <main className="flex-1">
         <Hero listings={heroListings} />
         <TrustBar
-          // сумма сделок по карточкам команды: та же методика, что в секции
-          // «Команда» — иначе TrustBar противоречил цифрам агентов (20 vs 53)
-          dealsCount={
-            agency.agents.reduce((s, a) => s + a.deals12m, 0) ||
-            agency.agency.dealsCount12m
-          }
           rating={agency.agency.domclickRating}
-          agentsCount={agency.agents.length}
           // страница рендерится на каждый запрос: стаж сам вырастет в апреле
           cianYears={fullYearsSince(site.cianSince)}
         />
@@ -97,9 +91,13 @@ export default async function Home() {
         <Safety />
         <LeadForm />
         <FAQ />
+        {/* банки-партнёры перед финальным призывом: рядом с вопросами про ипотеку */}
+        <BankPartners />
         <FinalCTA />
       </main>
-      <Footer />
+      {/* ключ JS API Яндекс Карт читается при каждом запросе (страница
+          динамическая): заказчик пришлёт ключ — кладём в .env, без пересборки */}
+      <Footer mapApiKey={process.env.YANDEX_MAPS_API_KEY || undefined} />
       <MobileBar />
       {/* отступ под мобильную панель */}
       <div className="h-[72px] sm:hidden" aria-hidden />
