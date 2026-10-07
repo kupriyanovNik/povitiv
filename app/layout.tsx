@@ -8,6 +8,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://positiv-vt.ru"),
   alternates: { canonical: "/" },
+  // демо на Vercel не индексируется (см. app/robots.ts), прод — да
+  robots: process.env.VERCEL ? { index: false, follow: false } : undefined,
   // запрос в начале title: Яндекс сильнее учитывает его начало
   title: "Агентство недвижимости в Москве и Подмосковье — «Позитив ВТ»",
   description:

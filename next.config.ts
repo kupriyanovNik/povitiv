@@ -11,6 +11,17 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/*": ["./data/*.json"],
   },
+  // демо на Vercel закрыто от индексации и заголовком на всех ответах,
+  // включая фото объектов: метатег есть только у страниц
+  async headers() {
+    if (!process.env.VERCEL) return [];
+    return [
+      {
+        source: "/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
