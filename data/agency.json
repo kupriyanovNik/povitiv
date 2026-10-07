@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-24",
+  "updatedAt": "2026-10-07",
   "sources": {
     "domclick": "https://agencies.domclick.ru/agency/269616",
     "cian": "https://www.cian.ru/company/211681"
@@ -9,9 +9,9 @@
     "nameLegal": "ООО \"АГЕНТСТВО \"ПОЗИТИВ ВТ\"",
     "inn": "7707723617",
     "ogrn": "1107746276769",
-    "dealsCount12m": 20,
+    "dealsCount12m": 29,
     "domclickRating": 5,
-    "domclickReviewVotes": 7,
+    "domclickReviewVotes": 8,
     "domclickSince": "2017-10-18",
     "cianYears": "14 лет 4 месяца",
     "cianStatus": [
@@ -31,19 +31,9 @@
       "verified": true,
       "avatar": "/team/olga-inkulets.png",
       "registeredAt": "2017-05-12",
-      "deals12m": 15,
+      "deals12m": 14,
       "ratingAvg": 5,
       "ratingVotes": 1
-    },
-    {
-      "name": "Екатерина Клименко",
-      "casId": 1144449,
-      "verified": true,
-      "avatar": "/team/ekaterina-klimenko.png",
-      "registeredAt": "2017-10-26",
-      "deals12m": 6,
-      "ratingAvg": 5,
-      "ratingVotes": 2
     },
     {
       "name": "Наталья Гречишникова",
@@ -64,39 +54,18 @@
       "deals12m": 6,
       "ratingAvg": 0,
       "ratingVotes": 0
-    },
-    {
-      "name": "Ирина Лисовская",
-      "casId": 1148165,
-      "verified": false,
-      "avatar": null,
-      "registeredAt": "2017-10-26",
-      "deals12m": 8,
-      "ratingAvg": 5,
-      "ratingVotes": 1
-    },
-    {
-      "name": "Надежда Аккуратнова",
-      "casId": 1148211,
-      "verified": false,
-      "avatar": null,
-      "registeredAt": "2017-10-26",
-      "deals12m": 4,
-      "ratingAvg": 5,
-      "ratingVotes": 1
-    },
-    {
-      "name": "Вера Тарасенкова",
-      "casId": 1148227,
-      "verified": false,
-      "avatar": null,
-      "registeredAt": "2017-10-26",
-      "deals12m": 0,
-      "ratingAvg": 0,
-      "ratingVotes": 0
     }
   ],
   "reviews": [
+    {
+      "id": 1111273,
+      "rating": 5,
+      "text": "Выражаем огромную благодарность за проделанную работу, профессионализм, терпение, внимательность, порядочность, отзывчивость. Риелтор - высокого уровня. \nОказала нашей семье огромную помощь, работа сделана с душой. Желаем удачи, здоровья, хороших клиентов. Очень всем рекомендуем.",
+      "createdAt": "2026-08-25",
+      "dealAt": "2026-08-13",
+      "agent": "Клименко Екатерина Владимировна",
+      "author": "Лариса К."
+    },
     {
       "id": 522897,
       "rating": 5,
