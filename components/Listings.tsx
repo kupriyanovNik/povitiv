@@ -34,7 +34,7 @@ function FeaturedCard({
   onPhotosLoop?: () => boolean | void;
 }) {
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface">
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface">
       <div className="relative">
         <PhotoCarousel
           photos={listing.photos}
@@ -224,7 +224,9 @@ function Showcase({
           layoutId={featured.id}
           layout
           transition={morph}
-          className="h-full"
+          // карточка своей высоты (не тянется до колонки справа, иначе под
+          // текстом пустота) и липнет под шапкой, пока листается список
+          className="lg:sticky lg:top-24"
         >
           <FeaturedCard listing={featured} onPhotosLoop={nextFeatured} />
         </motion.div>

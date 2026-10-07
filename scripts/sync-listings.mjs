@@ -523,6 +523,13 @@ async function fetchCianListings() {
   }
 }
 
+/** «Участок 9,14 га» от 100 соток, иначе «Участок 12 сот.» — как у Домклик */
+function plotTitle(sot) {
+  if (!sot) return "Участок";
+  const fmt = (n) => String(Number(n.toFixed(2))).replace(".", ",");
+  return sot >= 100 ? `Участок ${fmt(sot / 100)} га` : `Участок ${fmt(sot)} сот.`;
+}
+
 function parseCianCard(card) {
   const m = card.href.match(/\/(sale|rent)\/(flat|suburban)\/(\d+)/);
   if (!m) return null;
@@ -541,6 +548,11 @@ function parseCianCard(card) {
 
   // адрес: фрагменты между «|» после названия города
   const parts = text.split("|").map((s) => s.trim().replace(/,\s*$/, ""));
+  // в /suburban/ у ЦИАН лежат и дома, и участки: участок узнаём по
+  // первой строке карточки («Участок | 914 сот.»)
+  const isLand = isHouse && /^участок/i.test(parts[0] ?? "");
+  const plotSot =
+    Number((text.match(/([\d.,]+)\s*сот/) || [])[1]?.replace(",", ".")) || null;
   const addrStart = parts.findIndex((p) =>
     /^(Москва|Московская область)/.test(p),
   );
@@ -556,16 +568,19 @@ function parseCianCard(card) {
 
   let title;
   let category;
-  if (isHouse) {
+  if (isLand) {
+    category = "land";
+    title = plotTitle(plotSot);
+  } else if (isHouse) {
     category = "house";
-    title = `Дом${area ? ` ${area} м²` : ""}`;
+    title = `Дом${area ? ` ${String(area).replace(".", ",")} м²` : ""}`;
   } else if (isRoom && !roomsMatch) {
     category = "room";
     title = `Комната${area ? ` ${String(area).replace(".", ",")} м²` : ""}`;
   } else {
     category = "flat";
     const rooms = roomsMatch ? Number(roomsMatch[1]) : null;
-    title = `${rooms ? `${rooms}-комнатная квартира` : "Квартира"}${area ? `, ${area} м²` : ""}`;
+    title = `${rooms ? `${rooms}-комнатная квартира` : "Квартира"}${area ? `, ${String(area).replace(".", ",")} м²` : ""}`;
   }
 
   return {
@@ -591,9 +606,8 @@ function parseCianCard(card) {
 /** Проверяет по прямой ссылке, живо ли объявление, и собирает URL фото. */
 /**
  * Контент новых объявлений точечно с их страниц (когда состав пришёл из
- * API, а карточки на странице компании не оказалось): фото + текст в
- * |-формате для parseCianCard. Текст обрезаем до блока похожих объявлений,
- * чтобы не зацепить чужие цены.
+ * API, а карточки на странице компании не оказалось): фото + заголовок,
+ * адрес, цена и описание в |-формате для parseCianCard.
  */
 async function fetchCianOfferPages(urls) {
   const browser = await launchBrowser();
@@ -613,16 +627,32 @@ async function fetchCianOfferPages(urls) {
           const photos = Array.from(
             new Set(
               Array.from(
-                document.querySelectorAll('img[src*="images.cdn-cian"]'),
+                // только галерея объявления: ниже на странице блоки похожих
+                // объявлений и истории цен со своими (чужими) фото
+                document.querySelectorAll(
+                  '[data-name="OfferGallery"] img[src*="images.cdn-cian"]',
+                ),
               ).map((im) => im.src.replace(/-\d\.jpg$/, "-1.jpg")),
             ),
           ).slice(0, 4);
-          const raw = document.body.innerText.split(/Похожие|Похожих/)[0];
-          return { photos, raw: raw.slice(0, 6000) };
+          // поля по селекторам, а не весь текст страницы: меню вкладок
+          // «Похожие объявления» стоит выше характеристик, а в рекламных
+          // блоках посёлков есть чужие цены
+          const field = (sel) =>
+            document.querySelector(sel)?.innerText?.replace(/\s+/g, " ").trim() ?? "";
+          const raw = [
+            field("h1").replace(/^(Продается|Продаётся|Сдается|Сдаётся)\s+/i, ""),
+            field('[data-name="AddressContainer"]').replace(/\s*На карте$/, ""),
+            field('[data-testid="price-amount"]'),
+            field('[data-name="Description"]'),
+          ]
+            .filter(Boolean)
+            .join(" | ");
+          return { photos, raw };
         });
         result.set(url, {
           photoUrls: info.photos,
-          text: info.raw.replace(/\n+/g, " | "),
+          text: info.raw,
         });
       } catch (e) {
         console.warn("  страница объявления не открылась:", url, e.message);
@@ -653,7 +683,11 @@ async function probeCianListings(urls) {
           const photos = Array.from(
             new Set(
               Array.from(
-                document.querySelectorAll('img[src*="images.cdn-cian"]'),
+                // только галерея объявления: ниже на странице блоки похожих
+                // объявлений и истории цен со своими (чужими) фото
+                document.querySelectorAll(
+                  '[data-name="OfferGallery"] img[src*="images.cdn-cian"]',
+                ),
               ).map((im) => im.src.replace(/-\d\.jpg$/, "-1.jpg")),
             ),
           ).slice(0, 4);

@@ -12,7 +12,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { formatMonthYear, plural } from "@/lib/format";
 import type { ExternalReview, QuoteReview, Review } from "@/lib/types";
-import { site } from "@/lib/site";
+import { site, team } from "@/lib/site";
 import { Reveal } from "./Reveal";
 import { useAutoplayProgress } from "./useAutoplayProgress";
 
@@ -25,6 +25,10 @@ function shortAgentName(full: string): string {
   if (parts.length >= 2) return `${parts[1]} ${parts[0]}`;
   return full;
 }
+
+// подпись «Сделку проводила …» только для специалистов из раздела
+// «Команда»: отзыв о сотруднике, которого на сайте нет, показываем без имени
+const TEAM_NAMES = new Set(team.map((m) => m.name));
 
 function buildQuotes(
   reviews: Review[],
@@ -40,7 +44,9 @@ function buildQuotes(
       rating: r.rating,
       sourceLabel: "Домклик",
       url: site.profiles.domclick,
-      agentNote: `Сделку проводила ${shortAgentName(r.agent)}`,
+      agentNote: TEAM_NAMES.has(shortAgentName(r.agent))
+        ? `Сделку проводила ${shortAgentName(r.agent)}`
+        : null,
     }));
   const fromExternal: QuoteReview[] = external.map((r) => ({
     id: `${r.source}-${r.date}-${r.author}`,
