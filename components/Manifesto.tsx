@@ -3,11 +3,11 @@
 import { useRef, useSyncExternalStore } from "react";
 import {
   motion,
-  useReducedMotion,
   useScroll,
   type MotionValue,
   useTransform,
 } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 
 // текст клиента (замечания 02.10.2026, п. 6–7). «20 лет» — личный опыт
 // специалистов, а не срок работы вместе: агентство работает с 2010 года,
@@ -35,7 +35,7 @@ function Word({
 }
 
 export function Manifesto() {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   // на сервере и до маунта рендерим обычный текст: разметка совпадает,
   // эффект включается только на клиенте
   const mounted = useSyncExternalStore(

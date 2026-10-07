@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { animate, motion, useMotionValue, useReducedMotion } from "motion/react";
+import { animate, motion, useMotionValue } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { useAutoplayProgress } from "./useAutoplayProgress";
 
@@ -34,7 +35,7 @@ export function PhotoCarousel({
   autoplaySeconds?: number;
   onLoop?: () => boolean | void;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const viewportRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [index, setIndex] = useState(0);

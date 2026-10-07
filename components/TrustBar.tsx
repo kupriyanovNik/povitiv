@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInView, useReducedMotion } from "motion/react";
+import { useInView } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { plural } from "@/lib/format";
 
 type Stat = {
@@ -61,7 +62,7 @@ export function TrustBar({
   // ниже экрана, цифры обнуляются заранее, пока их не видно, и отсчёт
   // идёт, как только блок показался снизу. Один наблюдатель на все
   // ячейки — цифры оживают одновременно.
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const listRef = useRef<HTMLDListElement>(null);
   const [armed, setArmed] = useState(false);
   const inView = useInView(listRef, { once: true, margin: "0px 0px -10% 0px" });
@@ -72,7 +73,9 @@ export function TrustBar({
     if (el.getBoundingClientRect().top >= window.innerHeight) setArmed(true);
   }, [reduce]);
 
-  const phase: Phase = !armed ? "static" : inView ? "run" : "armed";
+  // reduce учитываем и здесь: при гидрации он ещё false (серверный
+  // снимок), и эффект мог успеть «взвести» отсчёт
+  const phase: Phase = reduce || !armed ? "static" : inView ? "run" : "armed";
 
   // все цифры либо константы, либо ночной синк (рейтинг Домклик), либо
   // вычисляются от даты регистрации на ЦИАН — сноска «по данным на

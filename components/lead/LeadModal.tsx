@@ -5,8 +5,8 @@ import {
   AnimatePresence,
   motion,
   useAnimate,
-  useReducedMotion,
 } from "motion/react";
+import { useReducedMotionSafe } from "../useReducedMotionSafe";
 import { CheckCircle, X } from "@phosphor-icons/react/dist/ssr";
 import { phones, type LeadTask } from "@/lib/site";
 import { trapTabKey } from "../focusTrap";
@@ -49,7 +49,7 @@ function ModalContent({
   initialTask?: LeadTask;
   onClose: () => void;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const { status, error, submit } = useLeadSubmit();
   const [formScope, animateEl] = useAnimate();
   const [name, setName] = useState("");

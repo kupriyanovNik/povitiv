@@ -6,10 +6,10 @@ import {
   animate,
   motion,
   useMotionValue,
-  useReducedMotion,
   useScroll,
   useTransform,
 } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { formatPrice } from "@/lib/format";
 import type { Listing } from "@/lib/types";
@@ -22,7 +22,7 @@ const AUTOPLAY_S = 4.5;
 
 export function Hero({ listings }: { listings: Listing[] }) {
   const { openLead } = useLead();
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const sectionRef = useRef<HTMLElement>(null);
   const photoRef = useRef<HTMLDivElement>(null);
   const count = listings.length;

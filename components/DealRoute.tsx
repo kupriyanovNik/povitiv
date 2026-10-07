@@ -3,10 +3,10 @@
 import { useRef, useSyncExternalStore } from "react";
 import {
   motion,
-  useReducedMotion,
   useScroll,
   useTransform,
 } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { useLead } from "./lead/LeadContext";
 import { Reveal } from "./Reveal";
 
@@ -74,7 +74,7 @@ function StepFill({
 
 export function DealRoute() {
   const { openLead } = useLead();
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   // линия-маршрут появляется только после маунта: на сервере её нет,
   // поэтому нет и hydration mismatch при reduced-motion
   const mounted = useSyncExternalStore(

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { Plus } from "@phosphor-icons/react/dist/ssr";
 import { FAQ_ITEMS } from "@/lib/faq";
 import { Reveal } from "./Reveal";
@@ -15,7 +16,7 @@ function Item({
   open: boolean;
   onToggle: () => void;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   return (
     <div className="border-b border-line">
       <button

@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useMotionValueEvent,
-  useReducedMotion,
   useScroll,
   useTransform,
   type MotionValue,
 } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import {
   ChatsCircle,
   FileMagnifyingGlass,
@@ -108,7 +108,7 @@ function StopMarker({
 }
 
 export function Safety() {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const trackRef = useRef<HTMLDivElement>(null);
   const markerEls = useRef<(HTMLDivElement | null)[]>([]);
   const [geo, setGeo] = useState<{

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { ArrowUpRight, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { formatPrice } from "@/lib/format";
 import type { Listing } from "@/lib/types";
@@ -84,7 +85,7 @@ function FeaturedCard({
 }
 
 function CompactCard({ listing }: { listing: Listing }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const [photoIdx, setPhotoIdx] = useState(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 

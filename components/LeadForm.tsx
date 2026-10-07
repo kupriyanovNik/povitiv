@@ -5,8 +5,8 @@ import {
   AnimatePresence,
   motion,
   useAnimate,
-  useReducedMotion,
 } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import { leadTasks, phones, type LeadTask } from "@/lib/site";
 import { ConsentCheckbox } from "./lead/ConsentCheckbox";
@@ -23,7 +23,7 @@ const RESULTS = [
 
 export function LeadForm() {
   const { status, error, submit } = useLeadSubmit();
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const [scope, animateEl] = useAnimate();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");

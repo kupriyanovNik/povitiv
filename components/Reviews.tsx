@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { animate, motion, useMotionValue, useReducedMotion } from "motion/react";
+import { animate, motion, useMotionValue } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import {
   ArrowUpRight,
   CaretLeft,
@@ -102,7 +103,7 @@ export function Reviews({
   rating: number | null;
   votes: number;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const quotes = buildQuotes(reviews, external);
   const count = quotes.length;
 

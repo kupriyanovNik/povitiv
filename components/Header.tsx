@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { List, X } from "@phosphor-icons/react/dist/ssr";
 import { phones } from "@/lib/site";
 import { trapTabKey } from "./focusTrap";
@@ -20,7 +21,7 @@ const NAV = [
 
 export function Header() {
   const { openLead } = useLead();
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

@@ -5,9 +5,9 @@ import {
   AnimatePresence,
   motion,
   useMotionValueEvent,
-  useReducedMotion,
   useScroll,
 } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { Phone, X } from "@phosphor-icons/react/dist/ssr";
 import { phones } from "@/lib/site";
 import { useLead } from "./lead/LeadContext";
@@ -20,7 +20,7 @@ import { PhoneIcon } from "./PhoneIcon";
  */
 export function MobileBar() {
   const { openLead } = useLead();
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const { scrollY } = useScroll();
   const [visible, setVisible] = useState(false);
   const [callOpen, setCallOpen] = useState(false);

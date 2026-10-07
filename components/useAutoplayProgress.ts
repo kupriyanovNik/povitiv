@@ -5,9 +5,9 @@ import {
   animate,
   useInView,
   useMotionValue,
-  useReducedMotion,
   type AnimationPlaybackControls,
 } from "motion/react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 
 /**
  * Автопрокрутка карусели: прогресс 0..1 за `seconds`, затем advance().
@@ -27,7 +27,7 @@ export function useAutoplayProgress({
   advance: () => void;
   resetKey: number;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const inView = useInView(targetRef, { amount: 0.35 });
   const [paused, setPaused] = useState(false);
   const progress = useMotionValue(0);
