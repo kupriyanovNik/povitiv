@@ -12,7 +12,6 @@ import { leadTasks, phone as officePhone, type LeadTask } from "@/lib/site";
 import { ConsentCheckbox } from "./lead/ConsentCheckbox";
 import { normalizePhoneInput } from "./lead/phone";
 import { useLeadSubmit } from "./lead/useLeadSubmit";
-import { Reveal } from "./Reveal";
 
 const RESULTS = [
   "Ориентир по рыночной стоимости",
@@ -48,7 +47,7 @@ export function LeadForm() {
   return (
     <section id="zayavka" className="scroll-mt-20 bg-wine-ink py-20 lg:py-28">
       <div className="mx-auto grid max-w-[1280px] items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
-        <Reveal>
+        <div>
           <h2 className="font-display max-w-[20ch] text-3xl font-bold text-white sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Получите предварительную оценку и план сделки
           </h2>
@@ -70,7 +69,7 @@ export function LeadForm() {
               </li>
             ))}
           </ul>
-        </Reveal>
+        </div>
 
         <div className="rounded-2xl bg-surface p-6 shadow-2xl shadow-black/25 sm:p-8">
           <AnimatePresence mode="wait" initial={false}>

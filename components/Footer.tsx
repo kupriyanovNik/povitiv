@@ -29,7 +29,7 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
                 <Phone size={20} weight="bold" className="shrink-0 text-wine" aria-hidden />
                 <a
                   href={phone.href}
-                  className="tnum text-lg font-bold transition-colors hover:text-wine"
+                  className="tnum whitespace-nowrap text-lg font-bold transition-colors hover:text-wine"
                 >
                   {phone.display}
                 </a>
@@ -42,7 +42,7 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
 
         <div className="mt-14 grid gap-10 border-t border-line pt-10 sm:grid-cols-2 lg:grid-cols-[5fr_3fr_4fr] lg:gap-14">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">
+            <p className="text-[15px] font-semibold text-ink-soft">
               Разделы
             </p>
             <nav className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 text-[15px] sm:max-w-[360px]">
@@ -68,7 +68,7 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
           </div>
 
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">
+            <p className="text-[15px] font-semibold text-ink-soft">
               Мы на площадках
             </p>
             <nav className="mt-4 flex gap-6 text-[15px]">

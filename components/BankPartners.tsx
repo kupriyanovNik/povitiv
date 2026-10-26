@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Reveal } from "./Reveal";
 
 /**
  * «Мы партнёры банков» (замечания клиента, п. 12).
@@ -44,7 +43,7 @@ export function BankPartners() {
   return (
     <section aria-labelledby="banks-title" className="border-y border-line bg-surface">
       <div className="mx-auto max-w-[1280px] px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-        <Reveal>
+        <div>
           <h2
             id="banks-title"
             className="font-display text-2xl font-bold sm:text-3xl lg:text-[32px]"
@@ -69,7 +68,7 @@ export function BankPartners() {
               );
             })}
           </ul>
-        </Reveal>
+        </div>
       </div>
     </section>
   );

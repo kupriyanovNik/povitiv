@@ -20,7 +20,6 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 import { burstConfetti } from "./confetti";
-import { Reveal } from "./Reveal";
 
 const POINTS: { icon: Icon; title: string; text: string }[] = [
   {
@@ -219,7 +218,7 @@ export function Safety() {
   return (
     <section className="overflow-hidden py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        <Reveal>
+        <div>
           <h2 className="font-display max-w-[22ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Критические этапы сделки под контролем
           </h2>
@@ -228,7 +227,7 @@ export function Safety() {
             участниками. Мы ведём вас по понятному маршруту: шаг за шагом, до
             самых ключей.
           </p>
-        </Reveal>
+        </div>
 
         <div ref={trackRef} className="relative mt-14 lg:mt-16">
           {/* тропа: пунктир как маршрут на карте + бордовая прорисовка */}

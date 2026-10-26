@@ -19,7 +19,6 @@ import {
 import type { Icon } from "@phosphor-icons/react";
 import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { useLead } from "./lead/LeadContext";
-import { Reveal } from "./Reveal";
 
 const STEPS: { icon: Icon; title: string; text: string }[] = [
   {
@@ -112,7 +111,7 @@ export function DealRoute() {
     <section id="process" className="scroll-mt-20 bg-surface py-20 lg:py-28">
       <div className="mx-auto grid max-w-[1280px] gap-12 px-4 sm:px-6 lg:grid-cols-[5fr_7fr] lg:gap-20 lg:px-8">
         <div className="lg:sticky lg:top-28 lg:self-start">
-          <Reveal>
+          <div>
             <h2 className="font-display max-w-[16ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
               Вся работа по сделке в одном агентстве
             </h2>
@@ -128,7 +127,7 @@ export function DealRoute() {
             >
               Обсудить задачу
             </button>
-          </Reveal>
+          </div>
         </div>
 
         <div className="relative">

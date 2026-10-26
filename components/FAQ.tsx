@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { Plus } from "@phosphor-icons/react/dist/ssr";
 import { FAQ_ITEMS } from "@/lib/faq";
-import { Reveal } from "./Reveal";
 
 function Item({
   item,
@@ -64,11 +63,11 @@ export function FAQ() {
   return (
     <section id="faq" className="scroll-mt-20 bg-surface py-20 lg:py-28">
       <div className="mx-auto max-w-[880px] px-4 sm:px-6">
-        <Reveal>
+        <div>
           <h2 className="font-display text-3xl font-bold sm:text-4xl lg:text-[44px]">
             Частые вопросы
           </h2>
-        </Reveal>
+        </div>
         <div className="mt-8 border-t border-line lg:mt-10">
           {FAQ_ITEMS.map((item, i) => (
             <Item

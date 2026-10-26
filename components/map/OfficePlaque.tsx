@@ -35,7 +35,7 @@ export function OfficePlaque() {
 
         <a
           href={phone.href}
-          className="tnum mt-3 flex items-center gap-2 text-[14px] font-semibold transition-colors hover:text-wine"
+          className="tnum mt-3 flex items-center gap-2 whitespace-nowrap text-[14px] font-semibold transition-colors hover:text-wine"
         >
           <Phone size={14} weight="bold" className="text-wine" aria-hidden />
           {phone.display}

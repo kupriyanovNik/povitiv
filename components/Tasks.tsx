@@ -5,7 +5,6 @@ import { motion } from "motion/react";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import type { LeadTask } from "@/lib/site";
 import { useLead } from "./lead/LeadContext";
-import { Reveal } from "./Reveal";
 import whiteTower from "@/public/photos/white-tower.jpg";
 import entrance from "@/public/photos/entrance.jpg";
 import towersUp from "@/public/photos/towers-up.jpg";
@@ -150,7 +149,7 @@ export function Tasks() {
   return (
     <section id="uslugi" className="scroll-mt-20 py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        <Reveal>
+        <div>
           <h2 className="font-display max-w-[24ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             С какой задачей вам помочь?
           </h2>
@@ -158,7 +157,7 @@ export function Tasks() {
             Выберите направление. Мы разберём ситуацию, предложим подходящий
             сценарий и объясним следующие шаги.
           </p>
-        </Reveal>
+        </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:mt-12">
           {PRIMARY.map((card) => (

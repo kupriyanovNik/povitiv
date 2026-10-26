@@ -4,7 +4,6 @@ import { site } from "@/lib/site";
 import { LeadProvider } from "@/components/lead/LeadContext";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
-import { TrustBar } from "@/components/TrustBar";
 import { Tasks } from "@/components/Tasks";
 import { DealRoute } from "@/components/DealRoute";
 import { Manifesto } from "@/components/Manifesto";
@@ -35,8 +34,7 @@ export default async function Home() {
       <JsonLd />
       <Header />
       <main className="flex-1">
-        <Hero />
-        <TrustBar
+        <Hero
           rating={agency.agency.domclickRating}
           // страница рендерится на каждый запрос: стаж сам вырастет в апреле
           cianYears={fullYearsSince(site.cianSince)}

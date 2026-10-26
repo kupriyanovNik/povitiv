@@ -7,13 +7,11 @@ import {
   ArrowUpRight,
   CaretLeft,
   CaretRight,
-  Quotes,
   Star,
 } from "@phosphor-icons/react/dist/ssr";
 import { formatMonthYear, plural } from "@/lib/format";
 import type { ExternalReview, QuoteReview, Review } from "@/lib/types";
 import { site } from "@/lib/site";
-import { Reveal } from "./Reveal";
 import { useAutoplayProgress } from "./useAutoplayProgress";
 
 const GAP = 16;
@@ -55,22 +53,21 @@ function buildQuotes(
 function QuoteSlide({ quote }: { quote: QuoteReview }) {
   return (
     <figure
-      className="flex w-full shrink-0 flex-col p-7 sm:p-9"
+      className="flex w-full shrink-0 flex-col p-7 sm:p-10 lg:px-14 lg:pt-14"
       style={{ marginRight: GAP }}
     >
-      <div className="flex items-center justify-between">
-        <Quotes size={32} weight="fill" className="text-wine/40" />
-        <div className="flex gap-0.5" aria-label={`Оценка ${quote.rating} из 5`}>
-          {Array.from({ length: quote.rating }).map((_, i) => (
-            <Star key={i} size={15} weight="fill" className="text-gold" />
-          ))}
-        </div>
-      </div>
-      <blockquote className="font-display mt-4 text-xl font-semibold leading-[1.4] sm:text-2xl sm:leading-[1.4]">
+      <blockquote className="font-display max-w-[46ch] text-xl font-semibold leading-[1.4] text-balance sm:text-2xl sm:leading-[1.4] lg:text-[28px] lg:leading-[1.38]">
         «{quote.text}»
       </blockquote>
       <figcaption className="mt-auto pt-6 text-[15px] text-ink-soft">
-        <span className="font-bold text-ink">{quote.author}</span>
+        <span className="flex items-center gap-3">
+          <span className="font-bold text-ink">{quote.author}</span>
+          <span className="flex gap-0.5" aria-label={`Оценка ${quote.rating} из 5`}>
+            {Array.from({ length: quote.rating }).map((_, i) => (
+              <Star key={i} size={13} weight="fill" className="text-gold" />
+            ))}
+          </span>
+        </span>
         <br />
         {quote.agentNote ? `${quote.agentNote}, ` : ""}
         {formatMonthYear(quote.date)}{" "}
@@ -149,18 +146,71 @@ export function Reviews({
   return (
     <section id="otzyvy" className="scroll-mt-20 bg-surface py-20 lg:py-28">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        <Reveal>
-          <h2 className="font-display max-w-[26ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
-            Что говорят после проведённых сделок
-          </h2>
-          <p className="mt-4 max-w-[58ch] text-base leading-relaxed text-ink-soft sm:text-lg">
-            Только настоящие отзывы с открытых площадок: оценки на Домклик
-            привязаны к реальным сделкам, отзывы на Яндекс Картах публикуют
-            проверенные пользователи.
-          </p>
-        </Reveal>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
+          <div>
+            <h2 className="font-display max-w-[22ch] text-3xl font-bold text-balance sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
+              Что говорят после проведённых сделок
+            </h2>
+            <p className="mt-4 max-w-[58ch] text-base leading-relaxed text-ink-soft sm:text-lg">
+              Только настоящие отзывы с открытых площадок: оценки на Домклик
+              привязаны к реальным сделкам, отзывы на Яндекс Картах публикуют
+              проверенные пользователи.
+            </p>
+          </div>
 
-        <div className="mt-10 grid gap-4 lg:mt-12 lg:grid-cols-[7fr_5fr]">
+          {/* рейтинг — строкой сведений рядом с заголовком, а не отдельной
+              карточкой с крупной цифрой */}
+          <div className="shrink-0 lg:pb-1 lg:text-right">
+            {rating != null && votes > 0 && (
+              <p className="flex items-center gap-2 text-[15px] lg:justify-end">
+                <span
+                  className="flex gap-0.5 text-gold"
+                  aria-label={`${Math.round(rating)} из 5 звёзд`}
+                >
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      size={16}
+                      weight="fill"
+                      className={i < Math.round(rating) ? "" : "opacity-25"}
+                    />
+                  ))}
+                </span>
+                <span>
+                  <span className="tnum font-bold">
+                    {rating.toFixed(1).replace(".", ",")}
+                  </span>{" "}
+                  <span className="text-ink-soft">
+                    на Домклик, {votes}{" "}
+                    {plural(votes, "оценка", "оценки", "оценок")} после сделок
+                  </span>
+                </span>
+              </p>
+            )}
+            <div className="mt-3 flex gap-5 text-[15px] font-semibold lg:justify-end">
+              <a
+                href={site.profiles.domclick}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-wine underline-offset-4 hover:underline"
+              >
+                Отзывы на Домклик
+                <ArrowUpRight size={14} weight="bold" />
+              </a>
+              <a
+                href="https://yandex.ru/maps/org/pozitiv_vt/200829446440/reviews/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-wine underline-offset-4 hover:underline"
+              >
+                На Яндекс Картах
+                <ArrowUpRight size={14} weight="bold" />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 lg:mt-12">
           {/* карусель цитат */}
           <div
             className="flex flex-col overflow-hidden rounded-2xl bg-wine-tint"
@@ -200,7 +250,7 @@ export function Reviews({
               </motion.div>
             </div>
 
-            <div className="flex items-center justify-between px-7 pb-6 sm:px-9">
+            <div className="flex items-center justify-between px-7 pb-6 sm:px-10 lg:px-14 lg:pb-10">
               <div className="flex gap-1.5" role="group" aria-label="Отзывы">
                 {quotes.map((q, i) => (
                   <button
@@ -246,56 +296,6 @@ export function Reviews({
             </div>
           </div>
 
-          {/* сводка рейтинга и ссылки на источники */}
-          <div className="flex flex-col gap-4">
-            {rating != null && votes > 0 && (
-              <div className="flex flex-1 flex-col justify-center rounded-2xl bg-wine-ink p-7 text-white sm:p-8">
-                <div className="flex items-end gap-3">
-                  <span className="font-display text-6xl font-bold leading-none">
-                    {rating.toFixed(1).replace(".", ",")}
-                  </span>
-                  <div
-                    className="mb-1 flex gap-0.5"
-                    aria-label={`${Math.round(rating)} из 5 звёзд`}
-                  >
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        size={18}
-                        weight="fill"
-                        className={
-                          i < Math.round(rating) ? "text-white" : "text-white/25"
-                        }
-                      />
-                    ))}
-                  </div>
-                </div>
-                <p className="mt-3 text-[15px] leading-relaxed text-white/80">
-                  Общая оценка агентства на Домклик: {votes}{" "}
-                  {plural(votes, "оценка", "оценки", "оценок")} после
-                  проведённых сделок, и все они максимальные.
-                </p>
-              </div>
-            )}
-            <a
-              href={site.profiles.domclick}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-12 items-center justify-between rounded-2xl border border-line bg-surface px-5 text-[15px] font-semibold transition-colors hover:border-ink/30"
-            >
-              Отзывы на Домклик
-              <ArrowUpRight size={15} weight="bold" className="text-wine" />
-            </a>
-            <a
-              href="https://yandex.ru/maps/org/pozitiv_vt/200829446440/reviews/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-12 items-center justify-between rounded-2xl border border-line bg-surface px-5 text-[15px] font-semibold transition-colors hover:border-ink/30"
-            >
-              Отзывы на Яндекс Картах
-              <ArrowUpRight size={15} weight="bold" className="text-wine" />
-            </a>
-          </div>
         </div>
       </div>
     </section>

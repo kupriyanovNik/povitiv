@@ -7,7 +7,6 @@ import {
   Storefront,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
-import { Reveal } from "./Reveal";
 
 /**
  * Виды недвижимости вместо витрины объектов (правки клиента 26.10.2026):
@@ -48,38 +47,44 @@ const TYPES: { icon: Icon; title: string; text: string }[] = [
 ];
 
 export function PropertyTypes() {
+  // бордовая полоса: единственный тёмный блок в середине страницы,
+  // список строками, а не сетка одинаковых карточек
   return (
-    <section id="nedvizhimost" className="scroll-mt-20 bg-surface py-20 lg:py-28">
-      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        <Reveal>
-          <h2 className="font-display max-w-[26ch] text-3xl font-bold sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
+    <section
+      id="nedvizhimost"
+      className="scroll-mt-20 bg-wine-ink py-20 text-white lg:py-28"
+    >
+      <div className="mx-auto grid max-w-[1280px] gap-12 px-4 sm:px-6 lg:grid-cols-[5fr_7fr] lg:gap-20 lg:px-8">
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <h2 className="font-display max-w-[14ch] text-3xl font-bold text-balance sm:text-4xl lg:text-[44px] lg:leading-[1.1]">
             Недвижимость, с которой мы работаем
           </h2>
-          <p className="mt-4 max-w-[54ch] text-base leading-relaxed text-ink-soft sm:text-lg">
+          <p className="mt-4 max-w-[40ch] text-base leading-relaxed text-white/70 sm:text-lg">
             Жилая, загородная и коммерческая недвижимость в Москве и
             Московской области.
           </p>
-        </Reveal>
+        </div>
 
-        <Reveal y={28} delay={0.08}>
-          <ul className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3 lg:gap-y-14">
-            {TYPES.map(({ icon: TypeIcon, title, text }) => (
-              <li key={title} className="flex gap-5">
-                <span className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-2xl bg-wine text-white shadow-[0_14px_30px_-16px_rgba(125,27,36,0.7)] lg:h-[84px] lg:w-[84px]">
-                  <TypeIcon size={40} weight="regular" aria-hidden />
-                </span>
-                <div className="pt-1.5">
-                  <h3 className="text-lg font-bold leading-snug tracking-[-0.01em] lg:text-xl">
-                    {title}
-                  </h3>
-                  <p className="mt-1.5 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">
-                    {text}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
+        <ul className="border-b border-white/15">
+          {TYPES.map(({ icon: TypeIcon, title, text }) => (
+            <li
+              key={title}
+              className="flex items-center gap-5 border-t border-white/15 py-6 sm:gap-8 sm:py-7"
+            >
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-wine text-white sm:h-[88px] sm:w-[88px]">
+                <TypeIcon size={44} weight="light" aria-hidden className="h-9 w-9 sm:h-11 sm:w-11" />
+              </span>
+              <div className="sm:grid sm:flex-1 sm:grid-cols-[minmax(0,15ch)_1fr] sm:items-baseline sm:gap-8">
+                <h3 className="text-lg font-bold leading-snug tracking-[-0.01em] sm:text-2xl">
+                  {title}
+                </h3>
+                <p className="mt-1 text-[15px] leading-relaxed text-white/70 sm:mt-0">
+                  {text}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

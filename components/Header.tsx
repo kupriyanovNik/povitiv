@@ -62,7 +62,7 @@ export function Header() {
       <header
         className={`fixed inset-x-0 top-0 z-40 transition-[background-color,box-shadow,border-color] duration-300 ${
           scrolled
-            ? "border-b border-line/80 bg-paper/80 shadow-[0_8px_30px_-18px_rgba(31,36,31,0.25)] backdrop-blur-xl"
+            ? "border-b border-line/80 bg-paper/95 backdrop-blur-xl"
             : "border-b border-transparent bg-transparent"
         }`}
       >
@@ -117,7 +117,7 @@ export function Header() {
               aria-label="Открыть меню"
               className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors lg:hidden ${
                 onPhoto
-                  ? "border-white/30 bg-white/10 text-white backdrop-blur-sm"
+                  ? "border-white/40 bg-wine-ink/30 text-white"
                   : "border-line bg-surface text-ink"
               }`}
             >
