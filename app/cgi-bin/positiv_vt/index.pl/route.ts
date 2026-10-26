@@ -24,8 +24,9 @@ const PAGES: Record<string, string> = {
 function target(params: URLSearchParams): string {
   const text = params.get("text");
   if (text === "page") return PAGES[params.get("i") ?? ""] ?? "/";
-  // разделы каталога и карточки объектов старого сайта
-  if (text === "cat" || text === "elem") return "/#obekty";
+  // разделы каталога и карточки объектов старого сайта: объектов на
+  // новом сайте нет, ближе всего по смыслу блок видов недвижимости
+  if (text === "cat" || text === "elem") return "/#nedvizhimost";
   return "/";
 }
 

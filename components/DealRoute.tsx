@@ -6,40 +6,59 @@ import {
   useScroll,
   useTransform,
 } from "motion/react";
+import {
+  ChartLineUp,
+  FileText,
+  Handshake,
+  HouseLine,
+  Key,
+  MagnifyingGlass,
+  Megaphone,
+  Strategy,
+} from "@phosphor-icons/react/dist/ssr";
+import type { Icon } from "@phosphor-icons/react";
 import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { useLead } from "./lead/LeadContext";
 import { Reveal } from "./Reveal";
 
-const STEPS: { title: string; text: string }[] = [
+const STEPS: { icon: Icon; title: string; text: string }[] = [
   {
+    icon: ChartLineUp,
     title: "Анализ рынка и оценка",
     text: "Изучаем похожие предложения, спрос, состояние объекта и документы. Называем обоснованный ценовой диапазон.",
   },
   {
+    icon: Strategy,
     title: "Стратегия",
     text: "Согласовываем цену, сроки и порядок действий до начала активной работы.",
   },
   {
+    icon: HouseLine,
     title: "Подготовка объекта",
     text: "Собираем сильное описание и решаем, как лучше представить объект покупателям.",
   },
   {
+    icon: Megaphone,
     title: "Размещение и продвижение",
     text: "Публикуем объект на профильных площадках, следим за откликами и корректируем стратегию.",
   },
   {
+    icon: MagnifyingGlass,
     title: "Поиск и показы",
     text: "Отбираем подходящих покупателей или варианты, проводим показы и собираем обратную связь.",
   },
   {
+    icon: Handshake,
     title: "Переговоры",
     text: "Обсуждаем цену и условия, отстаиваем ваши интересы и фиксируем договорённости.",
   },
   {
+    icon: FileText,
     title: "Документы и расчёты",
     text: "Проверяем документы и согласовываем безопасную схему расчётов.",
   },
   {
+    icon: Key,
     title: "Регистрация и передача",
     text: "Сопровождаем подписание, регистрацию перехода права и передачу ключей.",
   },
@@ -49,12 +68,12 @@ function StepFill({
   progress,
   threshold,
   reduce,
-  num,
+  icon: StepIcon,
 }: {
   progress: ReturnType<typeof useScroll>["scrollYProgress"];
   threshold: number;
   reduce: boolean;
-  num: number;
+  icon: Icon;
 }) {
   const opacity = useTransform(
     progress,
@@ -67,7 +86,7 @@ function StepFill({
       style={{ opacity: reduce ? 1 : opacity }}
       className="absolute inset-0 z-20 flex items-center justify-center rounded-full bg-wine text-white"
     >
-      {num}
+      <StepIcon size={28} weight="regular" />
     </motion.span>
   );
 }
@@ -116,32 +135,34 @@ export function DealRoute() {
           {/* маршрут: линия прорисовывается по мере скролла */}
           <div
             aria-hidden
-            className="absolute bottom-6 left-[15px] top-6 w-px bg-line"
+            className="absolute bottom-8 left-[27px] top-8 w-px bg-line sm:left-[31px]"
           />
           {mounted && (
             <motion.div
               aria-hidden
               style={{ scaleY: reduce ? 1 : scaleY }}
-              className="absolute bottom-6 left-[15px] top-6 w-px origin-top bg-wine"
+              className="absolute bottom-8 left-[27px] top-8 w-px origin-top bg-wine sm:left-[31px]"
             />
           )}
-          <ol ref={listRef} className="space-y-9">
+          <ol ref={listRef} className="space-y-8">
             {STEPS.map((step, i) => (
-              <li key={step.title} className="relative flex gap-6">
-                <span className="tnum relative z-10 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-surface text-[13px] font-bold text-wine">
-                  {/* номер «заполняется» бордовым, когда линия доходит до шага */}
+              <li key={step.title} className="relative flex gap-5 sm:gap-7">
+                {/* иконки крупные (правки клиента 26.10.2026); кружок
+                    «заполняется» бордовым, когда линия доходит до шага */}
+                <span className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-surface text-wine sm:h-16 sm:w-16">
+                  <step.icon size={28} weight="regular" aria-hidden />
                   {mounted && (
                     <StepFill
                       progress={scrollYProgress}
                       threshold={i / (STEPS.length - 1)}
                       reduce={Boolean(reduce)}
-                      num={i + 1}
+                      icon={step.icon}
                     />
                   )}
-                  <span className="relative z-10">{i + 1}</span>
                 </span>
-                <div className="pt-0.5">
+                <div className="pt-1.5 sm:pt-2.5">
                   <h3 className="text-lg font-bold tracking-[-0.01em]">
+                    <span className="tnum mr-2 text-wine">{i + 1}.</span>
                     {step.title}
                   </h3>
                   <p className="mt-1.5 max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">

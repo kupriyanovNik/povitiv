@@ -8,21 +8,13 @@ import {
 } from "motion/react";
 import { useReducedMotionSafe } from "../useReducedMotionSafe";
 import { CheckCircle, X } from "@phosphor-icons/react/dist/ssr";
-import { phones, type LeadTask } from "@/lib/site";
+import { leadTasks, phone as officePhone, type LeadTask } from "@/lib/site";
 import { trapTabKey } from "../focusTrap";
 import { ConsentCheckbox } from "./ConsentCheckbox";
 import { normalizePhoneInput } from "./phone";
 import { useLeadSubmit } from "./useLeadSubmit";
 
-const MODAL_TASKS: LeadTask[] = [
-  "Продать",
-  "Купить",
-  "Обменять",
-  "Сдать",
-  "Снять",
-  "Сопровождение",
-  "Другое",
-];
+const MODAL_TASKS = leadTasks;
 
 export function LeadModal({
   open,
@@ -313,17 +305,12 @@ function ModalContent({
               </button>
               <p className="text-xs leading-relaxed text-ink-soft">
                 Или позвоните:{" "}
-                {phones.map((p, i) => (
-                  <span key={p.href}>
-                    {i > 0 && " или "}
-                    <a
-                      href={p.href}
-                      className="tnum font-medium whitespace-nowrap text-ink underline"
-                    >
-                      {p.display}
-                    </a>
-                  </span>
-                ))}
+                <a
+                  href={officePhone.href}
+                  className="tnum font-medium whitespace-nowrap text-ink underline"
+                >
+                  {officePhone.display}
+                </a>
               </p>
             </form>
           </motion.div>

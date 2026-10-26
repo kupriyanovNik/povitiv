@@ -12,24 +12,15 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { formatMonthYear, plural } from "@/lib/format";
 import type { ExternalReview, QuoteReview, Review } from "@/lib/types";
-import { site, team } from "@/lib/site";
+import { site } from "@/lib/site";
 import { Reveal } from "./Reveal";
 import { useAutoplayProgress } from "./useAutoplayProgress";
 
 const GAP = 16;
 const AUTOPLAY_S = 6;
 
-function shortAgentName(full: string): string {
-  // «Гречишникова Наталья Ивановна» -> «Наталья Гречишникова»
-  const parts = full.split(" ");
-  if (parts.length >= 2) return `${parts[1]} ${parts[0]}`;
-  return full;
-}
-
-// подпись «Сделку проводила …» только для специалистов из раздела
-// «Команда»: отзыв о сотруднике, которого на сайте нет, показываем без имени
-const TEAM_NAMES = new Set(team.map((m) => m.name));
-
+// имена сотрудников с сайта убраны (правки клиента 26.10.2026), поэтому
+// подписи «Сделку проводила …» у отзывов больше нет
 function buildQuotes(
   reviews: Review[],
   external: ExternalReview[],
@@ -44,9 +35,7 @@ function buildQuotes(
       rating: r.rating,
       sourceLabel: "Домклик",
       url: site.profiles.domclick,
-      agentNote: TEAM_NAMES.has(shortAgentName(r.agent))
-        ? `Сделку проводила ${shortAgentName(r.agent)}`
-        : null,
+      agentNote: null,
     }));
   const fromExternal: QuoteReview[] = external.map((r) => ({
     id: `${r.source}-${r.date}-${r.author}`,
@@ -56,7 +45,7 @@ function buildQuotes(
     rating: r.rating,
     sourceLabel: r.sourceLabel,
     url: r.url,
-    agentNote: r.agent,
+    agentNote: null,
   }));
   return [...fromDomclick, ...fromExternal].sort((a, b) =>
     b.date.localeCompare(a.date),
@@ -154,7 +143,7 @@ export function Reviews({
     resetKey: index,
   });
 
-  // данные приходят из ночного синка: без цитат секция не рендерится
+  // без цитат в data/*.json секция не рендерится
   if (count === 0) return null;
 
   return (

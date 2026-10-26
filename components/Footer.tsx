@@ -1,8 +1,7 @@
-import { ArrowUpRight, Clock, MapPin } from "@phosphor-icons/react/dist/ssr";
-import { phones, site } from "@/lib/site";
+import { ArrowUpRight, Clock, MapPin, Phone } from "@phosphor-icons/react/dist/ssr";
+import { phone, site } from "@/lib/site";
 import { Logo } from "./Logo";
 import { OfficeMap } from "./OfficeMap";
-import { PhoneIcon } from "./PhoneIcon";
 
 export function Footer({ mapApiKey }: { mapApiKey?: string }) {
   return (
@@ -11,7 +10,7 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
         <div className="grid gap-10 lg:grid-cols-[5fr_7fr] lg:gap-14">
           <div>
             <div className="text-wine">
-              <Logo size="lg" />
+              <Logo variant="stacked" />
             </div>
             <p className="font-display mt-7 max-w-[24ch] text-2xl font-semibold leading-[1.25] text-balance sm:text-[28px]">
               {site.welcome}
@@ -26,20 +25,15 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
                 <Clock size={20} weight="bold" className="mt-0.5 shrink-0 text-wine" />
                 <span className="tnum">{site.workHours}</span>
               </p>
-              <ul className="space-y-2 pt-1">
-                {phones.map((p) => (
-                  <li key={p.href} className="flex items-center gap-3">
-                    <PhoneIcon kind={p.kind} size={20} className="shrink-0 text-wine" />
-                    <a
-                      href={p.href}
-                      className="tnum text-lg font-bold transition-colors hover:text-wine"
-                    >
-                      {p.display}
-                    </a>
-                    <span className="text-sm text-ink-soft">{p.label}</span>
-                  </li>
-                ))}
-              </ul>
+              <p className="flex items-center gap-3 pt-1">
+                <Phone size={20} weight="bold" className="shrink-0 text-wine" aria-hidden />
+                <a
+                  href={phone.href}
+                  className="tnum text-lg font-bold transition-colors hover:text-wine"
+                >
+                  {phone.display}
+                </a>
+              </p>
             </address>
           </div>
 
@@ -55,8 +49,8 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
               <a href="#uslugi" className="font-medium transition-colors hover:text-wine">
                 Услуги
               </a>
-              <a href="#obekty" className="font-medium transition-colors hover:text-wine">
-                Объекты
+              <a href="#nedvizhimost" className="font-medium transition-colors hover:text-wine">
+                Недвижимость
               </a>
               <a href="#process" className="font-medium transition-colors hover:text-wine">
                 Как мы работаем

@@ -1,8 +1,6 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import nodemailer from "nodemailer";
-import { maxChatIds, maxSend } from "./max";
 
 /**
  * Лид-пайплайн: заявка = запись, а не сообщение.
@@ -10,9 +8,9 @@ import { maxChatIds, maxSend } from "./max";
  * 1. Заявка СНАЧАЛА пишется в журнал на сервере (JSONL, каталог LEADS_DIR).
  *    Это требование 152-ФЗ (первичная запись ПДн в БД на территории РФ)
  *    и страховка: лид не теряется, даже если все каналы уведомлений лежат.
- * 2. Затем уведомления по каналам, каждый с повтором при сбое:
- *    email (SMTP_*) — основной, MAX-бот (MAX_*) — вторичный,
- *    Telegram (TELEGRAM_*) — опция для не-РФ окружений.
+ * 2. Затем уведомление на почту. Решение клиента (26.10.2026): только
+ *    email, без MAX и Telegram. Сама отправка пока не реализована,
+ *    sendEmail — заглушка (см. ниже).
  * 3. Итог доставки дописывается в журнал отдельной строкой.
  */
 
@@ -27,8 +25,7 @@ export type LeadInput = {
   consentAt: string; // ISO-время отметки чекбокса согласия
 };
 
-// partial — канал с несколькими получателями (чаты MAX) дошёл не до всех
-export type DeliveryStatus = "ok" | "partial" | "failed" | "skipped";
+export type DeliveryStatus = "ok" | "failed" | "skipped";
 
 const LEADS_DIR =
   process.env.LEADS_DIR ?? path.join(process.cwd(), "data", "leads");
@@ -42,112 +39,17 @@ async function appendJournal(entry: Record<string, unknown>): Promise<void> {
   await appendFile(file, JSON.stringify(entry) + "\n", "utf8");
 }
 
-/* --------------------------------- каналы --------------------------------- */
+/* ---------------------------------- почта ---------------------------------- */
 
-function formatLeadText(lead: LeadInput, forHtml = false): string {
-  const esc = (s: string) =>
-    forHtml
-      ? s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
-      : s;
-  const time = new Intl.DateTimeFormat("ru-RU", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "Europe/Moscow",
-  }).format(new Date());
-  const lines = [
-    forHtml ? "<b>Новая заявка с сайта</b>" : "Новая заявка с сайта",
-    "",
-    `Имя: ${esc(lead.name)}`,
-    `Телефон: ${esc(lead.phone)}`,
-    `Задача: ${esc(lead.task)}`,
-  ];
-  if (lead.object) lines.push(`Объект или район: ${esc(lead.object)}`);
-  if (lead.comment) lines.push(`Комментарий: ${esc(lead.comment)}`);
-  lines.push("", `${time} МСК${lead.page ? ` · ${esc(lead.page)}` : ""}`);
-  return lines.join("\n");
-}
-
-async function withRetry(
-  attempt: () => Promise<void>,
-  tries = 2,
-  backoffMs = 2000,
-): Promise<DeliveryStatus> {
-  for (let i = 0; i < tries; i++) {
-    try {
-      await attempt();
-      return "ok";
-    } catch (e) {
-      if (i === tries - 1) {
-        console.error("[lead] канал доставки упал:", e);
-        return "failed";
-      }
-      await new Promise((r) => setTimeout(r, backoffMs));
-    }
-  }
-  return "failed";
-}
-
+/**
+ * ЗАГЛУШКА: уведомление о заявке на почту агентства.
+ * Отправка будет реализована позже (SMTP-параметры из env, см.
+ * .env.example). Пока заявка сохраняется только в журнал, а функция
+ * возвращает "skipped".
+ */
 async function sendEmail(lead: LeadInput): Promise<DeliveryStatus> {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, LEAD_EMAIL_TO } =
-    process.env;
-  if (!SMTP_HOST || !LEAD_EMAIL_TO) return "skipped";
-  const transport = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT ?? 465),
-    secure: (process.env.SMTP_SECURE ?? "true") !== "false",
-    auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
-    // без таймаутов зависший SMTP держал бы запрос заявки минутами
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 15_000,
-  });
-  return withRetry(async () => {
-    await transport.sendMail({
-      from: process.env.LEAD_EMAIL_FROM ?? SMTP_USER,
-      to: LEAD_EMAIL_TO,
-      subject: `Заявка с сайта: ${lead.task}, ${lead.name}`,
-      text: formatLeadText(lead),
-    });
-  });
-}
-
-async function sendMax(lead: LeadInput): Promise<DeliveryStatus> {
-  const chatIds = maxChatIds();
-  if (!process.env.MAX_BOT_TOKEN || chatIds.length === 0) return "skipped";
-  const text = formatLeadText(lead, true);
-  // повтор у каждого чата свой: иначе сбой в одном чате дублировал бы
-  // заявку в тех, куда она уже дошла
-  const results = await Promise.all(
-    chatIds.map((chatId) =>
-      withRetry(() => maxSend(chatId, { text, format: "html" })),
-    ),
-  );
-  if (results.every((r) => r === "ok")) return "ok";
-  return results.includes("ok") ? "partial" : "failed";
-}
-
-async function sendTelegram(lead: LeadInput): Promise<DeliveryStatus> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return "skipped";
-  const base = process.env.TELEGRAM_API_BASE ?? "https://api.telegram.org";
-  return withRetry(async () => {
-    const res = await fetch(`${base}/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: formatLeadText(lead, true),
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    const data = (await res.json()) as { ok?: boolean; description?: string };
-    if (!res.ok || !data.ok) {
-      throw new Error(`Telegram API: ${data.description ?? res.status}`);
-    }
-  });
+  void lead;
+  return "skipped";
 }
 
 /* ---------------------------------- вход ----------------------------------- */
@@ -178,18 +80,13 @@ export async function processLead(lead: LeadInput): Promise<LeadResult> {
       consent: { given: true, at: lead.consentAt, ip: lead.ip },
     });
   } catch (e) {
-    // например, read-only ФС на serverless: заявка уйдёт каналами
+    // например, read-only ФС на serverless
     journaled = false;
     console.error("[lead] не удалось записать журнал:", e);
   }
 
-  // 2. Каналы уведомлений (параллельно, каждый со своими ретраями)
-  const [email, max, telegram] = await Promise.all([
-    sendEmail(lead),
-    sendMax(lead),
-    sendTelegram(lead),
-  ]);
-  const delivery = { email, max, telegram };
+  // 2. Уведомление на почту
+  const delivery = { email: await sendEmail(lead) };
 
   // 3. Итог доставки в журнал
   try {

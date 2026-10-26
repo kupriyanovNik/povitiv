@@ -16,7 +16,7 @@ import path from "node:path";
 import { chromium } from "playwright-core";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
-// офисный номер из lib/site.ts (phones[0]); TS из .mjs не импортировать
+// офисный номер из lib/site.ts (phone); TS из .mjs не импортировать
 const OFFICE_PHONE = "+7 (495) 609-28-64";
 
 const dataUri = async (file, mime) =>
@@ -40,6 +40,7 @@ const fonts = [
 const html = (await readFile(path.join(ROOT, "scripts/og/card.html"), "utf8"))
   .replace("{{FONTS}}", fonts)
   .replaceAll("{{EMBLEM}}", await dataUri("public/brand/emblem.svg", "image/svg+xml"))
+  .replaceAll("{{WORDMARK}}", await dataUri("public/brand/wordmark.svg", "image/svg+xml"))
   .replace("{{PHONE}}", OFFICE_PHONE);
 
 const browser = await chromium.launch({

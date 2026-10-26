@@ -8,11 +8,6 @@ export function plural(n: number, one: string, few: string, many: string): strin
   return many;
 }
 
-export function formatPrice(price: number, note?: string | null): string {
-  const formatted = new Intl.NumberFormat("ru-RU").format(price);
-  return note ? `${formatted} ₽ ${note}` : `${formatted} ₽`;
-}
-
 /** Полных лет с даты (учитывает месяц и день, не только год). */
 export function fullYearsSince(iso: string, now = new Date()): number {
   const d = new Date(iso);

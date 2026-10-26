@@ -18,8 +18,7 @@ const ALLOWED_TASKS = new Set([
   "Продать",
   "Купить",
   "Обменять",
-  "Сдать",
-  "Снять",
+  "Новостройка",
   "Сопровождение",
   "Перезвоните мне",
   "Другое",
@@ -134,10 +133,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Заявка принята, если записана в журнал ИЛИ доставлена хоть одним каналом
-  const deliveredSomewhere = Object.values(result.delivery).some(
-    (s) => s === "ok" || s === "partial",
-  );
+  // Заявка принята, если записана в журнал ИЛИ ушла на почту
+  const deliveredSomewhere = result.delivery.email === "ok";
   if (!result.journaled && !deliveredSomewhere) {
     return NextResponse.json(
       { ok: false, error: "Не удалось отправить заявку" },

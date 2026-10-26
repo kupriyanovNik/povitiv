@@ -1,22 +1,3 @@
-export type Listing = {
-  id: string;
-  source: "cian" | "domclick";
-  url: string;
-  dealType: "sale" | "rent";
-  category: "flat" | "room" | "house" | "land";
-  title: string;
-  badge: string | null;
-  price: number;
-  priceNote: string | null;
-  area: number | null;
-  floor: string | null;
-  rooms: number | null;
-  address: string;
-  metro: string | null;
-  highlight: string;
-  photos: string[];
-};
-
 export type Agent = {
   name: string;
   casId: number;

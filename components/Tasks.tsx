@@ -1,88 +1,150 @@
 "use client";
 
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 import { motion } from "motion/react";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import type { LeadTask } from "@/lib/site";
 import { useLead } from "./lead/LeadContext";
 import { Reveal } from "./Reveal";
+import whiteTower from "@/public/photos/white-tower.jpg";
+import entrance from "@/public/photos/entrance.jpg";
+import towersUp from "@/public/photos/towers-up.jpg";
+import brick from "@/public/photos/brick.jpg";
+import nightTower from "@/public/photos/night-tower.jpg";
+import courtyard from "@/public/photos/courtyard.jpg";
 
+/**
+ * Услуги на фотографиях недвижимости (правки клиента 26.10.2026): аренды
+ * больше нет, добавлены новостройки. Фото сняты агентством.
+ */
 type TaskCard = {
   task: LeadTask;
   title: string;
   text: string;
   cta: string;
+  photo: StaticImageData;
+  /** фокус кадра при обрезке: здания в кадре стоят по-разному */
+  focus?: string;
 };
 
 const PRIMARY: TaskCard[] = [
   {
     task: "Продать",
-    title: "Продать объект",
+    title: "Продать недвижимость",
     text: "Определим рыночную цену, подготовим объект, запустим продвижение, организуем показы и проведём переговоры с покупателями.",
-    cta: "Продать недвижимость",
+    cta: "Оценить и продать",
+    photo: whiteTower,
+    focus: "object-[center_30%]",
   },
   {
     task: "Купить",
-    title: "Купить объект",
+    title: "Купить недвижимость",
     text: "Подберём варианты под ваш бюджет и задачу, проверим документы, согласуем условия и сопроводим расчёты и регистрацию.",
-    cta: "Подобрать недвижимость",
+    cta: "Подобрать вариант",
+    photo: entrance,
   },
 ];
 
 const SECONDARY: TaskCard[] = [
   {
-    task: "Сдать",
-    title: "Сдать или снять",
-    text: "Найдём подходящего арендатора или объект, организуем показы и подготовим договор.",
-    cta: "Решить вопрос с арендой",
+    task: "Новостройка",
+    title: "Новостройки",
+    text: "Поможем выбрать квартиру в новостройке в Москве и Московской области, оформить документы и провести сделку без лишних затрат. Работаем только с проверенными застройщиками и гарантируем юридическую чистоту сделки.",
+    cta: "Подобрать новостройку",
+    photo: towersUp,
+    focus: "object-[center_35%]",
   },
   {
     task: "Обменять",
     title: "Обменять или разъехаться",
     text: "Свяжем продажу и покупку в одну последовательную схему: участники, документы, расчёты.",
     cta: "Обсудить обмен",
+    photo: brick,
+    focus: "object-[center_25%]",
   },
   {
     task: "Сопровождение",
     title: "Ипотека и рефинансирование",
     text: "Поможем собрать документы и встроим банковские этапы в общий процесс сделки.",
     cta: "Спросить про ипотеку",
+    photo: nightTower,
+    focus: "object-[center_20%]",
   },
   {
     task: "Другое",
     title: "Нестандартная задача",
     text: "Субсидии, сертификаты, приватизация, срочный выкуп и отдельное юридическое сопровождение.",
     cta: "Рассказать о ситуации",
+    photo: courtyard,
+    focus: "object-[center_35%]",
   },
 ];
 
-function CardShell({
-  children,
+function PhotoCard({
+  card,
+  size,
   onClick,
-  className,
-  label,
 }: {
-  children: React.ReactNode;
+  card: TaskCard;
+  size: "lg" | "sm";
   onClick: () => void;
-  className: string;
-  label: string;
 }) {
+  const lg = size === "lg";
   return (
     <motion.button
       type="button"
       onClick={onClick}
-      aria-label={label}
-      whileHover={{ y: -3 }}
+      aria-label={card.cta}
       whileTap={{ scale: 0.985 }}
       transition={{ type: "spring", duration: 0.35, bounce: 0 }}
-      className={`group flex flex-col justify-between rounded-2xl p-6 text-left sm:p-7 ${className}`}
+      className={`group relative isolate flex w-full flex-col justify-end overflow-hidden rounded-2xl bg-wine-ink text-left text-white ${
+        lg ? "min-h-[380px] p-6 sm:min-h-[460px] sm:p-8" : "min-h-[420px] p-6"
+      }`}
     >
-      {children}
+      <Image
+        src={card.photo}
+        alt=""
+        fill
+        placeholder="blur"
+        sizes={lg ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"}
+        className={`-z-10 object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04] ${card.focus ?? ""}`}
+      />
+      {/* скрим держит контраст белого текста на любом кадре */}
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-gradient-to-t from-wine-ink via-wine-ink/70 to-wine-ink/0"
+      />
+      <h3
+        className={`font-bold tracking-[-0.01em] ${
+          lg ? "text-[28px] leading-tight sm:text-[32px]" : "text-xl leading-snug"
+        }`}
+      >
+        {card.title}
+      </h3>
+      <p
+        className={`mt-2 leading-relaxed text-white/85 ${
+          lg ? "max-w-[46ch] text-[15px] sm:text-base" : "text-sm"
+        }`}
+      >
+        {card.text}
+      </p>
+      <span
+        className={`mt-5 inline-flex items-center gap-2 font-semibold ${
+          lg ? "text-[15px]" : "text-sm"
+        }`}
+      >
+        {card.cta}
+        <ArrowRight
+          size={lg ? 16 : 14}
+          weight="bold"
+          className="transition-transform group-hover:translate-x-1"
+        />
+      </span>
     </motion.button>
   );
 }
 
-export function Tasks({ photo }: { photo?: string }) {
+export function Tasks() {
   const { openLead } = useLead();
 
   return (
@@ -99,91 +161,24 @@ export function Tasks({ photo }: { photo?: string }) {
         </Reveal>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:mt-12">
-          <CardShell
-            onClick={() => openLead("Продать")}
-            label="Продать недвижимость"
-            className="relative min-h-[280px] overflow-hidden bg-wine-ink text-white"
-          >
-            {photo && (
-              <Image
-                src={photo}
-                alt=""
-                fill
-                sizes="(min-width: 768px) 50vw, 100vw"
-                className="object-cover opacity-35 transition-opacity duration-500 group-hover:opacity-45"
-              />
-            )}
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-gradient-to-t from-wine-ink via-wine-ink/55 to-transparent"
+          {PRIMARY.map((card) => (
+            <PhotoCard
+              key={card.title}
+              card={card}
+              size="lg"
+              onClick={() => openLead(card.task)}
             />
-            <div className="relative mt-auto">
-              <h3 className="text-2xl font-bold tracking-[-0.01em]">
-                {PRIMARY[0].title}
-              </h3>
-              <p className="mt-2 max-w-[44ch] text-[15px] leading-relaxed text-white/85">
-                {PRIMARY[0].text}
-              </p>
-              <span className="mt-5 inline-flex items-center gap-2 text-[15px] font-semibold text-white">
-                {PRIMARY[0].cta}
-                <ArrowRight
-                  size={16}
-                  weight="bold"
-                  className="transition-transform group-hover:translate-x-1"
-                />
-              </span>
-            </div>
-          </CardShell>
-
-          <CardShell
-            onClick={() => openLead("Купить")}
-            label="Купить недвижимость"
-            className="min-h-[280px] bg-wine-tint"
-          >
-            <div className="mt-auto">
-              <h3 className="text-2xl font-bold tracking-[-0.01em]">
-                {PRIMARY[1].title}
-              </h3>
-              <p className="mt-2 max-w-[44ch] text-[15px] leading-relaxed text-ink-soft">
-                {PRIMARY[1].text}
-              </p>
-              <span className="mt-5 inline-flex items-center gap-2 text-[15px] font-semibold text-wine">
-                {PRIMARY[1].cta}
-                <ArrowRight
-                  size={16}
-                  weight="bold"
-                  className="transition-transform group-hover:translate-x-1"
-                />
-              </span>
-            </div>
-          </CardShell>
+          ))}
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {SECONDARY.map((card) => (
-            <CardShell
+            <PhotoCard
               key={card.title}
+              card={card}
+              size="sm"
               onClick={() => openLead(card.task)}
-              label={card.cta}
-              className="border border-line bg-surface"
-            >
-              <div>
-                <h3 className="text-lg font-bold leading-snug tracking-[-0.01em]">
-                  {card.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                  {card.text}
-                </p>
-              </div>
-              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-wine">
-                {card.cta}
-                <ArrowRight
-                  size={14}
-                  weight="bold"
-                  className="transition-transform group-hover:translate-x-1"
-                />
-              </span>
-            </CardShell>
+            />
           ))}
         </div>
       </div>

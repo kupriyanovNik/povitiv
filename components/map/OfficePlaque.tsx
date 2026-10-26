@@ -1,6 +1,6 @@
 import { NavigationArrow } from "@phosphor-icons/react/dist/ssr";
-import { phones, site } from "@/lib/site";
-import { PhoneIcon } from "../PhoneIcon";
+import { Phone } from "@phosphor-icons/react/dist/ssr";
+import { phone, site } from "@/lib/site";
 
 /**
  * Плашка агентства вместо стандартной метки: карточка с телефонами и
@@ -33,20 +33,13 @@ export function OfficePlaque() {
           </div>
         </div>
 
-        <ul className="mt-3 space-y-1">
-          {phones.map((p) => (
-            <li key={p.href}>
-              <a
-                href={p.href}
-                aria-label={`${p.label}: ${p.display}`}
-                className="tnum flex items-center gap-2 text-[14px] font-semibold transition-colors hover:text-wine"
-              >
-                <PhoneIcon kind={p.kind} size={14} className="text-wine" />
-                {p.display}
-              </a>
-            </li>
-          ))}
-        </ul>
+        <a
+          href={phone.href}
+          className="tnum mt-3 flex items-center gap-2 text-[14px] font-semibold transition-colors hover:text-wine"
+        >
+          <Phone size={14} weight="bold" className="text-wine" aria-hidden />
+          {phone.display}
+        </a>
 
         <a
           href={site.routeUrl}

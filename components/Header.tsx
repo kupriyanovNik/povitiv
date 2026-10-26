@@ -3,17 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useReducedMotionSafe } from "./useReducedMotionSafe";
-import { List, X } from "@phosphor-icons/react/dist/ssr";
-import { phones } from "@/lib/site";
+import { List, Phone, X } from "@phosphor-icons/react/dist/ssr";
+import { phone } from "@/lib/site";
 import { trapTabKey } from "./focusTrap";
 import { useLead } from "./lead/LeadContext";
 import { Logo } from "./Logo";
-import { PhoneIcon } from "./PhoneIcon";
 
 const NAV = [
   { href: "#uslugi", label: "Услуги" },
   { href: "#process", label: "Этапы" },
-  { href: "#obekty", label: "Объекты" },
+  { href: "#nedvizhimost", label: "Недвижимость" },
   { href: "#komanda", label: "Команда" },
   { href: "#otzyvy", label: "Отзывы" },
   { href: "#kontakty", label: "Контакты" },
@@ -54,6 +53,9 @@ export function Header() {
     return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
+  // пока шапка над фото города в хиро, она прозрачная и белая
+  const onPhoto = !scrolled;
+
   return (
     <>
       <div id="top-sentinel" aria-hidden className="absolute top-0 h-px w-px" />
@@ -68,7 +70,7 @@ export function Header() {
           <a
             href="#"
             aria-label="Позитив ВТ, агентство недвижимости: в начало страницы"
-            className="shrink-0 text-wine"
+            className={`shrink-0 transition-colors duration-300 ${onPhoto ? "text-white" : "text-wine"}`}
           >
             <Logo />
           </a>
@@ -78,7 +80,11 @@ export function Header() {
               <a
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-ink-soft transition-colors hover:text-ink"
+                className={`text-sm font-medium transition-colors ${
+                  onPhoto
+                    ? "text-white/85 hover:text-white"
+                    : "text-ink-soft hover:text-ink"
+                }`}
               >
                 {item.label}
               </a>
@@ -86,20 +92,20 @@ export function Header() {
           </nav>
 
           <div className="ml-auto flex items-center gap-5 lg:ml-0">
-            {/* два номера столбиком: высота шапки вмещает обе строки */}
-            <div className="hidden flex-col items-end md:flex">
-              {phones.map((p) => (
-                <a
-                  key={p.href}
-                  href={p.href}
-                  aria-label={`${p.label}: ${p.display}`}
-                  className="tnum flex items-center gap-2 text-sm font-semibold leading-[22px] text-ink transition-colors hover:text-wine"
-                >
-                  <PhoneIcon kind={p.kind} size={14} className="text-wine" />
-                  {p.display}
-                </a>
-              ))}
-            </div>
+            <a
+              href={phone.href}
+              className={`tnum hidden items-center gap-2 whitespace-nowrap text-sm font-semibold transition-colors md:flex lg:hidden xl:flex ${
+                onPhoto ? "text-white hover:text-white/80" : "text-ink hover:text-wine"
+              }`}
+            >
+              <Phone
+                size={15}
+                weight="bold"
+                className={onPhoto ? "text-white" : "text-wine"}
+                aria-hidden
+              />
+              {phone.display}
+            </a>
             <button
               onClick={() => openLead("Продать")}
               className="hidden h-10 items-center rounded-full bg-wine px-4 text-sm font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98] sm:inline-flex"
@@ -109,7 +115,11 @@ export function Header() {
             <button
               onClick={() => setMenuOpen(true)}
               aria-label="Открыть меню"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-surface text-ink lg:hidden"
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors lg:hidden ${
+                onPhoto
+                  ? "border-white/30 bg-white/10 text-white backdrop-blur-sm"
+                  : "border-line bg-surface text-ink"
+              }`}
             >
               <List size={20} weight="bold" />
             </button>
@@ -174,23 +184,13 @@ export function Header() {
                 >
                   Оценить объект
                 </button>
-                <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
-                  {phones.map((p) => (
-                    <a
-                      key={p.href}
-                      href={p.href}
-                      className="flex h-14 flex-col items-center justify-center rounded-xl border border-line leading-tight transition-colors active:bg-paper"
-                    >
-                      <span className="flex items-center gap-1.5 text-xs font-medium text-ink-soft">
-                        <PhoneIcon kind={p.kind} size={13} className="text-wine" />
-                        {p.label}
-                      </span>
-                      <span className="tnum mt-0.5 text-[15px] font-semibold">
-                        {p.display}
-                      </span>
-                    </a>
-                  ))}
-                </div>
+                <a
+                  href={phone.href}
+                  className="tnum flex h-12 items-center justify-center gap-2 rounded-full border border-line text-[15px] font-semibold transition-colors active:bg-paper"
+                >
+                  <Phone size={16} weight="bold" className="text-wine" aria-hidden />
+                  {phone.display}
+                </a>
               </div>
             </motion.div>
           </motion.div>

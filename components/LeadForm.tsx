@@ -8,7 +8,7 @@ import {
 } from "motion/react";
 import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
-import { leadTasks, phones, type LeadTask } from "@/lib/site";
+import { leadTasks, phone as officePhone, type LeadTask } from "@/lib/site";
 import { ConsentCheckbox } from "./lead/ConsentCheckbox";
 import { normalizePhoneInput } from "./lead/phone";
 import { useLeadSubmit } from "./lead/useLeadSubmit";
@@ -242,14 +242,9 @@ export function LeadForm() {
               </button>
               <p className="text-xs leading-relaxed text-ink-soft">
                 Или позвоните:{" "}
-                {phones.map((p, i) => (
-                  <span key={p.href}>
-                    {i > 0 && " или "}
-                    <a href={p.href} className="tnum font-semibold whitespace-nowrap text-ink">
-                      {p.display}
-                    </a>
-                  </span>
-                ))}
+                <a href={officePhone.href} className="tnum font-semibold whitespace-nowrap text-ink">
+                  {officePhone.display}
+                </a>
               </p>
             </motion.form>
           )}
