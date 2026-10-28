@@ -25,6 +25,7 @@ export async function JsonLd() {
     legalName: site.legal.name,
     url: "https://positiv-vt.ru",
     telephone: phone.e164,
+    email: site.email,
     foundingDate: "2010-04-12",
     address: {
       "@type": "PostalAddress",

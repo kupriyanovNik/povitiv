@@ -72,7 +72,7 @@ export function Header() {
             aria-label="Позитив ВТ, агентство недвижимости: в начало страницы"
             className={`shrink-0 transition-colors duration-300 ${onPhoto ? "text-white" : "text-wine"}`}
           >
-            <Logo />
+            <Logo size={38} />
           </a>
 
           <nav className="hidden flex-1 items-center justify-center gap-7 lg:flex">
@@ -107,10 +107,10 @@ export function Header() {
               {phone.display}
             </a>
             <button
-              onClick={() => openLead("Продать")}
+              onClick={() => openLead()}
               className="hidden h-10 items-center rounded-full bg-wine px-4 text-sm font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98] sm:inline-flex"
             >
-              Оценить объект
+              Получить консультацию
             </button>
             <button
               onClick={() => setMenuOpen(true)}
@@ -152,7 +152,7 @@ export function Header() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-wine">
-                  <Logo />
+                  <Logo size={38} />
                 </span>
                 <button
                   onClick={() => setMenuOpen(false)}
@@ -178,11 +178,11 @@ export function Header() {
                 <button
                   onClick={() => {
                     setMenuOpen(false);
-                    openLead("Продать");
+                    openLead();
                   }}
                   className="h-12 rounded-full bg-wine font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98]"
                 >
-                  Оценить объект
+                  Получить консультацию
                 </button>
                 <a
                   href={phone.href}

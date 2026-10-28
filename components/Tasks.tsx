@@ -9,7 +9,7 @@ import whiteTower from "@/public/photos/white-tower.jpg";
 import entrance from "@/public/photos/entrance.jpg";
 import towersUp from "@/public/photos/towers-up.jpg";
 import brick from "@/public/photos/brick.jpg";
-import nightTower from "@/public/photos/night-tower.jpg";
+import embankment from "@/public/photos/embankment.jpg";
 import courtyard from "@/public/photos/courtyard.jpg";
 
 /**
@@ -66,8 +66,10 @@ const SECONDARY: TaskCard[] = [
     title: "Ипотека и рефинансирование",
     text: "Поможем собрать документы и встроим банковские этапы в общий процесс сделки.",
     cta: "Спросить про ипотеку",
-    photo: nightTower,
-    focus: "object-[center_20%]",
+    // фото клиента (28.10.2026) вместо слишком тёмной ночной высотки;
+    // кадр горизонтальный, фокус на домах, вывески справа за кадром
+    photo: embankment,
+    focus: "object-[64%_center]",
   },
   {
     task: "Другое",
@@ -78,6 +80,20 @@ const SECONDARY: TaskCard[] = [
     focus: "object-[center_35%]",
   },
 ];
+
+/**
+ * Ширина картинки для srcset. Вертикальный кадр в карточке тянется по
+ * ширине, а горизонтальный — по высоте, и тогда реальная ширина больше
+ * ширины карточки: считаем её от высоты (карточки до ~480px), иначе
+ * браузер берёт слишком маленький файл и растягивает его.
+ */
+function photoSizes(photo: StaticImageData, lg: boolean) {
+  const byWidth = lg
+    ? "(min-width: 768px) 50vw, 100vw"
+    : "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw";
+  if (photo.width <= photo.height) return byWidth;
+  return `${Math.round((480 * photo.width) / photo.height)}px`;
+}
 
 function PhotoCard({
   card,
@@ -105,7 +121,7 @@ function PhotoCard({
         alt=""
         fill
         placeholder="blur"
-        sizes={lg ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"}
+        sizes={photoSizes(card.photo, lg)}
         className={`-z-10 object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04] ${card.focus ?? ""}`}
       />
       {/* скрим держит контраст белого текста на любом кадре */}

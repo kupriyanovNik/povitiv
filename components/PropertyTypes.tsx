@@ -74,7 +74,7 @@ export function PropertyTypes() {
               <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-wine text-white sm:h-[88px] sm:w-[88px]">
                 <TypeIcon size={44} weight="light" aria-hidden className="h-9 w-9 sm:h-11 sm:w-11" />
               </span>
-              <div className="sm:grid sm:flex-1 sm:grid-cols-[minmax(0,15ch)_1fr] sm:items-baseline sm:gap-8">
+              <div className="sm:grid sm:flex-1 sm:grid-cols-[11.5rem_1fr] sm:items-center sm:gap-8">
                 <h3 className="text-lg font-bold leading-snug tracking-[-0.01em] sm:text-2xl">
                   {title}
                 </h3>

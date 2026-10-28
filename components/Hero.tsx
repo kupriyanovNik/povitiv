@@ -53,7 +53,7 @@ export function Hero({
           },
         ]
       : []),
-    { lead: "20+ лет", rest: "опыта у команды риелторов" },
+    { lead: "20+ лет", rest: "опыт команды риелторов" },
   ];
 
   const enter = (delay: number) => ({
@@ -128,7 +128,8 @@ export function Hero({
           >
             {/* ключевые слова в видимом тексте рядом с заголовком: слоган
                 клиента в H1 сам их не содержит */}
-            Агентство недвижимости в Москве и Подмосковье с 2010 года.
+            Агентство недвижимости, работаем в Москве и Подмосковье с 2010
+            года.
             Продаём, покупаем и обмениваем жильё, подбираем новостройки,
             помогаем с ипотекой и ведём сделку до передачи ключей.
           </motion.p>
@@ -145,9 +146,9 @@ export function Hero({
             </button>
             <a
               href={phone.href}
-              className="tnum flex h-14 items-center justify-center gap-2.5 whitespace-nowrap rounded-full border border-white/40 bg-wine-ink/30 px-7 text-base font-semibold text-white transition-colors hover:border-white/70 hover:bg-wine-ink/50"
+              className="tnum flex h-14 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-white/40 bg-wine-ink/30 px-4 text-sm font-semibold text-white transition-colors hover:border-white/70 hover:bg-wine-ink/50"
             >
-              <Phone size={18} weight="bold" aria-hidden />
+              <Phone size={15} weight="bold" aria-hidden />
               {phone.display}
             </a>
           </motion.div>

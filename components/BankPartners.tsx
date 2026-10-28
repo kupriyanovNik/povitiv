@@ -1,7 +1,8 @@
 import Image from "next/image";
 
 /**
- * «Мы партнёры банков» (замечания клиента, п. 12).
+ * «Наши партнеры» (замечания клиента, п. 12; заголовок изменён 28.10.2026,
+ * было «Мы партнёры банков»).
  *
  * Логотипы в public/partners/ (товарные знаки банков, используются как
  * указание на партнёрство):
@@ -48,7 +49,7 @@ export function BankPartners() {
             id="banks-title"
             className="font-display text-2xl font-bold sm:text-3xl lg:text-[32px]"
           >
-            Мы партнёры банков
+            Наши партнеры
           </h2>
           <ul className="mt-9 flex flex-wrap items-center justify-center gap-x-10 gap-y-9 sm:gap-x-14 lg:mt-10 lg:flex-nowrap lg:justify-between lg:gap-x-6">
             {BANKS.map((bank) => {

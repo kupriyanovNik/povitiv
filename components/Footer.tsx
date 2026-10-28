@@ -1,4 +1,4 @@
-import { ArrowUpRight, Clock, MapPin, Phone } from "@phosphor-icons/react/dist/ssr";
+import { ArrowUpRight, Clock, EnvelopeSimple, MapPin, Phone } from "@phosphor-icons/react/dist/ssr";
 import { phone, site } from "@/lib/site";
 import { Logo } from "./Logo";
 import { OfficeMap } from "./OfficeMap";
@@ -10,7 +10,7 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
         <div className="grid gap-10 lg:grid-cols-[5fr_7fr] lg:gap-14">
           <div>
             <div className="text-wine">
-              <Logo variant="stacked" />
+              <Logo />
             </div>
             <p className="font-display mt-7 max-w-[24ch] text-2xl font-semibold leading-[1.25] text-balance sm:text-[28px]">
               {site.welcome}
@@ -32,6 +32,15 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
                   className="tnum whitespace-nowrap text-lg font-bold transition-colors hover:text-wine"
                 >
                   {phone.display}
+                </a>
+              </p>
+              <p className="flex items-center gap-3">
+                <EnvelopeSimple size={20} weight="bold" className="shrink-0 text-wine" aria-hidden />
+                <a
+                  href={`mailto:${site.email}`}
+                  className="font-semibold transition-colors hover:text-wine"
+                >
+                  {site.email}
                 </a>
               </p>
             </address>

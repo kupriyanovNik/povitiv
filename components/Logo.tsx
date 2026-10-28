@@ -8,8 +8,9 @@
  * Обе части рисуются маской в currentColor: цвет логотипа задаёт родитель
  * (text-wine на светлом фоне, text-white на фото и бордовом).
  *
- * - inline: эмблема и надпись в строку, для шапки (высота 64–72px)
- * - stacked: надпись под эмблемой, как в оригинале, для подвала
+ * Надпись стоит под эмблемой, как в оригинале, и в шапке, и в подвале
+ * (правки 28.10.2026: в шапке логотип в столбик, а не в строку).
+ * size — высота эмблемы; отступы и надпись масштабируются от неё.
  */
 
 // пропорции исходников: эмблема 335×169, надпись 532.5×70
@@ -46,48 +47,30 @@ function Mask({
 }
 
 export function Logo({
-  variant = "inline",
+  size = 64,
   className = "",
 }: {
-  variant?: "inline" | "stacked";
+  size?: number;
   className?: string;
 }) {
-  if (variant === "stacked") {
-    const emblemH = 64;
-    const emblemW = Math.round(emblemH * EMBLEM_RATIO);
-    // надпись по ширине эмблемы, чуть уже: как в оригинале
-    const wordW = Math.round(emblemW * 0.92);
-    return (
-      <span className={`inline-flex flex-col items-center ${className}`}>
-        <Mask src="/brand/emblem.svg" width={emblemW} height={emblemH} />
-        <span aria-hidden className="mt-1.5 block h-px w-full bg-current opacity-40" />
-        <span className="mt-2">
-          <Mask
-            src="/brand/wordmark.svg"
-            width={wordW}
-            height={Math.round(wordW / WORD_RATIO)}
-          />
-        </span>
-        <span className="sr-only">Позитив ВТ</span>
-      </span>
-    );
-  }
-
-  const emblemH = 36;
-  const wordH = 15;
+  const emblemW = Math.round(size * EMBLEM_RATIO);
+  // надпись по ширине эмблемы, чуть уже: как в оригинале
+  const wordW = Math.round(emblemW * 0.92);
   return (
-    <span className={`flex items-center gap-3 ${className}`}>
-      <Mask
-        src="/brand/emblem.svg"
-        width={Math.round(emblemH * EMBLEM_RATIO)}
-        height={emblemH}
+    <span className={`inline-flex flex-col items-center ${className}`}>
+      <Mask src="/brand/emblem.svg" width={emblemW} height={size} />
+      <span
+        aria-hidden
+        className="block h-px w-full bg-current opacity-40"
+        style={{ marginTop: Math.round(size * 0.09) }}
       />
-      <span aria-hidden className="block h-7 w-px bg-current opacity-30" />
-      <Mask
-        src="/brand/wordmark.svg"
-        width={Math.round(wordH * WORD_RATIO)}
-        height={wordH}
-      />
+      <span style={{ marginTop: Math.round(size * 0.125) }}>
+        <Mask
+          src="/brand/wordmark.svg"
+          width={wordW}
+          height={Math.round(wordW / WORD_RATIO)}
+        />
+      </span>
       <span className="sr-only">Позитив ВТ</span>
     </span>
   );
