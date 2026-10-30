@@ -36,7 +36,9 @@ ssh root@SERVER
 tar -xzf /tmp/positiv-vt-dist.tar.gz -C /var/www/positiv-vt
 # data/agency.json и data/reviews-external.json приезжают в артефакте:
 # правятся руками в репозитории и обновляются каждым деплоем
-cp /var/www/positiv-vt/.env.example /var/www/positiv-vt/.env  # если ещё нет
+# .env создаётся один раз, при первом деплое; существующий файл не
+# перезаписываем — иначе cp затёр бы SMTP_PASS и YANDEX_MAPS_API_KEY
+[ -f /var/www/positiv-vt/.env ] || cp /var/www/positiv-vt/.env.example /var/www/positiv-vt/.env
 nano /var/www/positiv-vt/.env   # LEADS_DIR=/var/lib/positiv-vt/leads, YANDEX_MAPS_API_KEY
 chown -R www-data:www-data /var/www/positiv-vt
 ```
@@ -70,7 +72,10 @@ tail -f /var/lib/positiv-vt/leads/leads-*.jsonl  # журнал заявок
 
 Повторить шаги 2-3 (build-artifact → scp → tar -xzf) и
 `systemctl restart positiv-vt`. Журнал заявок живёт в `LEADS_DIR` вне
-каталога сайта и при обновлении не затрагивается.
+каталога сайта и при обновлении не затрагивается. Настройки `.env` тоже
+сохраняются: архив содержит только шаблон `.env.example` (это проверяет
+`deploy/artifact-env.cjs`), а cp в шаге 3 защищён проверкой `[ -f .env ]`
+и существующий файл не перезаписывает.
 
 ## Как это работает
 
