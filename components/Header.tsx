@@ -53,6 +53,22 @@ export function Header() {
     return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
+  // панель и бургер на десктопе скрывает только CSS (lg:hidden): если меню
+  // было открыто на мобильном и вьюпорт растянули до lg, состояние надо
+  // сбросить — иначе body остаётся заблокированным, а trapTabKey ловит Tab
+  // у display:none-меню (фокус проглатывается)
+  useEffect(() => {
+    // 64rem = Tailwind-брейкпоинт lg (--breakpoint-lg: 64rem в theme.css):
+    // rem, а не 1024px, чтобы совпадать с lg:hidden при нестандартном
+    // размере корневого шрифта
+    const mq = window.matchMedia("(min-width: 64rem)");
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setMenuOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   // пока шапка над фото города в хиро, она прозрачная и белая
   const onPhoto = !scrolled;
 
@@ -144,7 +160,7 @@ export function Header() {
             />
             <motion.div
               ref={menuRef}
-              className="absolute inset-x-0 top-0 rounded-b-2xl bg-surface p-6 pb-8 shadow-2xl shadow-ink/20"
+              className="absolute inset-x-0 top-0 max-h-[100dvh] overflow-y-auto overscroll-contain rounded-b-2xl bg-surface p-6 pb-8 shadow-2xl shadow-ink/20"
               initial={reduce ? { opacity: 0 } : { y: -24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={reduce ? { opacity: 0 } : { y: -24, opacity: 0 }}

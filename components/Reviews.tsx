@@ -50,9 +50,14 @@ function buildQuotes(
   );
 }
 
-function QuoteSlide({ quote }: { quote: QuoteReview }) {
+function QuoteSlide({ quote, active }: { quote: QuoteReview; active: boolean }) {
   return (
+    // inert у невидимых слайдов: убирает ссылку «Источник» из фокуса и
+    // a11y-дерева — иначе Tab фокусирует ссылку за пределами экрана и
+    // браузер нативно скроллит overflow-hidden вьюпорт, сбивая
+    // transform-позицию карусели (scrollLeft расходится с motion-x)
     <figure
+      inert={!active}
       className="flex w-full shrink-0 flex-col p-7 sm:p-10 lg:px-14 lg:pt-14"
       style={{ marginRight: GAP }}
     >
@@ -245,8 +250,8 @@ export function Reviews({
                   setPaused(false);
                 }}
               >
-                {quotes.map((q) => (
-                  <QuoteSlide key={q.id} quote={q} />
+                {quotes.map((q, i) => (
+                  <QuoteSlide key={q.id} quote={q} active={index === i} />
                 ))}
               </motion.div>
             </div>
