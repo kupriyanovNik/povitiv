@@ -23,13 +23,18 @@ export type LeadInput = {
   comment?: string;
   page?: string;
   ip: string;
-  consentAt: string; // ISO-время отметки чекбокса согласия
+  // ISO-время приёма заявки сервером: форма не отправляется без отметки
+  // согласия, так что это момент, когда согласие дано вместе с заявкой
+  consentAt: string;
 };
 
 export type DeliveryStatus = "ok" | "failed" | "skipped";
 
+// ignore-комментарий: иначе трейсинг Next кладёт локальный журнал (ПДн)
+// в standalone-сборку, см. также outputFileTracingExcludes
 const LEADS_DIR =
-  process.env.LEADS_DIR ?? path.join(process.cwd(), "data", "leads");
+  process.env.LEADS_DIR ??
+  path.join(/*turbopackIgnore: true*/ process.cwd(), "data", "leads");
 
 /* --------------------------------- журнал --------------------------------- */
 
@@ -61,6 +66,29 @@ function formatLeadText(lead: LeadInput): string {
   return lines.join("\n");
 }
 
+/**
+ * Код ошибки для лога без её текста: текст SMTP-ответа или ошибки ФС может
+ * содержать адреса и данные заявки, а код (EAUTH, ETIMEDOUT, EACCES, 535)
+ * достаточен, чтобы понять причину.
+ */
+export function errorCode(e: unknown): string {
+  const err = e as { code?: unknown; responseCode?: unknown } | null;
+  const parts = [err?.code, err?.responseCode].filter(
+    (v) => typeof v === "string" || typeof v === "number",
+  );
+  return parts.length ? parts.join("/") : "unknown";
+}
+
+// постоянные отказы (неверный пароль, 5xx от SMTP) повтором не лечатся,
+// а лишняя попытка только задерживает ответ посетителю
+function isPermanent(e: unknown): boolean {
+  const err = e as { code?: unknown; responseCode?: unknown } | null;
+  return (
+    err?.code === "EAUTH" ||
+    (typeof err?.responseCode === "number" && err.responseCode >= 500)
+  );
+}
+
 async function withRetry(
   attempt: () => Promise<void>,
   tries = 2,
@@ -71,8 +99,8 @@ async function withRetry(
       await attempt();
       return "ok";
     } catch (e) {
-      if (i === tries - 1) {
-        console.error("[lead] письмо не отправлено:", e);
+      if (i === tries - 1 || isPermanent(e)) {
+        console.error("[lead] письмо не отправлено:", errorCode(e));
         return "failed";
       }
       await new Promise((r) => setTimeout(r, backoffMs));
@@ -92,13 +120,16 @@ async function sendEmail(lead: LeadInput): Promise<DeliveryStatus> {
   if (!SMTP_HOST || !LEAD_EMAIL_TO) return "skipped";
   const transport = nodemailer.createTransport({
     host: SMTP_HOST,
-    port: Number(SMTP_PORT ?? 465),
+    // || а не ??: пустая строка SMTP_PORT= из шаблона дала бы порт 0
+    port: Number(SMTP_PORT || 465),
     secure: (process.env.SMTP_SECURE ?? "true") !== "false",
     auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
-    // без таймаутов зависший SMTP держал бы запрос заявки минутами
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 15_000,
+    // без таймаутов зависший SMTP держал бы запрос заявки минутами; с двумя
+    // попытками худший случай ~20 с — заметно меньше таймаута прокси (60 с),
+    // иначе посетитель получил бы 502 и отправил заявку повторно
+    connectionTimeout: 8_000,
+    greetingTimeout: 8_000,
+    socketTimeout: 10_000,
   });
   // в теме только задача и имя без переводов строк
   const subjectName = lead.name.replace(/[\r\n]+/g, " ").slice(0, 60);
@@ -116,7 +147,6 @@ async function sendEmail(lead: LeadInput): Promise<DeliveryStatus> {
 
 export type LeadResult = {
   id: string;
-  journaled: boolean;
   delivery: Record<string, DeliveryStatus>;
 };
 
@@ -125,7 +155,6 @@ export async function processLead(lead: LeadInput): Promise<LeadResult> {
   const createdAt = new Date().toISOString();
 
   // 1. Сначала запись в журнал на сервере
-  let journaled = true;
   try {
     await appendJournal({
       type: "lead",
@@ -140,9 +169,9 @@ export async function processLead(lead: LeadInput): Promise<LeadResult> {
       consent: { given: true, at: lead.consentAt, ip: lead.ip },
     });
   } catch (e) {
-    // например, read-only ФС на serverless
-    journaled = false;
-    console.error("[lead] не удалось записать журнал:", e);
+    // Без первичной записи, включая согласие, не принимаем заявку и не шлём ПДн.
+    console.error("[lead] не удалось записать первичный журнал", id, errorCode(e));
+    throw new Error("Lead journal unavailable");
   }
 
   // 2. Уведомление на почту
@@ -151,10 +180,11 @@ export async function processLead(lead: LeadInput): Promise<LeadResult> {
   // 3. Итог доставки в журнал
   try {
     await appendJournal({ type: "delivery", id, at: new Date().toISOString(), delivery });
-  } catch {
-    /* журнал уже мог быть недоступен, статусы есть в логе ниже */
+  } catch (e) {
+    // Первичная запись сохранена: сбой записи статуса не отменяет приём заявки.
+    console.error("[lead] не удалось записать статус доставки", id, errorCode(e));
   }
 
-  console.log("[lead]", id, JSON.stringify(delivery), journaled ? "" : "(журнал недоступен)");
-  return { id, journaled, delivery };
+  console.log("[lead]", id, JSON.stringify(delivery));
+  return { id, delivery };
 }

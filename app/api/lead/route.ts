@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { processLead } from "@/lib/leads";
+import { errorCode, processLead } from "@/lib/leads";
+import { phone } from "@/lib/site";
 
 export const runtime = "nodejs";
 
@@ -126,20 +127,18 @@ export async function POST(req: NextRequest) {
       consentAt: new Date().toISOString(),
     });
   } catch (e) {
-    // неожиданный сбой не должен отдавать HTML-500: клиент ждёт JSON
-    console.error("[lead] processLead упал:", e);
+    // неожиданный сбой не должен отдавать HTML-500: клиент ждёт JSON.
+    // Сюда же попадает отказ journal-first: processLead бросает, если
+    // первичная запись заявки с согласием в журнал не удалась
+    // (инвариант «нет записи — нет заявки», 152-ФЗ).
+    console.error("[lead] не удалось обработать заявку:", errorCode(e));
+    // заявка не сохранилась: посетитель должен узнать, как связаться иначе
     return NextResponse.json(
-      { ok: false, error: "Не удалось отправить заявку" },
+      {
+        ok: false,
+        error: `Не удалось отправить заявку. Позвоните нам: ${phone.display}`,
+      },
       { status: 500 },
-    );
-  }
-
-  // Заявка принята, если записана в журнал ИЛИ ушла на почту
-  const deliveredSomewhere = result.delivery.email === "ok";
-  if (!result.journaled && !deliveredSomewhere) {
-    return NextResponse.json(
-      { ok: false, error: "Не удалось отправить заявку" },
-      { status: 502 },
     );
   }
 

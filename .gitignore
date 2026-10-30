@@ -53,3 +53,7 @@ next-env.d.ts
 
 # логи playwright MCP
 /.playwright-mcp/
+
+# сборка артефакта для хостинга (может содержать данные сборочной машины)
+/dist/
+/positiv-vt-dist.tar.gz*

@@ -1,34 +1,41 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import {
   AnimatePresence,
   motion,
   useAnimate,
 } from "motion/react";
 import { useReducedMotionSafe } from "../useReducedMotionSafe";
-import { CheckCircle, X } from "@phosphor-icons/react/dist/ssr";
-import { leadTasks, phone as officePhone, type LeadTask } from "@/lib/site";
+import { X } from "@phosphor-icons/react/dist/ssr";
+import { phone as officePhone, type LeadTask } from "@/lib/site";
 import { trapTabKey } from "../focusTrap";
+import { TaskRadiogroup } from "./TaskRadiogroup";
+import { LeadSuccess } from "./LeadSuccess";
 import { ConsentCheckbox } from "./ConsentCheckbox";
 import { normalizePhoneInput } from "./phone";
 import { useLeadSubmit } from "./useLeadSubmit";
-
-const MODAL_TASKS = leadTasks;
 
 export function LeadModal({
   open,
   initialTask,
   onClose,
+  triggerRef,
 }: {
   open: boolean;
   initialTask?: LeadTask;
   onClose: () => void;
+  triggerRef: RefObject<HTMLElement | null>;
 }) {
   return (
     <AnimatePresence>
       {open && (
-        <ModalContent key="lead-modal" initialTask={initialTask} onClose={onClose} />
+        <ModalContent
+          key="lead-modal"
+          initialTask={initialTask}
+          onClose={onClose}
+          triggerRef={triggerRef}
+        />
       )}
     </AnimatePresence>
   );
@@ -37,9 +44,11 @@ export function LeadModal({
 function ModalContent({
   initialTask,
   onClose,
+  triggerRef,
 }: {
   initialTask?: LeadTask;
   onClose: () => void;
+  triggerRef: RefObject<HTMLElement | null>;
 }) {
   const reduce = useReducedMotionSafe();
   const { status, error, submit } = useLeadSubmit();
@@ -53,6 +62,11 @@ function ModalContent({
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // алиас объекта-рефа, не снапшот значения: react-hooks/exhaustive-deps
+    // просит скопировать triggerRef.current внутрь эффекта, но нам нужен
+    // именно актуальный триггер на момент cleanup (пишется в реф только
+    // openLead), поэтому читаем .current по-прежнему в cleanup
+    const latestTrigger = triggerRef;
     const t = setTimeout(() => nameRef.current?.focus(), 80);
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
@@ -69,11 +83,35 @@ function ModalContent({
       clearTimeout(t);
       document.body.style.overflow = "";
       window.removeEventListener("keydown", onKey);
+      // Возврат фокуса триггеру (APG Dialog, WCAG 2.4.3) — именно в cleanup
+      // размонтирования, а не в onClose: onClose срабатывает в начале
+      // exit-анимации (0.18–0.45 c), когда trapTabKey-листенер ещё жив и
+      // следующий Tab уводит фокус обратно в гаснущий диалог, стирая рестор.
+      // К моменту cleanup DOM диалога уже удалён и слушатели сняты.
+      const trigger = latestTrigger.current;
+      if (
+        // триггера может не быть (не было фокусируемого элемента) или он
+        // уже размонтирован (кнопка из мобильного меню умирает вместе с
+        // меню) — тогда не рестораем: фокус остаётся в body, это
+        // допустимый фолбэк APG
+        trigger &&
+        trigger.isConnected &&
+        // не крадём фокус у живого интерфейса: если модалку закрыли и
+        // немедленно открыли снова, наш поздний cleanup мог бы прибить
+        // фокус новой модалки. Рестораем только когда фокус никому не
+        // принадлежит; при гонке «закрыл-открыл» рестор срабатывает до
+        // 80-мс таймера новой модалки и сразу перекрывается им
+        (document.activeElement === document.body ||
+          document.activeElement == null)
+      ) {
+        trigger.focus();
+      }
     };
-  }, [onClose]);
+  }, [onClose, triggerRef]);
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const company = String(new FormData(e.currentTarget).get("company") ?? "");
     // комментарий уходит только вместе с «Другое»: для остальных задач
     // поле скрыто и его содержимое не должно утекать в заявку
     const ok = await submit({
@@ -82,6 +120,7 @@ function ModalContent({
       task,
       comment: task === "Другое" ? comment : "",
       consent,
+      company,
     });
     // короткий «шейк» формы как телесная обратная связь об ошибке
     if (!ok && !reduce && formScope.current) {
@@ -112,7 +151,7 @@ function ModalContent({
         role="dialog"
         aria-modal="true"
         aria-label="Заявка на консультацию"
-        className="relative w-full max-w-md rounded-t-2xl bg-surface p-6 shadow-2xl shadow-ink/20 sm:rounded-2xl sm:p-8"
+        className="relative flex max-h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-surface shadow-2xl shadow-ink/20 sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl"
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 32, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98 }}
@@ -121,47 +160,17 @@ function ModalContent({
         <button
           onClick={onClose}
           aria-label="Закрыть окно"
-          className="absolute right-4 top-4 rounded-full p-2 text-ink-soft transition-colors hover:bg-paper hover:text-ink"
+          className="absolute right-4 top-4 z-10 rounded-full bg-surface/90 p-2 text-ink-soft transition-colors hover:bg-paper hover:text-ink"
         >
           <X size={20} weight="bold" />
         </button>
 
+        {/* прокручивается только содержимое: крестик остаётся на месте,
+            даже когда длинная форма на телефоне пролистана вниз */}
+        <div className="overflow-y-auto overscroll-contain p-6 sm:p-8">
         <AnimatePresence mode="wait" initial={false}>
         {status === "success" ? (
-          <motion.div
-            key="success"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="py-6 text-center"
-          >
-            <motion.span
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                type: "spring",
-                duration: 0.5,
-                bounce: 0.3,
-                delay: 0.1,
-              }}
-              className="inline-block"
-            >
-              <CheckCircle size={56} weight="fill" className="mx-auto text-wine" />
-            </motion.span>
-            <h3 className="mt-4 text-xl font-bold">
-              Спасибо, заявка отправлена
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-              Мы получили ваши контактные данные. Специалист свяжется с вами по
-              указанному номеру.
-            </p>
-            <button
-              onClick={onClose}
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-wine px-6 font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98]"
-            >
-              Готово
-            </button>
-          </motion.div>
+          <LeadSuccess key="success" variant="modal" onDone={onClose} />
         ) : (
           <motion.div
             key="form"
@@ -176,28 +185,7 @@ function ModalContent({
               уточнит детали.
             </p>
             <form ref={formScope} onSubmit={onSubmit} className="mt-5 space-y-4">
-              <div
-                className="flex flex-wrap gap-2"
-                role="radiogroup"
-                aria-label="Задача"
-              >
-                {MODAL_TASKS.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    role="radio"
-                    aria-checked={task === t}
-                    onClick={() => setTask(t)}
-                    className={`h-9 rounded-full border px-3.5 text-sm font-medium transition-colors ${
-                      task === t
-                        ? "border-wine bg-wine text-white"
-                        : "border-line bg-surface text-ink hover:border-ink/30"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              <TaskRadiogroup ariaLabel="Задача" value={task} onChange={setTask} />
               {/* «Другое» без места для рассказа оставляло бы заявку пустой:
                   поле мягко раскрывается только для этой задачи */}
               <AnimatePresence initial={false}>
@@ -316,6 +304,7 @@ function ModalContent({
           </motion.div>
         )}
         </AnimatePresence>
+        </div>
       </motion.div>
     </motion.div>
   );

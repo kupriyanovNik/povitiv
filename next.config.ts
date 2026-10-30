@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/*": ["./data/*.json"],
   },
+  // журнал заявок (имена и телефоны) никогда не едет в сборку: на машине
+  // разработчика он может лежать в data/leads, а трейсинг подхватил бы его
+  outputFileTracingExcludes: {
+    "/*": ["./data/leads/**"],
+  },
   // демо на Vercel закрыто от индексации и заголовком на всех ответах,
   // включая фото объектов: метатег есть только у страниц
   async headers() {

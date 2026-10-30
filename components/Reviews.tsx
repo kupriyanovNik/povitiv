@@ -50,9 +50,14 @@ function buildQuotes(
   );
 }
 
-function QuoteSlide({ quote }: { quote: QuoteReview }) {
+function QuoteSlide({ quote, active }: { quote: QuoteReview; active: boolean }) {
   return (
+    // inert у невидимых слайдов: убирает ссылку «Источник» из фокуса и
+    // a11y-дерева — иначе Tab фокусирует ссылку за пределами экрана и
+    // браузер нативно скроллит overflow-hidden вьюпорт, сбивая
+    // transform-позицию карусели (scrollLeft расходится с motion-x)
     <figure
+      inert={!active}
       className="flex w-full shrink-0 flex-col p-7 sm:p-10 lg:px-14 lg:pt-14"
       style={{ marginRight: GAP }}
     >
@@ -133,6 +138,8 @@ export function Reviews({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [width]);
 
+  const hoverRef = useRef(false);
+  const focusRef = useRef(false);
   const { progress, setPaused } = useAutoplayProgress({
     seconds: AUTOPLAY_S,
     targetRef: viewportRef,
@@ -213,10 +220,28 @@ export function Reviews({
 
         <div className="mt-10 lg:mt-12">
           {/* карусель цитат */}
+          {/* пауза и под курсором, и пока внутри фокус клавиатуры: иначе
+              смена слайда делает текущий inert и фокус падает в начало
+              страницы (WCAG 2.2.2) */}
           <div
             className="flex flex-col overflow-hidden rounded-2xl bg-wine-tint"
-            onPointerEnter={() => setPaused(true)}
-            onPointerLeave={() => setPaused(false)}
+            onPointerEnter={() => {
+              hoverRef.current = true;
+              setPaused(true);
+            }}
+            onPointerLeave={() => {
+              hoverRef.current = false;
+              setPaused(focusRef.current);
+            }}
+            onFocusCapture={() => {
+              focusRef.current = true;
+              setPaused(true);
+            }}
+            onBlurCapture={(e) => {
+              if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+              focusRef.current = false;
+              setPaused(hoverRef.current);
+            }}
           >
             <div
               ref={viewportRef}
@@ -245,8 +270,8 @@ export function Reviews({
                   setPaused(false);
                 }}
               >
-                {quotes.map((q) => (
-                  <QuoteSlide key={q.id} quote={q} />
+                {quotes.map((q, i) => (
+                  <QuoteSlide key={q.id} quote={q} active={index === i} />
                 ))}
               </motion.div>
             </div>

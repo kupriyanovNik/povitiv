@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { List, Phone, X } from "@phosphor-icons/react/dist/ssr";
@@ -24,6 +24,18 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const burgerRef = useRef<HTMLButtonElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Возврат фокуса на бургер — стандарт диалога: фокус возвращается к
+  // триггеру, иначе после закрытия он падает в body и «Открыть меню»
+  // выпадает из таб-порядка. «Получить консультацию» тоже сначала
+  // возвращает фокус на бургер: модалка запоминает его как триггер и вернёт
+  // фокус туда после закрытия (кнопка в меню к тому времени уже исчезнет).
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+    burgerRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -46,12 +58,36 @@ export function Header() {
   useEffect(() => {
     if (!menuOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") closeMenu();
       else if (e.key === "Tab" && menuRef.current) trapTabKey(e, menuRef.current);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen, closeMenu]);
+
+  // при открытии фокус уходит в панель (первый её элемент — «Закрыть меню»),
+  // иначе скринридер и клавиатура остаются на кнопке под оверлеем
+  useEffect(() => {
+    if (!menuOpen) return;
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 80);
+    return () => clearTimeout(t);
   }, [menuOpen]);
+
+  // панель и бургер на десктопе скрывает только CSS (lg:hidden): если меню
+  // было открыто на мобильном и вьюпорт растянули до lg, состояние надо
+  // сбросить — иначе body остаётся заблокированным, а trapTabKey ловит Tab
+  // у display:none-меню (фокус проглатывается)
+  useEffect(() => {
+    // 64rem = Tailwind-брейкпоинт lg (--breakpoint-lg: 64rem в theme.css):
+    // rem, а не 1024px, чтобы совпадать с lg:hidden при нестандартном
+    // размере корневого шрифта
+    const mq = window.matchMedia("(min-width: 64rem)");
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setMenuOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   // пока шапка над фото города в хиро, она прозрачная и белая
   const onPhoto = !scrolled;
@@ -113,8 +149,11 @@ export function Header() {
               Получить консультацию
             </button>
             <button
+              ref={burgerRef}
               onClick={() => setMenuOpen(true)}
-              aria-label="Открыть меню"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              aria-label="Открыть меню" // состояние раскрытия сообщает aria-expanded, лейбл статичен
               className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors lg:hidden ${
                 onPhoto
                   ? "border-white/40 bg-wine-ink/30 text-white"
@@ -139,12 +178,16 @@ export function Header() {
             <button
               aria-label="Закрыть меню"
               className="absolute inset-0 bg-ink/45"
-              onClick={() => setMenuOpen(false)}
+              onClick={closeMenu}
               tabIndex={-1}
             />
             <motion.div
               ref={menuRef}
-              className="absolute inset-x-0 top-0 rounded-b-2xl bg-surface p-6 pb-8 shadow-2xl shadow-ink/20"
+              id="mobile-menu"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Меню"
+              className="absolute inset-x-0 top-0 max-h-[100dvh] overflow-y-auto overscroll-contain rounded-b-2xl bg-surface p-6 pb-8 shadow-2xl shadow-ink/20"
               initial={reduce ? { opacity: 0 } : { y: -24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={reduce ? { opacity: 0 } : { y: -24, opacity: 0 }}
@@ -155,7 +198,8 @@ export function Header() {
                   <Logo size={38} />
                 </span>
                 <button
-                  onClick={() => setMenuOpen(false)}
+                  ref={closeBtnRef}
+                  onClick={closeMenu}
                   aria-label="Закрыть меню"
                   className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-line text-ink"
                 >
@@ -167,7 +211,10 @@ export function Header() {
                   <a
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMenuOpen(false)}
+                    // дефолтная фрагментная навигация исполняется ПОСЛЕ onClick
+                    // и (цели-якоря не фокусируемы) сбрасывает фокус в body,
+                    // стирая рестор из closeMenu — закрытие уходим на макротаск
+                    onClick={() => setTimeout(closeMenu, 0)}
                     className="py-3.5 text-lg font-semibold"
                   >
                     {item.label}
@@ -177,7 +224,7 @@ export function Header() {
               <div className="mt-6 flex flex-col gap-3">
                 <button
                   onClick={() => {
-                    setMenuOpen(false);
+                    closeMenu();
                     openLead();
                   }}
                   className="h-12 rounded-full bg-wine font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98]"
