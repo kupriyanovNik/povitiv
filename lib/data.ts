@@ -15,7 +15,13 @@ export { formatMonthYear } from "./format";
 const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 
 async function readJson<T>(name: string): Promise<T> {
-  const raw = await readFile(path.join(DATA_DIR, name), "utf8");
+  // путь из env: без ignore-комментария Turbopack тащит в сборку весь
+  // проект, включая исходники и research/. JSON и так попадают в трейс
+  // через outputFileTracingIncludes в next.config.ts
+  const raw = await readFile(
+    path.join(/*turbopackIgnore: true*/ DATA_DIR, name),
+    "utf8",
+  );
   return JSON.parse(raw) as T;
 }
 

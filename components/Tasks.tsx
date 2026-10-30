@@ -109,7 +109,6 @@ function PhotoCard({
     <motion.button
       type="button"
       onClick={onClick}
-      aria-label={card.cta}
       whileTap={{ scale: 0.985 }}
       transition={{ type: "spring", duration: 0.35, bounce: 0 }}
       className={`group relative isolate flex w-full flex-col justify-end overflow-hidden rounded-2xl bg-wine-ink text-left text-white ${

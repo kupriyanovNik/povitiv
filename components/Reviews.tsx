@@ -62,7 +62,7 @@ function QuoteSlide({ quote }: { quote: QuoteReview }) {
       <figcaption className="mt-auto pt-6 text-[15px] text-ink-soft">
         <span className="flex items-center gap-3">
           <span className="font-bold text-ink">{quote.author}</span>
-          <span className="flex gap-0.5" aria-label={`Оценка ${quote.rating} из 5`}>
+          <span className="flex gap-0.5" role="img" aria-label={`Оценка ${quote.rating} из 5`}>
             {Array.from({ length: quote.rating }).map((_, i) => (
               <Star key={i} size={13} weight="fill" className="text-gold" />
             ))}
@@ -165,6 +165,7 @@ export function Reviews({
               <p className="flex items-center gap-2 text-[15px] lg:justify-end">
                 <span
                   className="flex gap-0.5 text-gold"
+                  role="img"
                   aria-label={`${Math.round(rating)} из 5 звёзд`}
                 >
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -251,7 +252,9 @@ export function Reviews({
             </div>
 
             <div className="flex items-center justify-between px-7 pb-6 sm:px-10 lg:px-14 lg:pb-10">
-              <div className="flex gap-1.5" role="group" aria-label="Отзывы">
+              {/* точки маленькие, а кнопки вокруг них 24px: в них легко попасть
+                  пальцем */}
+              <div className="-mx-[9px] flex" role="group" aria-label="Отзывы">
                 {quotes.map((q, i) => (
                   <button
                     key={q.id}
@@ -259,19 +262,23 @@ export function Reviews({
                     aria-current={index === i || undefined}
                     aria-label={`Отзыв: ${q.author}`}
                     onClick={() => goTo(i)}
-                    className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
-                      index === i
-                        ? "w-8 bg-wine/20"
-                        : "w-1.5 bg-wine/25 hover:bg-wine/45"
-                    }`}
+                    className="group/dot flex h-6 min-w-6 items-center justify-center px-[9px]"
                   >
-                    {index === i && (
-                      <motion.span
-                        aria-hidden
-                        style={{ scaleX: reduce ? 1 : progress }}
-                        className="absolute inset-0 origin-left rounded-full bg-wine"
-                      />
-                    )}
+                    <span
+                      className={`relative block h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
+                        index === i
+                          ? "w-8 bg-wine/20"
+                          : "w-1.5 bg-wine/25 group-hover/dot:bg-wine/45"
+                      }`}
+                    >
+                      {index === i && (
+                        <motion.span
+                          aria-hidden
+                          style={{ scaleX: reduce ? 1 : progress }}
+                          className="absolute inset-0 origin-left rounded-full bg-wine"
+                        />
+                      )}
+                    </span>
                   </button>
                 ))}
               </div>

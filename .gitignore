@@ -50,3 +50,6 @@ next-env.d.ts
 
 # локальные снапшоты дизайн-аудита (impeccable)
 .impeccable/
+
+# логи playwright MCP
+/.playwright-mcp/
