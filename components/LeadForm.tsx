@@ -8,7 +8,9 @@ import {
 } from "motion/react";
 import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
-import { leadTasks, phone as officePhone, type LeadTask } from "@/lib/site";
+import { phone as officePhone, type LeadTask } from "@/lib/site";
+import { TaskRadiogroup } from "./lead/TaskRadiogroup";
+import { LeadSuccess } from "./lead/LeadSuccess";
 import { ConsentCheckbox } from "./lead/ConsentCheckbox";
 import { normalizePhoneInput } from "./lead/phone";
 import { useLeadSubmit } from "./lead/useLeadSubmit";
@@ -75,38 +77,7 @@ export function LeadForm() {
         <div className="rounded-2xl bg-surface p-6 shadow-2xl shadow-black/25 sm:p-8">
           <AnimatePresence mode="wait" initial={false}>
           {status === "success" ? (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="py-10 text-center"
-            >
-              <motion.span
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{
-                  type: "spring",
-                  duration: 0.5,
-                  bounce: 0.3,
-                  delay: 0.1,
-                }}
-                className="inline-block"
-              >
-                <CheckCircle
-                  size={64}
-                  weight="fill"
-                  className="mx-auto text-wine"
-                />
-              </motion.span>
-              <h3 className="mt-5 text-2xl font-bold">
-                Спасибо, заявка отправлена
-              </h3>
-              <p className="mx-auto mt-2 max-w-[36ch] leading-relaxed text-ink-soft">
-                Мы получили ваши контактные данные. Специалист свяжется с вами
-                по указанному номеру.
-              </p>
-            </motion.div>
+            <LeadSuccess key="success" variant="section" />
           ) : (
             <motion.form
               key="form"
@@ -148,28 +119,12 @@ export function LeadForm() {
 
               <fieldset>
                 <legend className="text-sm font-semibold">Что требуется?</legend>
-                <div
-                  className="mt-2.5 flex flex-wrap gap-2"
-                  role="radiogroup"
-                  aria-label="Что требуется?"
-                >
-                  {leadTasks.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      role="radio"
-                      aria-checked={task === t}
-                      onClick={() => setTask(t)}
-                      className={`h-9 rounded-full border px-3.5 text-sm font-medium transition-colors ${
-                        task === t
-                          ? "border-wine bg-wine text-white"
-                          : "border-line bg-surface text-ink hover:border-ink/30"
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+                <TaskRadiogroup
+                  ariaLabel="Что требуется?"
+                  value={task}
+                  onChange={setTask}
+                  className="mt-2.5"
+                />
               </fieldset>
 
               <div className="space-y-2">

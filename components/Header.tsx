@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useReducedMotionSafe } from "./useReducedMotionSafe";
 import { List, Phone, X } from "@phosphor-icons/react/dist/ssr";
@@ -24,6 +24,17 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const burgerRef = useRef<HTMLButtonElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Возврат фокуса на бургер — стандарт диалога: фокус возвращается к
+  // триггеру, иначе после закрытия он падает в body и «Открыть меню»
+  // выпадает из таб-порядка. «Получить консультацию» — без рестора:
+  // фокус сразу перехватывает модалка заявки (её nameRef через 80 мс).
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+    burgerRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -46,11 +57,19 @@ export function Header() {
   useEffect(() => {
     if (!menuOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") closeMenu();
       else if (e.key === "Tab" && menuRef.current) trapTabKey(e, menuRef.current);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen, closeMenu]);
+
+  // при открытии фокус уходит в панель (первый её элемент — «Закрыть меню»),
+  // иначе скринридер и клавиатура остаются на кнопке под оверлеем
+  useEffect(() => {
+    if (!menuOpen) return;
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 80);
+    return () => clearTimeout(t);
   }, [menuOpen]);
 
   // панель и бургер на десктопе скрывает только CSS (lg:hidden): если меню
@@ -129,8 +148,11 @@ export function Header() {
               Получить консультацию
             </button>
             <button
+              ref={burgerRef}
               onClick={() => setMenuOpen(true)}
-              aria-label="Открыть меню"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              aria-label="Открыть меню" // состояние раскрытия сообщает aria-expanded, лейбл статичен
               className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors lg:hidden ${
                 onPhoto
                   ? "border-white/40 bg-wine-ink/30 text-white"
@@ -155,11 +177,15 @@ export function Header() {
             <button
               aria-label="Закрыть меню"
               className="absolute inset-0 bg-ink/45"
-              onClick={() => setMenuOpen(false)}
+              onClick={closeMenu}
               tabIndex={-1}
             />
             <motion.div
               ref={menuRef}
+              id="mobile-menu"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Меню"
               className="absolute inset-x-0 top-0 max-h-[100dvh] overflow-y-auto overscroll-contain rounded-b-2xl bg-surface p-6 pb-8 shadow-2xl shadow-ink/20"
               initial={reduce ? { opacity: 0 } : { y: -24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -171,7 +197,8 @@ export function Header() {
                   <Logo size={38} />
                 </span>
                 <button
-                  onClick={() => setMenuOpen(false)}
+                  ref={closeBtnRef}
+                  onClick={closeMenu}
                   aria-label="Закрыть меню"
                   className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-line text-ink"
                 >
@@ -183,7 +210,10 @@ export function Header() {
                   <a
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMenuOpen(false)}
+                    // дефолтная фрагментная навигация исполняется ПОСЛЕ onClick
+                    // и (цели-якоря не фокусируемы) сбрасывает фокус в body,
+                    // стирая рестор из closeMenu — закрытие уходим на макротаск
+                    onClick={() => setTimeout(closeMenu, 0)}
                     className="py-3.5 text-lg font-semibold"
                   >
                     {item.label}

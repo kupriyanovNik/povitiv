@@ -7,14 +7,14 @@ import {
   useAnimate,
 } from "motion/react";
 import { useReducedMotionSafe } from "../useReducedMotionSafe";
-import { CheckCircle, X } from "@phosphor-icons/react/dist/ssr";
-import { leadTasks, phone as officePhone, type LeadTask } from "@/lib/site";
+import { X } from "@phosphor-icons/react/dist/ssr";
+import { phone as officePhone, type LeadTask } from "@/lib/site";
 import { trapTabKey } from "../focusTrap";
+import { TaskRadiogroup } from "./TaskRadiogroup";
+import { LeadSuccess } from "./LeadSuccess";
 import { ConsentCheckbox } from "./ConsentCheckbox";
 import { normalizePhoneInput } from "./phone";
 import { useLeadSubmit } from "./useLeadSubmit";
-
-const MODAL_TASKS = leadTasks;
 
 export function LeadModal({
   open,
@@ -130,40 +130,7 @@ function ModalContent({
 
         <AnimatePresence mode="wait" initial={false}>
         {status === "success" ? (
-          <motion.div
-            key="success"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="py-6 text-center"
-          >
-            <motion.span
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                type: "spring",
-                duration: 0.5,
-                bounce: 0.3,
-                delay: 0.1,
-              }}
-              className="inline-block"
-            >
-              <CheckCircle size={56} weight="fill" className="mx-auto text-wine" />
-            </motion.span>
-            <h3 className="mt-4 text-xl font-bold">
-              Спасибо, заявка отправлена
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-              Мы получили ваши контактные данные. Специалист свяжется с вами по
-              указанному номеру.
-            </p>
-            <button
-              onClick={onClose}
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-wine px-6 font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98]"
-            >
-              Готово
-            </button>
-          </motion.div>
+          <LeadSuccess key="success" variant="modal" onDone={onClose} />
         ) : (
           <motion.div
             key="form"
@@ -178,28 +145,7 @@ function ModalContent({
               уточнит детали.
             </p>
             <form ref={formScope} onSubmit={onSubmit} className="mt-5 space-y-4">
-              <div
-                className="flex flex-wrap gap-2"
-                role="radiogroup"
-                aria-label="Задача"
-              >
-                {MODAL_TASKS.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    role="radio"
-                    aria-checked={task === t}
-                    onClick={() => setTask(t)}
-                    className={`h-9 rounded-full border px-3.5 text-sm font-medium transition-colors ${
-                      task === t
-                        ? "border-wine bg-wine text-white"
-                        : "border-line bg-surface text-ink hover:border-ink/30"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              <TaskRadiogroup ariaLabel="Задача" value={task} onChange={setTask} />
               {/* «Другое» без места для рассказа оставляло бы заявку пустой:
                   поле мягко раскрывается только для этой задачи */}
               <AnimatePresence initial={false}>
