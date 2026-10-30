@@ -62,7 +62,7 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
                 Недвижимость
               </a>
               <a href="#process" className="font-medium transition-colors hover:text-wine">
-                Как мы работаем
+                Этапы сделки
               </a>
               <a href="#komanda" className="font-medium transition-colors hover:text-wine">
                 Команда
@@ -114,7 +114,7 @@ export function Footer({ mapApiKey }: { mapApiKey?: string }) {
           <p>© {new Date().getFullYear()} Агентство недвижимости «Позитив ВТ»</p>
           <nav className="flex flex-wrap gap-x-5 gap-y-2">
             <a href="/privacy" className="transition-colors hover:text-ink">
-              Политика конфиденциальности
+              Политика обработки персональных данных
             </a>
             <a href="/consent" className="transition-colors hover:text-ink">
               Согласие на обработку данных

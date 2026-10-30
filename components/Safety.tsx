@@ -311,7 +311,7 @@ export function Safety() {
                 <p className="font-display text-xl font-bold">Ключи у вас</p>
                 <p className="mt-1 max-w-[42ch] text-sm text-ink-soft">
                   Сделка завершена: расчёты проведены, объект передан. Мы рядом
-                  на каждом из этих шагов
+                  на каждом из этих шагов.
                 </p>
               </div>
             </motion.div>

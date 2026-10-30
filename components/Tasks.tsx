@@ -62,7 +62,7 @@ const SECONDARY: TaskCard[] = [
     focus: "object-[center_25%]",
   },
   {
-    task: "Сопровождение",
+    task: "Ипотека",
     title: "Ипотека и рефинансирование",
     text: "Поможем собрать документы и встроим банковские этапы в общий процесс сделки.",
     cta: "Спросить про ипотеку",
@@ -90,7 +90,7 @@ const SECONDARY: TaskCard[] = [
 function photoSizes(photo: StaticImageData, lg: boolean) {
   const byWidth = lg
     ? "(min-width: 768px) 50vw, 100vw"
-    : "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw";
+    : "(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw";
   if (photo.width <= photo.height) return byWidth;
   return `${Math.round((480 * photo.width) / photo.height)}px`;
 }
@@ -186,7 +186,7 @@ export function Tasks() {
           ))}
         </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {SECONDARY.map((card) => (
             <PhotoCard
               key={card.title}

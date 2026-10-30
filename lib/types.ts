@@ -1,21 +1,9 @@
-export type Agent = {
-  name: string;
-  casId: number;
-  verified: boolean;
-  avatar: string | null;
-  registeredAt: string;
-  deals12m: number;
-  ratingAvg: number | null;
-  ratingVotes: number;
-};
-
 export type Review = {
   id: number;
   rating: number;
   text: string | null;
   createdAt: string;
   dealAt: string | null;
-  agent: string;
   author: string;
 };
 
@@ -35,7 +23,6 @@ export type AgencyData = {
     phone: string;
     workHours: string;
   };
-  agents: Agent[];
   reviews: Review[];
 };
 

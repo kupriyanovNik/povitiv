@@ -5,7 +5,8 @@ import type { LegalBlock } from "@/lib/legal";
 const EMAIL = /([\w.-]+@[\w-]+\.[a-z]{2,})/gi;
 
 function Text({ text }: { text: string }) {
-  return text.split(EMAIL).map((part, i) =>
+  // «№» не отрываем от номера закона при переносе строки
+  return text.replace(/№ /g, "№\u00a0").split(EMAIL).map((part, i) =>
     i % 2 === 1 ? (
       <a key={i} href={`mailto:${part}`} className="text-wine underline">
         {part}

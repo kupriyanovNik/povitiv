@@ -49,7 +49,7 @@ export function ConsentCheckbox({
           target="_blank"
           className="underline hover:text-ink"
         >
-          политикой конфиденциальности
+          политикой обработки персональных данных
         </a>
       </span>
     </label>

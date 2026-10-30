@@ -4,8 +4,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo "==> npm ci"
-npm ci
+# SKIP_NPM_CI=1 — собрать из уже установленных node_modules, без скачивания
+if [ "${SKIP_NPM_CI:-}" != "1" ]; then
+  echo "==> npm ci"
+  npm ci
+fi
 
 echo "==> next build (standalone)"
 npm run build
@@ -28,4 +31,4 @@ cp .env.example dist/.env.example
 echo "==> архив"
 tar -czf positiv-vt-dist.tar.gz -C dist .
 echo "Готово: positiv-vt-dist.tar.gz ($(du -h positiv-vt-dist.tar.gz | cut -f1))"
-echo "Дальше: scp positiv-vt-dist.tar.gz на сервер и см. deploy/README-VPS.md"
+echo "Дальше: передать архив на сервер, см. deploy/HANDOFF.md"
