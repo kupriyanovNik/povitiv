@@ -13,6 +13,14 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Deploy-скрипты — CommonJS-контракт деплоя: файл вызывается как
+  // `node deploy/artifact-env.cjs` из build-artifact.sh и HANDOFF,
+  // поэтому require() легален и TS-правило typescript-eslint не применяется.
+  {
+    files: ["**/*.cjs"],
+    languageOptions: { sourceType: "commonjs" },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
 ]);
 
 export default eslintConfig;
