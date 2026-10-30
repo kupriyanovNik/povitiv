@@ -151,7 +151,7 @@ function ModalContent({
         role="dialog"
         aria-modal="true"
         aria-label="Заявка на консультацию"
-        className="relative max-h-[100dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-surface p-6 shadow-2xl shadow-ink/20 sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl sm:p-8"
+        className="relative flex max-h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-surface shadow-2xl shadow-ink/20 sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl"
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 32, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98 }}
@@ -160,11 +160,14 @@ function ModalContent({
         <button
           onClick={onClose}
           aria-label="Закрыть окно"
-          className="absolute right-4 top-4 rounded-full p-2 text-ink-soft transition-colors hover:bg-paper hover:text-ink"
+          className="absolute right-4 top-4 z-10 rounded-full bg-surface/90 p-2 text-ink-soft transition-colors hover:bg-paper hover:text-ink"
         >
           <X size={20} weight="bold" />
         </button>
 
+        {/* прокручивается только содержимое: крестик остаётся на месте,
+            даже когда длинная форма на телефоне пролистана вниз */}
+        <div className="overflow-y-auto overscroll-contain p-6 sm:p-8">
         <AnimatePresence mode="wait" initial={false}>
         {status === "success" ? (
           <LeadSuccess key="success" variant="modal" onDone={onClose} />
@@ -301,6 +304,7 @@ function ModalContent({
           </motion.div>
         )}
         </AnimatePresence>
+        </div>
       </motion.div>
     </motion.div>
   );

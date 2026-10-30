@@ -1,9 +1,15 @@
 #!/usr/bin/env node
-// Keep deployment settings on the server, outside the distributable artifact.
+// Keep deployment settings and personal data on the server, outside the
+// distributable artifact: private .env* files and the lead journal
+// (data/leads, *.jsonl — names and phone numbers of visitors).
 const fs = require('node:fs');
 const path = require('node:path');
 
 const isEnv = (name) => /^\.env/i.test(name);
+const isJournal = (name) => /\.jsonl(\.|$)/i.test(name);
+// data/leads at any depth: Next file tracing can copy it next to server.js
+const isLeadsDir = (directory, name) =>
+  name === 'leads' && path.basename(directory) === 'data';
 
 function checkTree(root, clean) {
   if (!fs.lstatSync(root).isDirectory()) {
@@ -15,8 +21,12 @@ function checkTree(root, clean) {
       const entry = path.join(directory, name);
       const stat = fs.lstatSync(entry);
       const template = atRoot && name === '.env.example' && stat.isFile();
-      if (isEnv(name) && !template) {
-        if (!clean) throw new Error(`Private env entry: ${JSON.stringify(entry)}`);
+      const isPrivate =
+        (isEnv(name) && !template) ||
+        isJournal(name) ||
+        isLeadsDir(directory, name);
+      if (isPrivate) {
+        if (!clean) throw new Error(`Private entry: ${JSON.stringify(entry)}`);
         // rm removes the link itself; lstat and walk never follow directory links.
         fs.rmSync(entry, { recursive: true });
       } else if (stat.isDirectory()) {
@@ -39,8 +49,12 @@ function checkManifest() {
     throw new Error('Archive is missing the root .env.example.');
   }
   for (const entry of entries) {
-    if (entry !== './.env.example' && /(^|\/)\.env[^/]*(\/|$)/i.test(entry)) {
-      throw new Error(`Private env archive entry: ${JSON.stringify(entry)}`);
+    const env =
+      entry !== './.env.example' && /(^|\/)\.env[^/]*(\/|$)/i.test(entry);
+    const journal =
+      /(^|\/)data\/leads(\/|$)/i.test(entry) || /\.jsonl(\.[^/]*)?$/i.test(entry);
+    if (env || journal) {
+      throw new Error(`Private archive entry: ${JSON.stringify(entry)}`);
     }
   }
 }
@@ -55,6 +69,6 @@ try {
     throw new Error('Usage: node artifact-env.cjs clean|verify DIRECTORY, or verify-manifest < listing');
   }
 } catch (error) {
-  console.error(`Artifact env check failed: ${error.message}`);
+  console.error(`Artifact check failed: ${error.message}`);
   process.exitCode = 1;
 }

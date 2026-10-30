@@ -3,8 +3,12 @@
 Общая инструкция для хостинга, включая Windows и Apache:
 [HANDOFF.md](HANDOFF.md). Здесь — вариант Linux + nginx + systemd.
 
-Схема: артефакт собирается **вне РФ** (локально или в CI), на сервер попадает
-готовый бандл. На сервере ничего не собирается — только node и nginx. Это защищает от деградации GitHub/npm/Google Fonts из РФ.
+Схема: архив собирается отдельно (`deploy/build-artifact.sh`), на сервер
+попадает готовый бандл; на сервере нужны только node и nginx. Собирать лучше
+на Linux x64 (Linux-машина, WSL или CI): тогда в архив попадает нативный
+модуль оптимизации картинок под сервер. Архив, собранный на macOS, тоже
+работает, но картинки оптимизируются медленнее. Собирать можно и на самом
+сервере, если с него доступен registry.npmjs.org.
 
 ## Требования к серверу
 
@@ -16,13 +20,17 @@
 ## 1. Разовая настройка сервера
 
 ```bash
-apt update && apt install -y nginx certbot python3-certbot-nginx nodejs npm
-node -v   # нужен Node 20+; если старее — поставить NodeSource 22.x
+apt update && apt install -y nginx certbot python3-certbot-nginx curl
+# Node из стандартных репозиториев Ubuntu/Debian слишком старый для Next 16
+# (нужен 20.9+): ставим Node 22 LTS из NodeSource
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
+node -v   # v22.x
 mkdir -p /var/www/positiv-vt /var/lib/positiv-vt/leads
 chown -R www-data:www-data /var/www/positiv-vt /var/lib/positiv-vt
 ```
 
-## 2. Сборка и загрузка артефакта (на вашей машине)
+## 2. Сборка и загрузка архива
 
 ```bash
 ./deploy/build-artifact.sh
@@ -53,8 +61,7 @@ systemctl enable --now positiv-vt.service
 cp /var/www/positiv-vt/deploy/nginx.conf /etc/nginx/sites-available/positiv-vt
 ln -s /etc/nginx/sites-available/positiv-vt /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
-# --redirect фиксирует редирект HTTP->HTTPS явно (по умолчанию он и так
-# ставится с certbot 1.0; флаг — страховка от --no-redirect и cli.ini)
+# --redirect явно включает редирект HTTP->HTTPS
 certbot --nginx -d positiv-vt.ru -d www.positiv-vt.ru --redirect
 ```
 
@@ -73,14 +80,15 @@ tail -f /var/lib/positiv-vt/leads/leads-*.jsonl  # журнал заявок
 Повторить шаги 2-3 (build-artifact → scp → tar -xzf) и
 `systemctl restart positiv-vt`. Журнал заявок живёт в `LEADS_DIR` вне
 каталога сайта и при обновлении не затрагивается. Настройки `.env` тоже
-сохраняются: архив содержит только шаблон `.env.example` (это проверяет
-`deploy/artifact-env.cjs`), а cp в шаге 3 защищён проверкой `[ -f .env ]`
-и существующий файл не перезаписывает.
+сохраняются: архив содержит только шаблон `.env.example` и не содержит
+журнала заявок (это проверяет `deploy/artifact-env.cjs`), а cp в шаге 3
+защищён проверкой `[ -f .env ]` и существующий файл не перезаписывает.
 
 ## Как это работает
 
 - **Сайт**: standalone-бандл Next.js, `node server.js` на 127.0.0.1:3000,
-  nginx проксирует и отдаёт статику/фото напрямую с длинным кэшем.
+  nginx проксирует запросы и сам отдаёт `/_next/static/` с длинным кэшем;
+  фото и остальное отдаёт Node.
 - **Заявки**: пишутся в `LEADS_DIR` (journal JSONL, персональные данные
   остаются на сервере в РФ). Копия заявки уходит на почту
   агентства через SMTP (`SMTP_*` в `.env`).

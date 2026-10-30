@@ -138,6 +138,8 @@ export function Reviews({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [width]);
 
+  const hoverRef = useRef(false);
+  const focusRef = useRef(false);
   const { progress, setPaused } = useAutoplayProgress({
     seconds: AUTOPLAY_S,
     targetRef: viewportRef,
@@ -218,10 +220,28 @@ export function Reviews({
 
         <div className="mt-10 lg:mt-12">
           {/* карусель цитат */}
+          {/* пауза и под курсором, и пока внутри фокус клавиатуры: иначе
+              смена слайда делает текущий inert и фокус падает в начало
+              страницы (WCAG 2.2.2) */}
           <div
             className="flex flex-col overflow-hidden rounded-2xl bg-wine-tint"
-            onPointerEnter={() => setPaused(true)}
-            onPointerLeave={() => setPaused(false)}
+            onPointerEnter={() => {
+              hoverRef.current = true;
+              setPaused(true);
+            }}
+            onPointerLeave={() => {
+              hoverRef.current = false;
+              setPaused(focusRef.current);
+            }}
+            onFocusCapture={() => {
+              focusRef.current = true;
+              setPaused(true);
+            }}
+            onBlurCapture={(e) => {
+              if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+              focusRef.current = false;
+              setPaused(hoverRef.current);
+            }}
           >
             <div
               ref={viewportRef}

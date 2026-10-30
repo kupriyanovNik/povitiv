@@ -117,15 +117,19 @@ export function LeadForm() {
                 </div>
               </div>
 
-              <fieldset>
-                <legend className="text-sm font-semibold">Что требуется?</legend>
+              {/* имя группе даёт aria-label радиогруппы; видимая подпись
+                  скрыта от скринридера, чтобы не звучать дважды */}
+              <div>
+                <p aria-hidden className="text-sm font-semibold">
+                  Что требуется?
+                </p>
                 <TaskRadiogroup
                   ariaLabel="Что требуется?"
                   value={task}
                   onChange={setTask}
                   className="mt-2.5"
                 />
-              </fieldset>
+              </div>
 
               <div className="space-y-2">
                 <label htmlFor="lf-object" className="block text-sm font-semibold">

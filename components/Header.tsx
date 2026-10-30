@@ -29,8 +29,9 @@ export function Header() {
 
   // Возврат фокуса на бургер — стандарт диалога: фокус возвращается к
   // триггеру, иначе после закрытия он падает в body и «Открыть меню»
-  // выпадает из таб-порядка. «Получить консультацию» — без рестора:
-  // фокус сразу перехватывает модалка заявки (её nameRef через 80 мс).
+  // выпадает из таб-порядка. «Получить консультацию» тоже сначала
+  // возвращает фокус на бургер: модалка запоминает его как триггер и вернёт
+  // фокус туда после закрытия (кнопка в меню к тому времени уже исчезнет).
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
     burgerRef.current?.focus();
@@ -223,7 +224,7 @@ export function Header() {
               <div className="mt-6 flex flex-col gap-3">
                 <button
                   onClick={() => {
-                    setMenuOpen(false);
+                    closeMenu();
                     openLead();
                   }}
                   className="h-12 rounded-full bg-wine font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98]"

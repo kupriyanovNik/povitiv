@@ -14,7 +14,8 @@
   журнала на сервере (персональные данные остаются в РФ), затем копия уходит
   письмом на почту агентства positiv-vt@mail.ru.
 - Базы данных нет. Рейтинг и отзывы лежат в `data/*.json` и читаются с диска.
-- Внешние обращения со страницы: только API Яндекс Карт (карта в контактах).
+- Внешние обращения со страницы: только Яндекс Карты в контактах (JS API с
+  ключом или, без ключа, виджет Яндекса; виджет ставит cookie Яндекса).
   Шрифты, картинки и скрипты отдаёт сам сайт.
 - Адреса старого сайта `/cgi-bin/positiv_vt/index.pl?...` новый сайт
   перенаправляет (301) на нужные разделы, чтобы не потерять позиции в поиске.
@@ -30,27 +31,30 @@ registry.npmjs.org.
 
 ```powershell
 $ErrorActionPreference = 'Stop'
-npm ci
+# npm.cmd, а не npm: при политике выполнения Restricted npm.ps1 не запустится
+npm.cmd ci
 if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
-npm run build
+npm.cmd run build
 if ($LASTEXITCODE -ne 0) { throw 'npm run build failed' }
-# готовый сайт — в .next\standalone; докладываем статику и данные
+# готовый сайт — в .next\standalone; копируем в него статику и данные
+# (каждый раз после свежей сборки: build пересоздаёт .next\standalone)
 Copy-Item -Recurse -LiteralPath '.next\static' -Destination '.next\standalone\.next\static'
 Copy-Item -Recurse -LiteralPath 'public' -Destination '.next\standalone\public'
 New-Item -ItemType Directory -Force -Path '.next\standalone\data' | Out-Null
 Copy-Item -LiteralPath 'data\agency.json', 'data\reviews-external.json' -Destination '.next\standalone\data\'
 Copy-Item -LiteralPath '.env.example' -Destination '.next\standalone\.env.example'
-# Next.js копирует локальные .env*: удаляем их и проверяем весь комплект.
+# В комплект не должны попасть ни локальные .env*, ни журнал заявок
+# (data\leads, *.jsonl) с компьютера, где идёт сборка: удаляем и проверяем.
 # Скрипт не переходит по символическим ссылкам и сохраняет только корневой шаблон.
 node '.\deploy\artifact-env.cjs' clean '.next\standalone'
-if ($LASTEXITCODE -ne 0) { throw 'Artifact env cleanup/verification failed; do not transfer this build' }
+if ($LASTEXITCODE -ne 0) { throw 'Artifact cleanup/verification failed; do not transfer this build' }
 ```
 
 Только после успешного завершения всех команд содержимое `.next\standalone`
 переносится в каталог сайта (например
 `C:\sites\positiv-vt`) — это и есть рабочий сайт.
-Локальные `.env*`, включая вложенные файлы, каталоги и ссылки, передавать
-нельзя; настройки сервера создаются отдельно по разделу 6.
+Локальные `.env*` и журнал заявок передавать нельзя; настройки сервера
+создаются отдельно по разделу 6.
 
 **Linux / macOS:** `./deploy/build-artifact.sh` делает то же самое и
 упаковывает результат в архив `positiv-vt-dist.tar.gz`.
@@ -75,7 +79,7 @@ data/                agency.json, reviews-external.json
 |---|---|
 | Node.js | **20.9 или новее**, рекомендуем 22 LTS (Windows или Linux, x64) |
 | Процесс | постоянно работающий процесс Node.js (служба Windows или systemd) |
-| Веб-сервер | обратный прокси перед Node: Apache 2.4, nginx или IIS с ARR |
+| Веб-сервер | обратный прокси перед Node: Apache 2.4.10+, nginx или IIS с ARR |
 | HTTPS | обязателен: сертификат на `positiv-vt.ru` и `www.positiv-vt.ru` |
 | Порт | Node слушает только `127.0.0.1:3000` (порт можно сменить) |
 | Диск | ~300 МБ под сайт + каталог журнала заявок с правом записи |
@@ -84,7 +88,7 @@ data/                agency.json, reviews-external.json
 **Что мы увидели на текущем сервере** (30.10.2026, по ответу positiv-vt.ru):
 `Apache/2.2.19 (Win32) mod_perl/2.0.4`, без HTTPS, IP 89.179.241.13.
 Apache 2.2 (2011 год) не поддерживает современный TLS: браузеры не откроют
-сайт по HTTPS. Для нового сайта нужен Apache 2.4 (сборки Apache Lounge для
+сайт по HTTPS. Для нового сайта нужен Apache 2.4.10+ (сборки Apache Lounge для
 Windows) или другой прокси (nginx, IIS + ARR, Caddy). Если Apache 2.2 нельзя
 обновить из-за других сайтов на сервере — поставьте перед ним Apache 2.4/nginx
 либо выделите под сайт отдельный сервер или VPS.
@@ -125,7 +129,7 @@ HTTPS нужен не формально: без него браузеры по�
    ```
    Рабочий каталог службы должен быть каталогом сайта: оттуда читаются
    `.env` и `data/`.
-7. Apache 2.4: виртуальный хост из [apache-proxy.conf](apache-proxy.conf)
+7. Apache 2.4.10+: виртуальный хост из [apache-proxy.conf](apache-proxy.conf)
    (включить `mod_proxy`, `mod_proxy_http`, `mod_headers`, `mod_rewrite`,
    `mod_ssl`). В этом хосте не должно остаться `ScriptAlias /cgi-bin/` и
    обработчиков Perl старого сайта.
@@ -139,10 +143,8 @@ HTTPS нужен не формально: без него браузеры по�
 
 Готовый комплект: [README-VPS.md](README-VPS.md) — systemd-юнит
 [positiv-vt.service](positiv-vt.service), конфиг [nginx.conf](nginx.conf),
-certbot. Сертификат выпускается certbot; флаг `--redirect` фиксирует настройку
-редиректа HTTP→HTTPS явно (certbot и так ставит его по умолчанию с версии 1.0,
-но флаг гарантирует независимо от версии и cli.ini):
-`certbot --nginx -d positiv-vt.ru -d www.positiv-vt.ru --redirect`.
+certbot: `certbot --nginx -d positiv-vt.ru -d www.positiv-vt.ru --redirect`
+(флаг `--redirect` явно включает редирект HTTP→HTTPS).
 Если на Linux-сервере уже работает Apache — используйте
 [apache-proxy.conf](apache-proxy.conf), поправив пути к сертификату.
 
@@ -180,37 +182,52 @@ curl -sI "https://positiv-vt.ru/cgi-bin/positiv_vt/index.pl?text=page&i=4"
                                                   # 301, Location: /#kontakty
 ```
 
-Редирект HTTP→HTTPS certbot настраивает по умолчанию (с версии 1.0); флаг
-`--redirect` (раздел 5) фиксирует это явно: переводит оба server-блока на 443
-и добавляет :80-блоки с `return 301`. Если сертификат выпустили без флага или
-редирект явно отключили (`--no-redirect`, cli.ini), добавить постфактум:
-`certbot enhance --redirect --cert-name positiv-vt.ru`
-(enhance берёт домены из SAN сертификата: выбор по --cert-name или
-интерактивно, `-n` — применить ко всем SAN без вопросов; аргументы `-d` он
-не читает).
+Если `http://` не уводит на `https://` (сертификат на nginx выпустили без
+`--redirect`), включите редирект: `certbot enhance --redirect --cert-name positiv-vt.ru`.
 
 И в браузере:
 - в контактах видна карта с плашкой агентства (если вместо неё обычный
   виджет Яндекса — ключ карты не задан или не подходит к домену);
-- тестовая заявка с формы: в `LEADS_DIR` появляется файл
-  `leads-ГГГГ-ММ.jsonl` с этой заявкой, а на positiv-vt@mail.ru приходит
-  письмо «Заявка с сайта: …». В журнале рядом с заявкой строка
-  `"type":"delivery"` с `"email":"ok"`; если там `failed` — смотрите лог
-  сайта (обычно неверный пароль приложения). Тестовые строки потом удалите.
+- тестовая заявка с формы (с телефона через мобильный интернет, не с
+  сервера): в `LEADS_DIR` появляется файл `leads-ГГГГ-ММ.jsonl` с этой
+  заявкой, а на positiv-vt@mail.ru приходит письмо «Заявка с сайта: …».
+  В журнале проверьте:
+  - в строке заявки `"consent":{…,"ip":"…"}` — внешний IP телефона. Если там
+    `"local"` или IP самого сервера, прокси не передаёт `X-Real-IP`
+    (раздел 4, шаг 7): у всех посетителей окажется общий лимит заявок, а в
+    журнале согласий — неверный адрес;
+  - в строке `"type":"delivery"` — `"email":"ok"`. `skipped` значит, что в
+    `.env` не заданы `SMTP_HOST`/`LEAD_EMAIL_TO`; `failed` — смотрите лог
+    сайта: там код ошибки, `EAUTH`/`535` — неверный пароль приложения,
+    `ETIMEDOUT`/`ECONNECTION` — SMTP недоступен с сервера.
+
+  Тестовую заявку из журнала потом удалите.
 
 ## 9. Особенности
 
 - **Почта.** Если письмо не ушло (SMTP недоступен, неверный пароль), заявка
-  всё равно сохранена в журнале `LEADS_DIR` — его стоит проверять, если
-  письма перестали приходить.
+  всё равно сохранена в журнале `LEADS_DIR`, а посетитель видит «заявка
+  принята». Если письма перестали приходить, проверьте журнал и лог сайта.
+- **Журнал недоступен** (нет прав на `LEADS_DIR`, кончился диск): заявка не
+  принимается, посетитель видит ошибку с телефоном агентства. В логе сайта —
+  «не удалось записать первичный журнал» с кодом ошибки (`EACCES`, `ENOSPC`).
 - **Ключ Яндекс Карт** работает только на positiv-vt.ru и www.positiv-vt.ru.
   На других адресах (IP сервера, временный домен) вместо фирменной карты
   будет обычный виджет Яндекса — это нормально.
 
 ## 10. Обслуживание
 
-- **Обновление сайта:** собрать новую версию (раздел 2) → остановить службу
-  → заменить файлы в каталоге сайта, сохранив `.env` → запустить службу.
+- **Обновление сайта.** `.env` и журнала в собранном комплекте нет, поэтому
+  новую версию копируют поверх каталога сайта, не удаляя его:
+  - Windows (после сборки по разделу 2, в каталоге с исходниками):
+    ```powershell
+    nssm stop positiv-vt
+    Copy-Item -Recurse -Force '.next\standalone\*' 'C:\sites\positiv-vt\'
+    nssm start positiv-vt
+    ```
+  - Linux: шаги «Обновление версии» в [README-VPS.md](README-VPS.md).
+
+  Каталог сайта целиком не удаляйте: в нём лежит `.env`.
 - **Журнал заявок** (`LEADS_DIR`) содержит персональные данные: доступ
   только администраторам и агентству, резервная копия вместе с остальными
   данными сервера. При обновлении сайта не затрагивается только если задан
