@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -28,7 +29,19 @@ export function LeadProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [task, setTask] = useState<LeadTask | undefined>(undefined);
 
+  // Триггер последнего открытия модалки: активный элемент на момент вызова
+  // openLead. APG Dialog: «When a dialog closes, focus returns to the
+  // element that invoked it». Отдаём в модалку сам ref, а не значение:
+  // рестор выполняется в cleanup размонтирования ModalContent (после конца
+  // exit-анимации), когда значение из рендера уже устарело бы.
+  const triggerRef = useRef<HTMLElement | null>(null);
+
   const openLead = useCallback((t?: LeadTask) => {
+    // фиксируем триггер ДО открытия; не-HTMLElement и отсутствие фокуса
+    // (напр. клик мышью в Safari не фокусирует кнопку) дают null — тогда
+    // рестора не будет вовсе, это допустимый фолбэк APG
+    const el = document.activeElement;
+    triggerRef.current = el instanceof HTMLElement ? el : null;
     setTask(t);
     setOpen(true);
   }, []);
@@ -43,6 +56,7 @@ export function LeadProvider({ children }: { children: ReactNode }) {
           open={open}
           initialTask={task}
           onClose={() => setOpen(false)}
+          triggerRef={triggerRef}
         />
       </LeadContext.Provider>
     </MotionConfig>

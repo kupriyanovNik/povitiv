@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import {
   AnimatePresence,
   motion,
@@ -20,15 +20,22 @@ export function LeadModal({
   open,
   initialTask,
   onClose,
+  triggerRef,
 }: {
   open: boolean;
   initialTask?: LeadTask;
   onClose: () => void;
+  triggerRef: RefObject<HTMLElement | null>;
 }) {
   return (
     <AnimatePresence>
       {open && (
-        <ModalContent key="lead-modal" initialTask={initialTask} onClose={onClose} />
+        <ModalContent
+          key="lead-modal"
+          initialTask={initialTask}
+          onClose={onClose}
+          triggerRef={triggerRef}
+        />
       )}
     </AnimatePresence>
   );
@@ -37,9 +44,11 @@ export function LeadModal({
 function ModalContent({
   initialTask,
   onClose,
+  triggerRef,
 }: {
   initialTask?: LeadTask;
   onClose: () => void;
+  triggerRef: RefObject<HTMLElement | null>;
 }) {
   const reduce = useReducedMotionSafe();
   const { status, error, submit } = useLeadSubmit();
@@ -53,6 +62,11 @@ function ModalContent({
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // алиас объекта-рефа, не снапшот значения: react-hooks/exhaustive-deps
+    // просит скопировать triggerRef.current внутрь эффекта, но нам нужен
+    // именно актуальный триггер на момент cleanup (пишется в реф только
+    // openLead), поэтому читаем .current по-прежнему в cleanup
+    const latestTrigger = triggerRef;
     const t = setTimeout(() => nameRef.current?.focus(), 80);
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
@@ -69,8 +83,31 @@ function ModalContent({
       clearTimeout(t);
       document.body.style.overflow = "";
       window.removeEventListener("keydown", onKey);
+      // Возврат фокуса триггеру (APG Dialog, WCAG 2.4.3) — именно в cleanup
+      // размонтирования, а не в onClose: onClose срабатывает в начале
+      // exit-анимации (0.18–0.45 c), когда trapTabKey-листенер ещё жив и
+      // следующий Tab уводит фокус обратно в гаснущий диалог, стирая рестор.
+      // К моменту cleanup DOM диалога уже удалён и слушатели сняты.
+      const trigger = latestTrigger.current;
+      if (
+        // триггера может не быть (не было фокусируемого элемента) или он
+        // уже размонтирован (кнопка из мобильного меню умирает вместе с
+        // меню) — тогда не рестораем: фокус остаётся в body, это
+        // допустимый фолбэк APG
+        trigger &&
+        trigger.isConnected &&
+        // не крадём фокус у живого интерфейса: если модалку закрыли и
+        // немедленно открыли снова, наш поздний cleanup мог бы прибить
+        // фокус новой модалки. Рестораем только когда фокус никому не
+        // принадлежит; при гонке «закрыл-открыл» рестор срабатывает до
+        // 80-мс таймера новой модалки и сразу перекрывается им
+        (document.activeElement === document.body ||
+          document.activeElement == null)
+      ) {
+        trigger.focus();
+      }
     };
-  }, [onClose]);
+  }, [onClose, triggerRef]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
