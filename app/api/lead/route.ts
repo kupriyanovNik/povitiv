@@ -126,19 +126,14 @@ export async function POST(req: NextRequest) {
       consentAt: new Date().toISOString(),
     });
   } catch {
-    // неожиданный сбой не должен отдавать HTML-500: клиент ждёт JSON
+    // неожиданный сбой не должен отдавать HTML-500: клиент ждёт JSON.
+    // Сюда же попадает отказ journal-first: processLead бросает, если
+    // первичная запись заявки с согласием в журнал не удалась
+    // (инвариант «нет записи — нет заявки», 152-ФЗ).
     console.error("[lead] не удалось обработать заявку");
     return NextResponse.json(
       { ok: false, error: "Не удалось отправить заявку" },
       { status: 500 },
-    );
-  }
-
-  // Заявка принята только после первичной записи с согласием в журнал.
-  if (!result.journaled) {
-    return NextResponse.json(
-      { ok: false, error: "Не удалось отправить заявку" },
-      { status: 502 },
     );
   }
 

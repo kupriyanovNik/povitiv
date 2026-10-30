@@ -116,7 +116,6 @@ async function sendEmail(lead: LeadInput): Promise<DeliveryStatus> {
 
 export type LeadResult = {
   id: string;
-  journaled: boolean;
   delivery: Record<string, DeliveryStatus>;
 };
 
@@ -156,5 +155,5 @@ export async function processLead(lead: LeadInput): Promise<LeadResult> {
   }
 
   console.log("[lead]", id, JSON.stringify(delivery));
-  return { id, journaled: true, delivery };
+  return { id, delivery };
 }
