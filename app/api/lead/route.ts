@@ -125,18 +125,17 @@ export async function POST(req: NextRequest) {
       ip,
       consentAt: new Date().toISOString(),
     });
-  } catch (e) {
+  } catch {
     // неожиданный сбой не должен отдавать HTML-500: клиент ждёт JSON
-    console.error("[lead] processLead упал:", e);
+    console.error("[lead] не удалось обработать заявку");
     return NextResponse.json(
       { ok: false, error: "Не удалось отправить заявку" },
       { status: 500 },
     );
   }
 
-  // Заявка принята, если записана в журнал ИЛИ ушла на почту
-  const deliveredSomewhere = result.delivery.email === "ok";
-  if (!result.journaled && !deliveredSomewhere) {
+  // Заявка принята только после первичной записи с согласием в журнал.
+  if (!result.journaled) {
     return NextResponse.json(
       { ok: false, error: "Не удалось отправить заявку" },
       { status: 502 },

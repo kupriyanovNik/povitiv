@@ -70,9 +70,9 @@ async function withRetry(
     try {
       await attempt();
       return "ok";
-    } catch (e) {
+    } catch {
       if (i === tries - 1) {
-        console.error("[lead] письмо не отправлено:", e);
+        console.error("[lead] письмо не отправлено");
         return "failed";
       }
       await new Promise((r) => setTimeout(r, backoffMs));
@@ -125,7 +125,6 @@ export async function processLead(lead: LeadInput): Promise<LeadResult> {
   const createdAt = new Date().toISOString();
 
   // 1. Сначала запись в журнал на сервере
-  let journaled = true;
   try {
     await appendJournal({
       type: "lead",
@@ -139,10 +138,10 @@ export async function processLead(lead: LeadInput): Promise<LeadResult> {
       page: lead.page || undefined,
       consent: { given: true, at: lead.consentAt, ip: lead.ip },
     });
-  } catch (e) {
-    // например, read-only ФС на serverless
-    journaled = false;
-    console.error("[lead] не удалось записать журнал:", e);
+  } catch {
+    // Без первичной записи, включая согласие, не принимаем заявку и не шлём ПДн.
+    console.error("[lead] не удалось записать первичный журнал", id);
+    throw new Error("Lead journal unavailable");
   }
 
   // 2. Уведомление на почту
@@ -152,9 +151,10 @@ export async function processLead(lead: LeadInput): Promise<LeadResult> {
   try {
     await appendJournal({ type: "delivery", id, at: new Date().toISOString(), delivery });
   } catch {
-    /* журнал уже мог быть недоступен, статусы есть в логе ниже */
+    // Первичная запись сохранена: сбой записи статуса не отменяет приём заявки.
+    console.error("[lead] не удалось записать статус доставки", id);
   }
 
-  console.log("[lead]", id, JSON.stringify(delivery), journaled ? "" : "(журнал недоступен)");
-  return { id, journaled, delivery };
+  console.log("[lead]", id, JSON.stringify(delivery));
+  return { id, journaled: true, delivery };
 }

@@ -72,8 +72,9 @@ function ModalContent({
     };
   }, [onClose]);
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const company = String(new FormData(e.currentTarget).get("company") ?? "");
     // комментарий уходит только вместе с «Другое»: для остальных задач
     // поле скрыто и его содержимое не должно утекать в заявку
     const ok = await submit({
@@ -82,6 +83,7 @@ function ModalContent({
       task,
       comment: task === "Другое" ? comment : "",
       consent,
+      company,
     });
     // короткий «шейк» формы как телесная обратная связь об ошибке
     if (!ok && !reduce && formScope.current) {
@@ -112,7 +114,7 @@ function ModalContent({
         role="dialog"
         aria-modal="true"
         aria-label="Заявка на консультацию"
-        className="relative w-full max-w-md rounded-t-2xl bg-surface p-6 shadow-2xl shadow-ink/20 sm:rounded-2xl sm:p-8"
+        className="relative max-h-[100dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-surface p-6 shadow-2xl shadow-ink/20 sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl sm:p-8"
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 32, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98 }}

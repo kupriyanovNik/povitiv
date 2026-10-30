@@ -29,18 +29,28 @@ registry.npmjs.org.
 **Windows (PowerShell), в каталоге с исходниками:**
 
 ```powershell
+$ErrorActionPreference = 'Stop'
 npm ci
+if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
 npm run build
+if ($LASTEXITCODE -ne 0) { throw 'npm run build failed' }
 # готовый сайт — в .next\standalone; докладываем статику и данные
-Copy-Item -Recurse .next\static .next\standalone\.next\static
-Copy-Item -Recurse public .next\standalone\public
-New-Item -ItemType Directory .next\standalone\data
-Copy-Item data\agency.json, data\reviews-external.json .next\standalone\data\
-Copy-Item .env.example .next\standalone\.env.example
+Copy-Item -Recurse -LiteralPath '.next\static' -Destination '.next\standalone\.next\static'
+Copy-Item -Recurse -LiteralPath 'public' -Destination '.next\standalone\public'
+New-Item -ItemType Directory -Force -Path '.next\standalone\data' | Out-Null
+Copy-Item -LiteralPath 'data\agency.json', 'data\reviews-external.json' -Destination '.next\standalone\data\'
+Copy-Item -LiteralPath '.env.example' -Destination '.next\standalone\.env.example'
+# Next.js копирует локальные .env*: удаляем их и проверяем весь комплект.
+# Скрипт не переходит по символическим ссылкам и сохраняет только корневой шаблон.
+node '.\deploy\artifact-env.cjs' clean '.next\standalone'
+if ($LASTEXITCODE -ne 0) { throw 'Artifact env cleanup/verification failed; do not transfer this build' }
 ```
 
-Содержимое `.next\standalone` переносится в каталог сайта (например
+Только после успешного завершения всех команд содержимое `.next\standalone`
+переносится в каталог сайта (например
 `C:\sites\positiv-vt`) — это и есть рабочий сайт.
+Локальные `.env*`, включая вложенные файлы, каталоги и ссылки, передавать
+нельзя; настройки сервера создаются отдельно по разделу 6.
 
 **Linux / macOS:** `./deploy/build-artifact.sh` делает то же самое и
 упаковывает результат в архив `positiv-vt-dist.tar.gz`.

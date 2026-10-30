@@ -31,9 +31,10 @@ export function LeadForm() {
   const [comment, setComment] = useState("");
   const [consent, setConsent] = useState(false);
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const ok = await submit({ name, phone, task, object, comment, consent });
+    const company = String(new FormData(e.currentTarget).get("company") ?? "");
+    const ok = await submit({ name, phone, task, object, comment, consent, company });
     // короткий «шейк» формы как телесная обратная связь об ошибке
     if (!ok && !reduce && scope.current) {
       animateEl(
