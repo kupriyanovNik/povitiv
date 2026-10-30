@@ -51,7 +51,9 @@ systemctl enable --now positiv-vt.service
 cp /var/www/positiv-vt/deploy/nginx.conf /etc/nginx/sites-available/positiv-vt
 ln -s /etc/nginx/sites-available/positiv-vt /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
-certbot --nginx -d positiv-vt.ru -d www.positiv-vt.ru
+# --redirect фиксирует редирект HTTP->HTTPS явно (по умолчанию он и так
+# ставится с certbot 1.0; флаг — страховка от --no-redirect и cli.ini)
+certbot --nginx -d positiv-vt.ru -d www.positiv-vt.ru --redirect
 ```
 
 DNS: A-запись `positiv-vt.ru` и `www` на IP сервера (у текущего регистратора домена).
