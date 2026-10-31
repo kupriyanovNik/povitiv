@@ -777,6 +777,168 @@
     });
   }
 
+  /* ── Салют конфетти (confetti.ts) ──────────────────────────────────
+   * Web Animations API, только transform/opacity, частицы удаляются по
+   * окончании. Порт один в один: палитра, веер −165°…−15°, easing. */
+  var CONFETTI_COLORS = ["#7d1b24", "#5e1119", "#d98e3b", "#e9b77c", "#e7c3be"];
+  var BURST_EASING = "cubic-bezier(0.23, 1, 0.32, 1)";
+  var GRAVITY_EASING = "cubic-bezier(0.55, 0, 1, 0.45)";
+
+  function rand(min, max) { return min + Math.random() * (max - min); }
+
+  function burstConfetti(host, count) {
+    var n = count || 22;
+    for (var i = 0; i < n; i++) {
+      var piece = document.createElement("span");
+      // ленточки и кружочки: ленточки вращаются заметнее
+      var ribbon = i % 5 < 3;
+      var w = ribbon ? rand(3, 4.5) : rand(4.5, 6);
+      var h = ribbon ? rand(7, 10) : w;
+      piece.style.position = "absolute";
+      piece.style.left = -w / 2 + "px";
+      piece.style.top = -h / 2 + "px";
+      piece.style.width = w + "px";
+      piece.style.height = h + "px";
+      piece.style.borderRadius = ribbon ? "1px" : "50%";
+      piece.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+      piece.style.opacity = "0";
+      piece.style.willChange = "transform, opacity";
+      host.appendChild(piece);
+
+      // веер вверх от −165° до −15°, без полёта строго вниз в текст
+      var angle = (rand(-165, -15) * Math.PI) / 180;
+      var dist = rand(60, 130);
+      var dx = Math.cos(angle) * dist;
+      var dy = Math.sin(angle) * dist;
+      var fall = rand(50, 110);
+      var spin = (Math.random() < 0.5 ? -1 : 1) * rand(ribbon ? 240 : 90, ribbon ? 600 : 240);
+
+      var animation = piece.animate(
+        [
+          { transform: "translate(0, 0) rotate(0deg) scale(0.6)", opacity: 0, easing: BURST_EASING },
+          { opacity: 1, offset: 0.06, easing: BURST_EASING },
+          {
+            transform: "translate(" + dx * 0.85 + "px, " + dy + "px) rotate(" + spin * 0.45 + "deg) scale(1)",
+            opacity: 1,
+            offset: 0.42,
+            easing: GRAVITY_EASING,
+          },
+          {
+            transform: "translate(" + dx + "px, " + (dy + fall) + "px) rotate(" + spin + "deg) scale(0.85)",
+            opacity: 0,
+          },
+        ],
+        { duration: rand(1000, 1400), delay: rand(0, 70), fill: "forwards" }
+      );
+      animation.onfinish = function () { this.effect.target.remove(); };
+    }
+  }
+
+  /* ── Этапы сделки (DealRoute.tsx) ──────────────────────────────────
+   * Серая линия-маршрут есть в SSR; винтовая прорисовывается скроллом
+   * (scaleY по scrollYProgress), кружок шага заливается бордовым с
+   * белой иконкой, когда линия доходит до шага. Прогресс — как
+   * useScroll offset ["start 0.75", "end 0.7"]. */
+  function initDealRoute() {
+    var section = $("#process");
+    if (!section) return;
+    var list = $("ol", section);
+    var grayLine = section.querySelector('div[class*="bg-line"]');
+    if (!list || !grayLine) return;
+    var circles = $all("li > span.relative.z-10", list);
+    if (circles.length < 2) return;
+    // заливки шагов ведёт этот модуль, reveal-observer их не трогает
+    circles.forEach(function (c) { c.setAttribute("data-step-marker", ""); });
+
+    var n = circles.length;
+    var wineLine = document.createElement("div");
+    wineLine.setAttribute("aria-hidden", "true");
+    wineLine.className =
+      "absolute bottom-8 left-[27px] top-8 w-px origin-top bg-wine sm:left-[31px]";
+    grayLine.insertAdjacentElement("afterend", wineLine);
+
+    // StepFill: бордовый круг с той же иконкой в белом поверх
+    var overlays = circles.map(function (circle) {
+      var overlay = document.createElement("span");
+      overlay.setAttribute("aria-hidden", "true");
+      overlay.className =
+        "absolute inset-0 z-20 flex items-center justify-center rounded-full bg-wine text-white";
+      overlay.style.opacity = "0";
+      var icon = $("svg", circle);
+      if (icon) {
+        var clone = icon.cloneNode(true);
+        clone.removeAttribute("class"); // текст-цвет наследует text-white
+        overlay.appendChild(clone);
+      }
+      circle.appendChild(overlay);
+      return overlay;
+    });
+
+    function update() {
+      var rect = list.getBoundingClientRect();
+      // offset ["start 0.75", "end 0.7"]: p=0 — верх списка на линии 75%
+      // вьюпорта, p=1 — низ списка на линии 70%
+      var p = (window.innerHeight * 0.75 - rect.top) / (rect.height + window.innerHeight * 0.05);
+      p = Math.max(0, Math.min(1, REDUCE ? 1 : p));
+      wineLine.style.transform = "scaleY(" + p + ")";
+      overlays.forEach(function (overlay, i) {
+        var t = i / (n - 1);
+        var lo = Math.max(0, t - 0.05), hi = Math.min(1, t + 0.02);
+        var fill = Math.max(0, Math.min(1, (p - lo) / (hi - lo)));
+        overlay.style.opacity = String(REDUCE ? 1 : fill);
+      });
+    }
+
+    document.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+  }
+
+  /* ── Манифест (Manifesto.tsx) ──────────────────────────────────────
+   * Слова абзаца проявляются из opacity 0.14 в 1 по мере прокрутки:
+   * слово i живёт в окне прогресса [i/n, (i+1)/n]. Прогресс — как
+   * useScroll offset ["start 0.85", "end 0.5"]. В статике слова
+   * оборачиваются в спаны на клиенте, как после hydration в приложении;
+   * при reduced-motion текст остаётся цельным (как до маунта). */
+  function initManifesto() {
+    var p = null;
+    $all("section p").forEach(function (el) {
+      if (!p && el.textContent.indexOf("Мы не сетевой гигант") === 0) p = el;
+    });
+    if (!p || REDUCE) return;
+    var words = p.textContent.trim().split(/\s+/);
+    var total = words.length;
+    var spans = words.map(function (word) {
+      var span = document.createElement("span");
+      span.className = "inline";
+      span.textContent = word;
+      p.appendChild(span);
+      p.appendChild(document.createTextNode(" "));
+      return span;
+    });
+    p.textContent = "";
+    spans.forEach(function (span) {
+      p.appendChild(span);
+      p.appendChild(document.createTextNode(" "));
+    });
+
+    function update() {
+      var rect = p.getBoundingClientRect();
+      // offset ["start 0.85", "end 0.5"]
+      var progress = (window.innerHeight * 0.85 - rect.top) / (rect.height + window.innerHeight * 0.35);
+      progress = Math.max(0, Math.min(1, progress));
+      spans.forEach(function (span, i) {
+        var start = i / total, end = (i + 1) / total;
+        var local = Math.max(0, Math.min(1, (progress - start) / (end - start)));
+        span.style.opacity = String(0.14 + local * 0.86);
+      });
+    }
+
+    document.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+  }
+
   /* ── Линия таймлайна в «Безопасности» (Safety.tsx) ─────────────────
    * В приложении SVG-змейку строит useEffect по реальным позициям
    * маркеров (перестраивается на ресайзе), сплошная бордовая линия
@@ -807,6 +969,11 @@
 
     var R_MAX = 64;
     var svg = null, dashed = null, solid = null, thresholds = [0];
+    // салют (Safety.tsx): host — точка в центре финального маркера,
+    // пересечение p=0.999 снизу, один раз за визит
+    var burstHost = $('span[class*="left-1/2 top-1/2"]', markers[markers.length - 1]) || null;
+    var celebrated = false;
+    var prevP = 0;
 
     // layout-позиции (offset*), а не getBoundingClientRect: reveal-сдвиги
     // трансформой не учитываются (комментарий из Safety.tsx)
@@ -886,14 +1053,32 @@
       var p = (window.innerHeight * 0.72 - rect.top) / rect.height;
       p = Math.max(0, Math.min(1, REDUCE ? 1 : p));
       solid.style.strokeDashoffset = String(1 - p);
-      // заливка шагов: useTransform(progress, [t-.015, t+.015], [0,1])
+      // заливка шагов: useTransform(progress, [t-.015, t+.015], [0,1]).
+      // Границы окна клампятся в [0,1] наравне с прогрессом (как в
+      // useTransform) — иначе у первого маркера (t=0) окно [-0.015, 0.015]
+      // давало бы fill 0.5 ещё до начала скролла
       markers.forEach(function (m, i) {
         var overlay = m.querySelector("span.absolute.inset-0");
         if (!overlay) return;
         var t = thresholds[i] != null ? thresholds[i] : 1;
-        var fill = Math.max(0, Math.min(1, (p - (t - 0.015)) / 0.03));
+        var lo = Math.max(0, t - 0.015), hi = Math.min(1, t + 0.015);
+        var fill = Math.max(0, Math.min(1, (p - lo) / (hi - lo)));
         overlay.style.opacity = String(REDUCE ? 1 : fill);
       });
+      // салют: один раз за визит при пересечении 0.999 снизу и только
+      // когда финальная точка на экране (условия из Safety.tsx)
+      if (REDUCE || celebrated || p < 0.999 || prevP >= 0.999) {
+        prevP = p;
+        return;
+      }
+      if (burstHost) {
+        var hostTop = burstHost.getBoundingClientRect().top;
+        if (hostTop >= 0 && hostTop <= window.innerHeight) {
+          celebrated = true;
+          burstConfetti(burstHost);
+        }
+      }
+      prevP = p;
     }
 
     build();
@@ -914,8 +1099,12 @@
   function initReveal() {
     var els = $all('[style*="opacity:0"]').filter(function (el) {
       // ровно ноль, не 0.xxx; заливки маркеров таймлайна (data-stop-marker)
-      // ведёт initSafetyRoute — они проявляются по прогрессу тропы
-      return el.style.opacity === "0" && !el.closest("[data-stop-marker]");
+      // и шагов маршрута (data-step-marker) ведут их scroll-модули
+      return (
+        el.style.opacity === "0" &&
+        !el.closest("[data-stop-marker]") &&
+        !el.closest("[data-step-marker]")
+      );
     });
     if (!els.length) return;
     var reveal = function (el) {
@@ -943,6 +1132,8 @@
 
   initHeader();
   initSafetyRoute(); // до initReveal: помечает заливки маркеров (data-stop-marker)
+  initDealRoute(); // до initReveal: помечает заливки шагов (data-step-marker)
+  initManifesto();
   initReveal();
   initMenu();
   initLeadTriggers();
