@@ -812,6 +812,14 @@
       if (container.contains(e.relatedTarget)) return;
       focusIn = false;
     });
+    // смена REDUCE: новый 6-секундный отсчёт с нуля. В reduce прогресс
+    // стоял на 1 (статичная полная полоса) — без сброса после выключения
+    // reduce слайд «скакнул» бы сразу (остаток ≥1 → мгновенный advance)
+    reduceHandlers.push(function () {
+      progress = 0;
+      lastTs = null;
+      renderProgress();
+    });
 
     // пауза: постоянная кнопкой + временные hover и фокус клавиатуры
     // (WCAG 2.2.2); прогресс-полоса замирает по месту
