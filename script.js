@@ -15,7 +15,20 @@
   function submitLead(formData) { /* Подключается при деплое: сюда приходит FormData формы. Верните true после успешной отправки. */ }
   window.submitLead = submitLead;
 
-  var REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var REDUCE_QUERY = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var REDUCE = REDUCE_QUERY.matches;
+  // живая подписка: включение reduce на открытой странице мигрирует
+  // скролл-анимации в финальные состояния (модули регистрируют обработчики)
+  var reduceHandlers = [];
+  function onReduceChange() {
+    REDUCE = REDUCE_QUERY.matches;
+    reduceHandlers.forEach(function (fn) { fn(); });
+  }
+  if (REDUCE_QUERY.addEventListener) {
+    REDUCE_QUERY.addEventListener("change", onReduceChange);
+  } else if (REDUCE_QUERY.addListener) {
+    REDUCE_QUERY.addListener(onReduceChange); // старый Safari
+  }
 
   var PHONE = { display: "+7 (495) 609-28-64", href: "tel:+74956092864" };
 
@@ -327,7 +340,10 @@
       // AnimatePresence mode="wait" меняет ветки)
       var success = buildSuccess("section");
       form.replaceWith(success);
-      $("h3", success).focus();
+      // фокус на заголовок success — только когда lead-модалка не открыта:
+      // success под открытой модалкой не должен красть фокус из её полей
+      // (modalOverlay — авторитетный признак открытой модалки)
+      if (!modalOverlay) $("h3", success).focus();
     });
   }
 
@@ -692,6 +708,8 @@
     var hover = false;
     var focusIn = false;
     var dragging = false;
+    // постоянная пауза автоплея кнопкой: отдельно от временных hover/focus
+    var userPaused = false;
     var progress = REDUCE ? 1 : 0;
     var lastTs = null;
     var progressEl = null;
@@ -749,16 +767,49 @@
     if (prevBtn) prevBtn.addEventListener("click", function () { goTo(index - 1); });
     if (nextBtn) nextBtn.addEventListener("click", function () { goTo(index + 1); });
 
-    // пауза и под курсором, и пока внутри фокус клавиатуры (WCAG 2.2.2)
+    // кнопка «Пауза/Продолжить» (фича ревью): в стиле круглых стрелок,
+    // между точками и стрелками; userPaused — отдельно от hover/focus
+    var ICON_PAUSE =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true"><path d="M88,44h16a12,12,0,0,1,12,12v144a12,12,0,0,1-12,12H88a12,12,0,0,1-12-12V56A12,12,0,0,1,88,44Zm64,0h16a12,12,0,0,1,12,12v144a12,12,0,0,1-12,12h-16a12,12,0,0,1-12-12V56A12,12,0,0,1,152,44Z"></path></svg>';
+    var ICON_PLAY =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true"><path d="M96,64l80,64-80,64" fill="currentColor" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+    var pauseBtn = document.createElement("button");
+    pauseBtn.type = "button";
+    pauseBtn.className =
+      "flex h-10 w-10 items-center justify-center rounded-full border border-wine/25 text-wine transition-colors hover:border-wine/50";
+    function renderPauseBtn() {
+      pauseBtn.setAttribute("aria-pressed", userPaused ? "true" : "false");
+      pauseBtn.setAttribute(
+        "aria-label",
+        userPaused
+          ? "Продолжить автопрокрутку отзывов"
+          : "Поставить автопрокрутку отзывов на паузу"
+      );
+      pauseBtn.innerHTML = userPaused ? ICON_PLAY : ICON_PAUSE;
+    }
+    pauseBtn.addEventListener("click", function () {
+      userPaused = !userPaused;
+      renderPauseBtn();
+    });
+    renderPauseBtn();
+    if (prevBtn) prevBtn.insertAdjacentElement("beforebegin", pauseBtn);
+
+    // пауза и под курсором, и пока внутри фокус клавиатуры (WCAG 2.2.2);
+    // фокус на самой кнопке паузы автопрокрутку НЕ останавливает — иначе
+    // «Продолжить» не сработало бы, пока кнопка в фокусе
     container.addEventListener("pointerenter", function () { hover = true; });
     container.addEventListener("pointerleave", function () { hover = false; });
-    container.addEventListener("focusin", function () { focusIn = true; });
+    container.addEventListener("focusin", function (e) {
+      focusIn = e.target !== pauseBtn;
+    });
     container.addEventListener("focusout", function (e) {
       if (container.contains(e.relatedTarget)) return;
       focusIn = false;
     });
 
-    function paused() { return hover || focusIn || dragging; }
+    // пауза: постоянная кнопкой + временные hover и фокус клавиатуры
+    // (WCAG 2.2.2); прогресс-полоса замирает по месту
+    function paused() { return userPaused || hover || focusIn || dragging; }
 
     // автоплей: прогресс 0..1 за 6 с, затем следующий слайд
     function tick(ts) {
@@ -1023,6 +1074,8 @@
     document.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     update();
+    // reduce на живой странице: линия целиком (scaleY 1), заливки все
+    reduceHandlers.push(update);
   }
 
   /* ── Манифест (Manifesto.tsx) ──────────────────────────────────────
@@ -1068,6 +1121,11 @@
     document.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     update();
+    // reduce на живой странице: все слова в финальную непрозрачность
+    reduceHandlers.push(function () {
+      if (!REDUCE) { update(); return; }
+      spans.forEach(function (span) { span.style.opacity = "1"; });
+    });
   }
 
   /* ── Линия таймлайна в «Безопасности» (Safety.tsx) ─────────────────
@@ -1219,6 +1277,8 @@
     document.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     update();
+    // reduce на живой странице: линия целиком, заливки все (update читает REDUCE)
+    reduceHandlers.push(update);
   }
 
   /* ── Появление блоков (entrance-анимации приложения) ───────────────
@@ -1239,8 +1299,13 @@
     });
     if (!els.length) return;
     var reveal = function (el) {
-      el.style.transition =
-        "opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1)";
+      // в reduce — мгновенно, без 0.6s-перехода
+      if (!REDUCE) {
+        el.style.transition =
+          "opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1)";
+      } else {
+        el.style.transition = "none";
+      }
       el.style.opacity = "1";
       el.style.transform = "none";
     };
@@ -1257,6 +1322,13 @@
         });
     }, { threshold: 0.15 });
     els.forEach(function (el) { obs.observe(el); });
+    // reduce включили на живой странице: недоскрытые элементы — сразу
+    reduceHandlers.push(function () {
+      if (!REDUCE) return;
+      els.forEach(function (el) {
+        if (el.style.opacity === "0") reveal(el);
+      });
+    });
   }
 
   /* ── Запуск ──────────────────────────────────────────────────────── */
