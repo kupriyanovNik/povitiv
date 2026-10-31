@@ -164,9 +164,9 @@
   /* ── Формы: валидация → window.submitLead(FormData) ────────────────
    * Правила и тексты ошибок — из приложения (lead/useLeadSubmit.ts):
    * только валидная форма доходит до submitLead. Экран успеха
-   * показывается ТОЛЬКО если submitLead вернул true: заглушка
-   * возвращает undefined, и после сабмита не происходит ничего —
-   * это ожидаемо до подключения отправки (контракт в README-hosting.md). */
+   * показывается ТОЛЬКО если submitLead вернул true; любой другой
+   * исход (заглушка возвращает undefined, сетевая ошибка, reject) —
+   * сообщение об ошибке с телефоном (контракт в README-hosting.md). */
 
   function validateLead(data) {
     var name = String(data.get("name") || "").trim();
@@ -210,6 +210,13 @@
     }
   }
 
+  // Любой не-true исход отправки (false/undefined/reject/исключение):
+  // посетитель должен узнать о сбое — сообщение с телефоном в том же
+  // стиле, что и валидационные ошибки; исчезает при следующем сабмите
+  // (clearFormError) или после успеха (форму заменяет экран успеха)
+  var SEND_ERROR_MESSAGE =
+    "Не удалось отправить заявку. Позвоните нам: " + PHONE.display;
+
   function handleForm(form, onSuccess) {
     // пока асинхронный submitLead не разрешился, повторный сабмит
     // игнорируется (без индикатора — дизайн не меняется)
@@ -228,11 +235,12 @@
       try {
         result = window.submitLead(data);
       } catch (err) {
-        result = undefined; // синхронный сбой отправки — тихо, без success
+        result = undefined; // синхронный сбой отправки
       }
       // контракт: true синхронно → экран успеха; Promise (thenable) →
       // дождаться разрешения: true после успешного ответа сервера →
-      // success, иначе/ошибка → тихо; undefined/false → тихо
+      // success, любой другой исход → сообщение об ошибке;
+      // undefined/false → тоже сообщение об ошибке
       if (result === true) {
         if (onSuccess) onSuccess();
         return;
@@ -243,12 +251,16 @@
           function (ok) {
             pending = false;
             if (ok === true && onSuccess) onSuccess();
+            else showFormError(form, SEND_ERROR_MESSAGE);
           },
           function () {
-            pending = false; // отклонение/сетевая ошибка — тихо
+            pending = false; // отклонение/сетевая ошибка
+            showFormError(form, SEND_ERROR_MESSAGE);
           }
         );
+        return;
       }
+      showFormError(form, SEND_ERROR_MESSAGE);
     });
   }
 
@@ -470,14 +482,21 @@
 
     var comment = $("[data-modal-comment]", overlay);
     var taskInput = $('input[name="task"]', overlay);
-    wireRadiogroup($('[role="radiogroup"]', overlay), initialTask || "Продать", function (task) {
+    // textarea скрытого поля disabled: disabled-поля не попадают в FormData,
+    // поэтому комментарий от задачи «Другое» не уедет с другой задачей
+    function syncComment(task) {
       comment.hidden = task !== "Другое";
+      var ta = $("textarea", comment);
+      if (ta) ta.disabled = comment.hidden;
+    }
+    wireRadiogroup($('[role="radiogroup"]', overlay), initialTask || "Продать", function (task) {
+      syncComment(task);
       taskInput.value = task;
     });
     // initialTask задаёт состояние сразу: радиогруппа отрисовала выбранный
     // чип, поле «Другое» раскрыто и задача в FormData актуальны до первого
     // клика по чипу (в приложении initialTask едет в state модалки)
-    comment.hidden = (initialTask || "Продать") !== "Другое";
+    syncComment(initialTask || "Продать");
     taskInput.value = initialTask || "Продать";
     $("[data-modal-backdrop]", overlay).addEventListener("click", closeModal);
     $("[data-modal-close]", overlay).addEventListener("click", closeModal);

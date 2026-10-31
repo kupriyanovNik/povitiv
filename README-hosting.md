@@ -117,34 +117,34 @@ RewriteEngine On
 # страницы старого сайта: text=page&i=N
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
 RewriteCond %{QUERY_STRING} (^|&)i=4(&|$) [NC]
-RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#kontakty [NE,R=301,L]
+RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#kontakty? [NE,R=301,L]
 
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
 RewriteCond %{QUERY_STRING} (^|&)i=5(&|$) [NC]
-RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#zayavka [NE,R=301,L]
+RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#zayavka? [NE,R=301,L]
 
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
 RewriteCond %{QUERY_STRING} (^|&)i=6(&|$) [NC]
-RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#faq [NE,R=301,L]
+RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#faq? [NE,R=301,L]
 
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
 RewriteCond %{QUERY_STRING} (^|&)i=8(&|$) [NC]
-RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#zayavka [NE,R=301,L]
+RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#zayavka? [NE,R=301,L]
 
 # i=2, 3, 7 и неучтённые страницы — на главную
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
-RewriteRule ^cgi-bin/positiv_vt/index\.pl$ / [R=301,L]
+RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /? [R=301,L]
 
 # разделы каталога и карточки объектов старого сайта
 RewriteCond %{QUERY_STRING} (^|&)text=(cat|elem)(&|$) [NC]
-RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#nedvizhimost [NE,R=301,L]
+RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#nedvizhimost? [NE,R=301,L]
 
 # прочее — на главную
-RewriteRule ^cgi-bin/positiv_vt/index\.pl$ / [R=301,L]
+RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /? [R=301,L]
 
 # прежние адреса /privacy и /consent
-RewriteRule ^privacy$ /privacy.html [R=301,L]
-RewriteRule ^consent$ /consent.html [R=301,L]
+RewriteRule ^privacy$ /privacy.html? [R=301,L]
+RewriteRule ^consent$ /consent.html? [R=301,L]
 ```
 
 #### VirtualHost (конфиг сервера)
@@ -158,38 +158,43 @@ RewriteEngine On
 # страницы старого сайта: text=page&i=N
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
 RewriteCond %{QUERY_STRING} (^|&)i=4(&|$) [NC]
-RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#kontakty [NE,R=301,L]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#kontakty? [NE,R=301,L]
 
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
 RewriteCond %{QUERY_STRING} (^|&)i=5(&|$) [NC]
-RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#zayavka [NE,R=301,L]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#zayavka? [NE,R=301,L]
 
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
 RewriteCond %{QUERY_STRING} (^|&)i=6(&|$) [NC]
-RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#faq [NE,R=301,L]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#faq? [NE,R=301,L]
 
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
 RewriteCond %{QUERY_STRING} (^|&)i=8(&|$) [NC]
-RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#zayavka [NE,R=301,L]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#zayavka? [NE,R=301,L]
 
 # i=2, 3, 7 и неучтённые страницы — на главную
 RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
-RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ / [R=301,L]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /? [R=301,L]
 
 # разделы каталога и карточки объектов старого сайта
 RewriteCond %{QUERY_STRING} (^|&)text=(cat|elem)(&|$) [NC]
-RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#nedvizhimost [NE,R=301,L]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#nedvizhimost? [NE,R=301,L]
 
 # прочее — на главную
-RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ / [R=301,L]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /? [R=301,L]
 
 # прежние адреса /privacy и /consent
-RewriteRule ^/privacy$ /privacy.html [R=301,L]
-RewriteRule ^/consent$ /consent.html [R=301,L]
+RewriteRule ^/privacy$ /privacy.html? [R=301,L]
+RewriteRule ^/consent$ /consent.html? [R=301,L]
 ```
 
-(`NE` запрещает кодировать `#` в `%23`; якоря `#…` браузер применяет сам,
-сервер их не получает — редирект на адрес с якорем корректен.)
+(`NE` запрещает кодировать `#` в `%23`; завершающий `?` в подстановке
+отбрасывает исходную query-строку — иначе к `/` или `/#kontakty`
+приклеился бы хвост `?text=page&i=N`. Приём работает на всех Apache 2.4 —
+флаг QSD требует 2.4.11+; якоря не ломаются: браузер применяет `#…` сам,
+сервер их не получает. В nginx-блоке `?` не нужен: `return 301 $cgi_target`
+подставляет переменную как есть и query не добавляет — приклейка
+аргументов — поведение только директивы `rewrite` без `?` в замене.)
 
 ### Прежние адреса /privacy и /consent
 
@@ -220,10 +225,17 @@ function submitLead(formData) { /* Подключается при деплое:
 Контракт:
 
 - функция вызывается с `FormData` формы;
-- **верните `true` после успешной отправки** — только тогда посетителю
-  показывается экран успеха («Спасибо, заявка отправлена»);
+- **`true` (синхронно) или Promise, разрешившийся `true` после успешного
+  ответа сервера** — посетителю показывается экран успеха («Спасибо,
+  заявка отправлена»);
+- **любой другой исход** — `false`, `undefined`, отклонённый Promise
+  (ошибка сети), исключение внутри функции — посетителю показывается
+  сообщение «Не удалось отправить заявку. Позвоните нам:
+  +7 (495) 609-28-64» (тот же стиль, что у валидационных ошибок);
+  сообщение исчезает при следующем сабмите или после успешной отправки;
+- до разрешения Promise повторный сабмит игнорируется (без индикатора);
 - до подключения отправки заглушка возвращает `undefined`: после сабмита
-  **не происходит ничего** (ни экрана успеха, ни ошибки) — это ожидаемо,
+  валидной формы посетитель видит сообщение с телефоном — это ожидаемо,
   пока отправка не подключена.
 
 Валидация встроена в страницу — правила и тексты ошибок из исходного
@@ -249,9 +261,10 @@ function submitLead(formData) {
 ```
 
 До разрешения Promise страница остаётся на форме, а повторный сабмит
-игнорируется (без индикатора — дизайн не меняется); если Promise
-разрешится не-`true` или отклонится (сетевая ошибка), — экрана успеха
-не будет, форма останется на странице. Не возвращайте `true` сразу
-после **запуска** `fetch`: это показало бы «Спасибо» даже при сетевой
-ошибке. При синхронном сбое внутри `submitLead` (исключение) страница
-также остаётся на форме.
+игнорируется (без индикатора — дизайн не меняется). Если Promise
+разрешится не-`true` или отклонится (сетевая ошибка), посетителю
+показывается сообщение «Не удалось отправить заявку. Позвоните нам:
++7 (495) 609-28-64». Не возвращайте `true` сразу после **запуска**
+`fetch`: это показало бы «Спасибо» даже при сетевой ошибке. Синхронный
+сбой внутри `submitLead` (исключение) — тоже сообщение с телефоном,
+без экрана успеха.
