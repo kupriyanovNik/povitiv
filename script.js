@@ -211,8 +211,12 @@
   }
 
   function handleForm(form, onSuccess) {
+    // пока асинхронный submitLead не разрешился, повторный сабмит
+    // игнорируется (без индикатора — дизайн не меняется)
+    var pending = false;
     form.addEventListener("submit", function (e) {
       e.preventDefault();
+      if (pending) return;
       clearFormError(form);
       var problem = validateLead(new FormData(form));
       if (problem) {
@@ -220,9 +224,31 @@
         return;
       }
       var data = new FormData(form);
-      // контракт: submitLead вернул true после успешной отправки →
-      // экран успеха; undefined (заглушка) → ничего не происходит
-      if (window.submitLead(data) === true && onSuccess) onSuccess();
+      var result;
+      try {
+        result = window.submitLead(data);
+      } catch (err) {
+        result = undefined; // синхронный сбой отправки — тихо, без success
+      }
+      // контракт: true синхронно → экран успеха; Promise (thenable) →
+      // дождаться разрешения: true после успешного ответа сервера →
+      // success, иначе/ошибка → тихо; undefined/false → тихо
+      if (result === true) {
+        if (onSuccess) onSuccess();
+        return;
+      }
+      if (result && typeof result.then === "function") {
+        pending = true;
+        result.then(
+          function (ok) {
+            pending = false;
+            if (ok === true && onSuccess) onSuccess();
+          },
+          function () {
+            pending = false; // отклонение/сетевая ошибка — тихо
+          }
+        );
+      }
     });
   }
 
@@ -448,6 +474,11 @@
       comment.hidden = task !== "Другое";
       taskInput.value = task;
     });
+    // initialTask задаёт состояние сразу: радиогруппа отрисовала выбранный
+    // чип, поле «Другое» раскрыто и задача в FormData актуальны до первого
+    // клика по чипу (в приложении initialTask едет в state модалки)
+    comment.hidden = (initialTask || "Продать") !== "Другое";
+    taskInput.value = initialTask || "Продать";
     $("[data-modal-backdrop]", overlay).addEventListener("click", closeModal);
     $("[data-modal-close]", overlay).addEventListener("click", closeModal);
     handleForm($("form", overlay), function () {
@@ -540,6 +571,9 @@
       item.classList.add("st-faq-item");
       var answer = document.createElement("div");
       answer.className = "st-faq-answer";
+      // свёрнутый ответ недоступен скринридеру: hidden снимается при
+      // раскрытии и возвращается после анимации сворачивания
+      answer.hidden = true;
       var p = document.createElement("p");
       p.className = "max-w-[68ch] pb-6 text-[15px] leading-relaxed text-ink-soft";
       p.textContent = data.a;
@@ -569,6 +603,10 @@
       btn.setAttribute("aria-expanded", "true");
       item.classList.add("st-open");
       var box = $(".st-faq-answer", item);
+      // снять hidden до анимации, затем reflow: высота идёт с 0, скринридер
+      // видит ответ сразу после клика; источник правды — aria-expanded
+      box.hidden = false;
+      void box.offsetHeight;
       if (REDUCE) {
         box.style.height = "auto";
         return;
@@ -588,6 +626,7 @@
       var box = $(".st-faq-answer", item);
       if (REDUCE) {
         box.style.height = "";
+        box.hidden = true;
         return;
       }
       if (box.style.height === "auto") {
@@ -595,6 +634,19 @@
         void box.offsetHeight; // reflow, чтобы переход пошёл с фикс. высоты
       }
       box.style.height = "";
+      // hidden — после завершения анимации; если вопрос успели раскрыть
+      // снова (st-open вернулся), скрывать нельзя
+      var onEnd = function (e) {
+        if (e.propertyName !== "height") return;
+        box.removeEventListener("transitionend", onEnd);
+        clearTimeout(timer);
+        if (!item.classList.contains("st-open")) box.hidden = true;
+      };
+      var timer = setTimeout(function () {
+        box.removeEventListener("transitionend", onEnd);
+        if (!item.classList.contains("st-open")) box.hidden = true;
+      }, 350);
+      box.addEventListener("transitionend", onEnd);
     }
   }
 

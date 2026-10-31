@@ -102,7 +102,14 @@ location = /cgi-bin/positiv_vt/index.pl {
 }
 ```
 
-### Apache (mod_rewrite, в .htaccess или vhost)
+### Apache (mod_rewrite)
+
+⚠️ В `RewriteRule` путь **без начального слэша** — в контексте per-directory
+(`.htaccess` в каталоге сайта), **со слэшем** — в контексте сервера
+(VirtualHost в конфиге). Правила одинаковые, отличается только префикс
+пути — используйте подходящий блок целиком.
+
+#### .htaccess (в каталоге сайта)
 
 ```apache
 RewriteEngine On
@@ -134,6 +141,51 @@ RewriteRule ^cgi-bin/positiv_vt/index\.pl$ /#nedvizhimost [NE,R=301,L]
 
 # прочее — на главную
 RewriteRule ^cgi-bin/positiv_vt/index\.pl$ / [R=301,L]
+
+# прежние адреса /privacy и /consent
+RewriteRule ^privacy$ /privacy.html [R=301,L]
+RewriteRule ^consent$ /consent.html [R=301,L]
+```
+
+#### VirtualHost (конфиг сервера)
+
+Те же правила с начальным слэшем в путях (в контексте сервера путь
+сопоставляется с полного URL):
+
+```apache
+RewriteEngine On
+
+# страницы старого сайта: text=page&i=N
+RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
+RewriteCond %{QUERY_STRING} (^|&)i=4(&|$) [NC]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#kontakty [NE,R=301,L]
+
+RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
+RewriteCond %{QUERY_STRING} (^|&)i=5(&|$) [NC]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#zayavka [NE,R=301,L]
+
+RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
+RewriteCond %{QUERY_STRING} (^|&)i=6(&|$) [NC]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#faq [NE,R=301,L]
+
+RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
+RewriteCond %{QUERY_STRING} (^|&)i=8(&|$) [NC]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#zayavka [NE,R=301,L]
+
+# i=2, 3, 7 и неучтённые страницы — на главную
+RewriteCond %{QUERY_STRING} (^|&)text=page(&|$) [NC]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ / [R=301,L]
+
+# разделы каталога и карточки объектов старого сайта
+RewriteCond %{QUERY_STRING} (^|&)text=(cat|elem)(&|$) [NC]
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ /#nedvizhimost [NE,R=301,L]
+
+# прочее — на главную
+RewriteRule ^/cgi-bin/positiv_vt/index\.pl$ / [R=301,L]
+
+# прежние адреса /privacy и /consent
+RewriteRule ^/privacy$ /privacy.html [R=301,L]
+RewriteRule ^/consent$ /consent.html [R=301,L]
 ```
 
 (`NE` запрещает кодировать `#` в `%23`; якоря `#…` браузер применяет сам,
@@ -153,12 +205,8 @@ location = /privacy { return 301 /privacy.html; }
 location = /consent { return 301 /consent.html; }
 ```
 
-Apache (mod_rewrite, рядом с правилами выше):
-
-```apache
-RewriteRule ^privacy$ /privacy.html [R=301,L]
-RewriteRule ^consent$ /consent.html [R=301,L]
-```
+Apache — правила `^privacy$`/`^consent$` (в VirtualHost: `^/privacy$`,
+`^/consent$`) уже включены в блоки выше.
 
 ## Подключение отправки формы
 
@@ -189,7 +237,21 @@ function submitLead(formData) { /* Подключается при деплое:
 только для задачи «Другое»), `consent` («on», если отмечен), `company`
 (honeypot для ботов — всегда пустой у людей).
 
-Обратите внимание: контракт синхронный — решение об экране успеха
-принимается по возвращённому значению, поэтому при асинхронной отправке
-(`fetch`) либо возвращайте `true` после запуска отправки, либо показывайте
-результат сами: при `undefined`/`false` страница остаётся на форме.
+Обратите внимание: контракт поддерживает и асинхронную отправку.
+Возвращайте `true` **синхронно** (если отправка уже выполнена) либо
+**Promise, который разрешится `true` после успешного ответа сервера**:
+
+```js
+function submitLead(formData) {
+  return fetch("/api/lead", { method: "POST", body: formData })
+    .then(function (res) { return res.ok; });
+}
+```
+
+До разрешения Promise страница остаётся на форме, а повторный сабмит
+игнорируется (без индикатора — дизайн не меняется); если Promise
+разрешится не-`true` или отклонится (сетевая ошибка), — экрана успеха
+не будет, форма останется на странице. Не возвращайте `true` сразу
+после **запуска** `fetch`: это показало бы «Спасибо» даже при сетевой
+ошибке. При синхронном сбое внутри `submitLead` (исключение) страница
+также остаётся на форме.
