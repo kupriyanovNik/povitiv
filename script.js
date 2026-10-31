@@ -1157,7 +1157,7 @@
     markers.forEach(function (m) { m.setAttribute("data-stop-marker", ""); });
 
     var R_MAX = 64;
-    var svg = null, dashed = null, solid = null, thresholds = [0];
+    var svg = null, dashed = null, solid = null, thresholds = [0], fillWindows = [];
     // салют (Safety.tsx): host — точка в центре финального маркера,
     // пересечение p=0.999 снизу, один раз за визит
     var burstHost = $('span[class*="left-1/2 top-1/2"]', markers[markers.length - 1]) || null;
@@ -1206,6 +1206,19 @@
       }
       var total = cumLen[cumLen.length - 1] || 1;
       thresholds = cumLen.map(function (v) { return v / total; });
+      // Окна заливки из ФАКТИЧЕСКОЙ длины пути (тот же проход, что и path):
+      // заливка маркера начинается, когда кончик линии доходит до КРАЯ его
+      // кружка (cumLen[i] − радиус), и полна, когда кончик в центре. Так
+      // линия никогда не опережает заливку на любой ширине: у финального
+      // кружка после поворота трассы фиксированное окно ±0.015 от total
+      // давало 8–10px «линия внутри незалитого кружка» на 390/360/320.
+      var radii = markers.map(function (m) { return m.offsetWidth / 2; });
+      fillWindows = cumLen.map(function (v, i) {
+        var end = v / total;
+        var start = i === 0 ? 0 : Math.max(0, (v - radii[i]) / total);
+        if (i === 0) end = 0.015; // первый: окно [0, 0.015], как в оригинале
+        return { start: start, end: Math.max(start, Math.min(1, end)) };
+      });
 
       var w = track.offsetWidth, h = track.offsetHeight;
       if (!svg) {
@@ -1242,16 +1255,13 @@
       var p = (window.innerHeight * 0.72 - rect.top) / rect.height;
       p = Math.max(0, Math.min(1, REDUCE ? 1 : p));
       solid.style.strokeDashoffset = String(1 - p);
-      // заливка шагов: useTransform(progress, [t-.015, t+.015], [0,1]).
-      // Границы окна клампятся в [0,1] наравне с прогрессом (как в
-      // useTransform) — иначе у первого маркера (t=0) окно [-0.015, 0.015]
-      // давало бы fill 0.5 ещё до начала скролла
+      // заливка по окнам из геометрии пути (build): старт у края кружка,
+      // полная в центре — линия и заливка синхронны в каждом положении
       markers.forEach(function (m, i) {
         var overlay = m.querySelector("span.absolute.inset-0");
         if (!overlay) return;
-        var t = thresholds[i] != null ? thresholds[i] : 1;
-        var lo = Math.max(0, t - 0.015), hi = Math.min(1, t + 0.015);
-        var fill = Math.max(0, Math.min(1, (p - lo) / (hi - lo)));
+        var win = fillWindows[i] || { start: 0, end: 0.015 };
+        var fill = Math.max(0, Math.min(1, (p - win.start) / (win.end - win.start)));
         overlay.style.opacity = String(REDUCE ? 1 : fill);
       });
       // салют: один раз за визит при пересечении 0.999 снизу и только
