@@ -57,3 +57,4 @@ next-env.d.ts
 # сборка артефакта для хостинга (может содержать данные сборочной машины)
 /dist/
 /positiv-vt-dist.tar.gz*
+/positiv-vt-static.zip
