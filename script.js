@@ -714,8 +714,6 @@
     var hover = false;
     var focusIn = false;
     var dragging = false;
-    // постоянная пауза автоплея кнопкой: отдельно от временных hover/focus
-    var userPaused = false;
     var progress = REDUCE ? 1 : 0;
     var lastTs = null;
     var progressEl = null;
@@ -773,41 +771,10 @@
     if (prevBtn) prevBtn.addEventListener("click", function () { goTo(index - 1); });
     if (nextBtn) nextBtn.addEventListener("click", function () { goTo(index + 1); });
 
-    // кнопка «Пауза/Продолжить» (фича ревью): в стиле круглых стрелок,
-    // между точками и стрелками; userPaused — отдельно от hover/focus
-    var ICON_PAUSE =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true"><path d="M88,44h16a12,12,0,0,1,12,12v144a12,12,0,0,1-12,12H88a12,12,0,0,1-12-12V56A12,12,0,0,1,88,44Zm64,0h16a12,12,0,0,1,12,12v144a12,12,0,0,1-12,12h-16a12,12,0,0,1-12-12V56A12,12,0,0,1,152,44Z"></path></svg>';
-    var ICON_PLAY =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true"><path d="M96,64l80,64-80,64" fill="currentColor" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
-    var pauseBtn = document.createElement("button");
-    pauseBtn.type = "button";
-    pauseBtn.className =
-      "flex h-10 w-10 items-center justify-center rounded-full border border-wine/25 text-wine transition-colors hover:border-wine/50";
-    function renderPauseBtn() {
-      pauseBtn.setAttribute("aria-pressed", userPaused ? "true" : "false");
-      pauseBtn.setAttribute(
-        "aria-label",
-        userPaused
-          ? "Продолжить автопрокрутку отзывов"
-          : "Поставить автопрокрутку отзывов на паузу"
-      );
-      pauseBtn.innerHTML = userPaused ? ICON_PLAY : ICON_PAUSE;
-    }
-    pauseBtn.addEventListener("click", function () {
-      userPaused = !userPaused;
-      renderPauseBtn();
-    });
-    renderPauseBtn();
-    if (prevBtn) prevBtn.insertAdjacentElement("beforebegin", pauseBtn);
-
-    // пауза и под курсором, и пока внутри фокус клавиатуры (WCAG 2.2.2);
-    // фокус на самой кнопке паузы автопрокрутку НЕ останавливает — иначе
-    // «Продолжить» не сработало бы, пока кнопка в фокусе
+    // пауза и под курсором, и пока внутри фокус клавиатуры (WCAG 2.2.2)
     container.addEventListener("pointerenter", function () { hover = true; });
     container.addEventListener("pointerleave", function () { hover = false; });
-    container.addEventListener("focusin", function (e) {
-      focusIn = e.target !== pauseBtn;
-    });
+    container.addEventListener("focusin", function () { focusIn = true; });
     container.addEventListener("focusout", function (e) {
       if (container.contains(e.relatedTarget)) return;
       focusIn = false;
@@ -821,9 +788,9 @@
       renderProgress();
     });
 
-    // пауза: постоянная кнопкой + временные hover и фокус клавиатуры
-    // (WCAG 2.2.2); прогресс-полоса замирает по месту
-    function paused() { return userPaused || hover || focusIn || dragging; }
+    // пауза: hover и фокус клавиатуры (WCAG 2.2.2); прогресс-полоса
+    // замирает по месту
+    function paused() { return hover || focusIn || dragging; }
 
     // автоплей: прогресс 0..1 за 6 с, затем следующий слайд
     function tick(ts) {
