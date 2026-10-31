@@ -7,6 +7,11 @@
 (function () {
   "use strict";
 
+  // progressive enhancement: скрытие reveal-элементов (CSS .st-js .st-reveal)
+  // включается только при работающем JS; script в конце body синхронный —
+  // класс ставится до первой отрисовки, без FOUC
+  document.documentElement.classList.add("st-js");
+
   /* ── Отправка формы ─────────────────────────────────────────────────
    * ЗАРЕЗЕРВИРОВАННАЯ ПУСТАЯ ФУНКЦИЯ. Контракт: вызывается с FormData
    * валидной формы; верните true после успешной отправки — только тогда
@@ -340,10 +345,11 @@
       // AnimatePresence mode="wait" меняет ветки)
       var success = buildSuccess("section");
       form.replaceWith(success);
-      // фокус на заголовок success — только когда lead-модалка не открыта:
-      // success под открытой модалкой не должен красть фокус из её полей
-      // (modalOverlay — авторитетный признак открытой модалки)
-      if (!modalOverlay) $("h3", success).focus();
+      // фокус на заголовок success — только когда не открыт ни один
+      // оверлей-диалог (lead-модалка ИЛИ мобильное меню): success под
+      // открытой панелью не должен красть фокус из её элементов
+      // (modalOverlay/menuOverlay — авторитетные признаки открытых панелей)
+      if (!modalOverlay && !menuOverlay) $("h3", success).focus();
     });
   }
 
@@ -829,7 +835,10 @@
       }
       requestAnimationFrame(tick);
     }
-    if (!REDUCE) requestAnimationFrame(tick);
+    // цикл живёт всегда: при REDUCE tick не двигает прогресс (как в
+    // оригинале — автопрокрутки нет), но после ВЫКЛЮЧЕНИЯ reduce на живой
+    // странице автопрокрутка стартует сама, без пересоздания цикла
+    requestAnimationFrame(tick);
 
     // автоплей работает только когда карусель в вьюпорте (useInView 0.35)
     new IntersectionObserver(function (entries) {
@@ -1056,6 +1065,27 @@
       return overlay;
     });
 
+    // Пороги заливок — из геометрии ЛИНИИ (как в Safety): доля накопленной
+    // высоты линии в проекции кружка шага. Заливка начинается, когда
+    // кончик линии доходит до края кружка, и полна, когда кончик в его
+    // центре. Равные доли i/(n-1) на 320 рассинхронивали заливки с
+    // кончиком линии до ~126px. Пересчёт — на ресайзе/рефлоу (RO ниже).
+    var windows = [];
+    function measure() {
+      var container = grayLine.parentElement;
+      var cr = container.getBoundingClientRect();
+      var gl = grayLine.getBoundingClientRect();
+      var lineTop = gl.top - cr.top;
+      var span = gl.height; // серая линия: top-8 → bottom-8 контейнера
+      windows = circles.map(function (circle) {
+        var cRect = circle.getBoundingClientRect();
+        var center = cRect.top + cRect.height / 2 - cr.top;
+        var end = Math.max(0, Math.min(1, (center - lineTop) / span));
+        var start = Math.max(0, (center - cRect.height / 2 - lineTop) / span);
+        return { start: start, end: Math.max(start, end) };
+      });
+    }
+
     function update() {
       var rect = list.getBoundingClientRect();
       // offset ["start 0.75", "end 0.7"]: p=0 — верх списка на линии 75%
@@ -1064,15 +1094,19 @@
       p = Math.max(0, Math.min(1, REDUCE ? 1 : p));
       wineLine.style.transform = "scaleY(" + p + ")";
       overlays.forEach(function (overlay, i) {
-        var t = i / (n - 1);
-        var lo = Math.max(0, t - 0.05), hi = Math.min(1, t + 0.02);
-        var fill = Math.max(0, Math.min(1, (p - lo) / (hi - lo)));
+        var w = windows[i] || { start: 0, end: 1 };
+        var fill = Math.max(0, Math.min(1, (p - w.start) / (w.end - w.start)));
         overlay.style.opacity = String(REDUCE ? 1 : fill);
       });
     }
 
+    measure();
     document.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+    window.addEventListener("resize", function () { measure(); update(); });
+    if (typeof ResizeObserver === "function") {
+      // перенос текста/шрифты меняют высоту списка — пороги пересчитываются
+      new ResizeObserver(function () { measure(); update(); }).observe(list);
+    }
     update();
     // reduce на живой странице: линия целиком (scaleY 1), заливки все
     reduceHandlers.push(update);
@@ -1107,6 +1141,13 @@
     });
 
     function update() {
+      // reduce: слова в финальном состоянии независимо от скролла — иначе
+      // следующий scroll после включения reduce снова пересчитает opacity
+      // вплоть до 0.14 (миграция reduceHandlers ниже при этом терялась)
+      if (REDUCE) {
+        spans.forEach(function (span) { span.style.opacity = "1"; });
+        return;
+      }
       var rect = p.getBoundingClientRect();
       // offset ["start 0.85", "end 0.5"]
       var progress = (window.innerHeight * 0.85 - rect.top) / (rect.height + window.innerHeight * 0.35);
@@ -1298,15 +1339,10 @@
    * (только opacity). Показываем один раз при входе во вьюпорт, как
    * whileInView с once:true; одновременно вошедшие — с лёгким стаггером. */
   function initReveal() {
-    var els = $all('[style*="opacity:0"]').filter(function (el) {
-      // ровно ноль, не 0.xxx; заливки маркеров таймлайна (data-stop-marker)
-      // и шагов маршрута (data-step-marker) ведут их scroll-модули
-      return (
-        el.style.opacity === "0" &&
-        !el.closest("[data-stop-marker]") &&
-        !el.closest("[data-step-marker]")
-      );
-    });
+    // reveal-элементы помечены классом st-reveal (inline-скрытие из SSR
+    // убрано — no-JS показывает страницу полностью); заливки маршрутов
+    // (data-stop-marker / data-step-marker) ведут их scroll-модули
+    var els = $all(".st-reveal");
     if (!els.length) return;
     var reveal = function (el) {
       // в reduce — мгновенно, без 0.6s-перехода
@@ -1335,9 +1371,7 @@
     // reduce включили на живой странице: недоскрытые элементы — сразу
     reduceHandlers.push(function () {
       if (!REDUCE) return;
-      els.forEach(function (el) {
-        if (el.style.opacity === "0") reveal(el);
-      });
+      els.forEach(reveal);
     });
   }
 
