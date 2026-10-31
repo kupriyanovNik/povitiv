@@ -1,0 +1,7 @@
+User-Agent: *
+Allow: /
+Disallow: /privacy
+Disallow: /consent
+Disallow: /api/
+
+Sitemap: https://positiv-vt.ru/sitemap.xml
