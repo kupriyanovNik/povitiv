@@ -8,8 +8,11 @@
   "use strict";
 
   /* ── Отправка формы ─────────────────────────────────────────────────
-   * ЗАРЕЗЕРВИРОВАННАЯ ПУСТАЯ ФУНКЦИЯ. */
-  function submitLead(formData) { /* Подключается при деплое: сюда приходит FormData формы. Ничего не делает. */ }
+   * ЗАРЕЗЕРВИРОВАННАЯ ПУСТАЯ ФУНКЦИЯ. Контракт: вызывается с FormData
+   * валидной формы; верните true после успешной отправки — только тогда
+   * посетителю показывается экран успеха. До подключения отправки
+   * функция возвращает undefined и сабмит не даёт отклика — это ожидаемо. */
+  function submitLead(formData) { /* Подключается при деплое: сюда приходит FormData формы. Верните true после успешной отправки. */ }
   window.submitLead = submitLead;
 
   var REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -158,16 +161,68 @@
     render();
   }
 
-  /* ── Формы: submit → window.submitLead(FormData) ─────────────────── */
+  /* ── Формы: валидация → window.submitLead(FormData) ────────────────
+   * Правила и тексты ошибок — из приложения (lead/useLeadSubmit.ts):
+   * только валидная форма доходит до submitLead. Экран успеха
+   * показывается ТОЛЬКО если submitLead вернул true: заглушка
+   * возвращает undefined, и после сабмита не происходит ничего —
+   * это ожидаемо до подключения отправки (контракт в README-hosting.md). */
+
+  function validateLead(data) {
+    var name = String(data.get("name") || "").trim();
+    if (name.length < 2) return "Укажите имя";
+    var digits = String(data.get("phone") || "").replace(/\D/g, "");
+    if (digits.length < 10 || digits.length > 15)
+      return "Укажите корректный номер телефона";
+    if (!data.get("consent"))
+      return "Подтвердите согласие на обработку персональных данных";
+    return null;
+  }
+
+  function clearFormError(form) {
+    var old = $('[role="alert"]', form);
+    if (old) old.parentNode.removeChild(old);
+  }
+
+  // Ошибка — над согласием и кнопкой сабмита, как motion.p в LeadForm.tsx:
+  // text-sm font-medium text-[#b3261e], role="alert", появление
+  // opacity 0→1 / y −4→0 за 0.18s easeOut
+  function showFormError(form, message) {
+    clearFormError(form);
+    var p = document.createElement("p");
+    p.setAttribute("role", "alert");
+    p.className = "text-sm font-medium text-[#b3261e]";
+    p.textContent = message;
+    var consent = $('input[type="checkbox"]', form);
+    var anchor =
+      (consent && consent.closest("label")) ||
+      $('button[type="submit"]', form);
+    if (anchor) form.insertBefore(p, anchor);
+    else form.appendChild(p);
+    if (!REDUCE && p.animate) {
+      p.animate(
+        [
+          { opacity: 0, transform: "translateY(-4px)" },
+          { opacity: 1, transform: "none" },
+        ],
+        { duration: 180, easing: "ease-out" }
+      );
+    }
+  }
 
   function handleForm(form, onSuccess) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      // НИКАКОЙ валидации и сообщений: пустая заглушка из script.js
-      window.submitLead(new FormData(form));
-      // успех показывается всегда: submitLead — заглушка, экран
-      // успеха рендерит обработчик формы, как LeadSuccess в приложении
-      if (onSuccess) onSuccess();
+      clearFormError(form);
+      var problem = validateLead(new FormData(form));
+      if (problem) {
+        showFormError(form, problem);
+        return;
+      }
+      var data = new FormData(form);
+      // контракт: submitLead вернул true после успешной отправки →
+      // экран успеха; undefined (заглушка) → ничего не происходит
+      if (window.submitLead(data) === true && onSuccess) onSuccess();
     });
   }
 
@@ -352,6 +407,9 @@
       '    <p class="mt-1.5 text-sm leading-relaxed text-ink-soft">Оставьте номер и выберите задачу. Специалист свяжется с вами и уточнит детали.</p>' +
       '    <form class="mt-5 space-y-4">' +
       '      <div role="radiogroup" aria-label="Задача" class="flex flex-wrap gap-2">' + chipButtons(initialTask || "Продать") + "</div>" +
+      // выбранная задача едет в FormData: чипы — радиогруппа без инпутов,
+      // value синхронизирует обработчик wireRadiogroup ниже
+      '      <input type="hidden" name="task" value="' + (initialTask || "Продать") + '"/>' +
       // «Другое» без места для рассказа оставляло бы заявку пустой:
       // поле раскрывается только для этой задачи
       '      <div class="-mx-1.5 overflow-hidden" data-modal-comment hidden>' +
@@ -385,8 +443,10 @@
     document.body.appendChild(overlay);
 
     var comment = $("[data-modal-comment]", overlay);
+    var taskInput = $('input[name="task"]', overlay);
     wireRadiogroup($('[role="radiogroup"]', overlay), initialTask || "Продать", function (task) {
       comment.hidden = task !== "Другое";
+      taskInput.value = task;
     });
     $("[data-modal-backdrop]", overlay).addEventListener("click", closeModal);
     $("[data-modal-close]", overlay).addEventListener("click", closeModal);
