@@ -1057,7 +1057,13 @@
         var center = cRect.top + cRect.height / 2 - cr.top;
         var end = Math.max(0, Math.min(1, (center - lineTop) / span));
         var start = Math.max(0, (center - cRect.height / 2 - lineTop) / span);
-        return { start: start, end: Math.max(start, end) };
+        // Вырожденное окно (кружок стоит на самом старте линии: start==end
+        // после клампа) даёт p/0 → Infinity/NaN → присвоение opacity
+        // игнорируется и кружок «залипает» при обратной прокрутке.
+        // Расширяем до минимальной ширины — как в initSafetyRoute для
+        // первого маркера
+        if (end - start < 0.01) end = Math.min(1, start + 0.01);
+        return { start: start, end: end };
       });
     }
 
