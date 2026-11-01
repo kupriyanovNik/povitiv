@@ -12,6 +12,14 @@
   // класс ставится до первой отрисовки, без FOUC
   document.documentElement.classList.add("st-js");
 
+  /* ── Ключ Яндекс Карт JS API ─────────────────────────────────────────
+   * Впишите ключ JS API Яндекс Карт (кабинет разработчика
+   * yandex.ru/maps-api/, ключ привязан к positiv-vt.ru и www).
+   * Пусто (по умолчанию) → в футере показывается iframe-виджет без ключа.
+   * Непусто → грузится брендированная карта в палитре сайта; при сбое
+   * загрузки или невалидном ключе — автоматический откат на iframe-виджет. */
+  var YANDEX_MAPS_API_KEY = "";
+
   /* ── Отправка формы ─────────────────────────────────────────────────
    * ЗАРЕЗЕРВИРОВАННАЯ ПУСТАЯ ФУНКЦИЯ. Контракт: вызывается с FormData
    * валидной формы; верните true после успешной отправки — только тогда
@@ -36,6 +44,15 @@
   }
 
   var PHONE = { display: "+7 (495) 609-28-64", href: "tel:+74956092864" };
+  // path телефонной иконки (Phosphor Phone, bold) — для svg 16 и 14px
+  var PHONE_ICON_PATH =
+    "M224,154.8l-47.09-21.11-.18-.08a19.94,19.94,0,0,0-19,1.75,13.08,13.08,0,0,0-1.12.84l-22.31,19c-13-7.05-26.43-20.37-33.49-33.21l19.06-22.66a11.76,11.76,0,0,0,.85-1.15,20,20,0,0,0,1.66-18.83,1.42,1.42,0,0,1-.08-.18L101.2,32A20.06,20.06,0,0,0,80.42,20.15,60.27,60.27,0,0,0,28,80c0,81.61,66.39,148,148,148a60.27,60.27,0,0,0,59.85-52.42A20.06,20.06,0,0,0,224,154.8ZM176,204A124.15,124.15,0,0,1,52,80,36.29,36.29,0,0,1,80.48,44.46l18.82,42L80.14,109.28a12,12,0,0,0-.86,1.16A20,20,0,0,0,78,130.08c9.42,19.28,28.83,38.56,48.31,48A20,20,0,0,0,146,176.63a11.63,11.63,0,0,0,1.11-.85l22.43-19.07,42,18.81A36.29,36.29,0,0,1,176,204Z";
+  function phoneIconSvg(size) {
+    return (
+      '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size +
+      '" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true"><path d="' + PHONE_ICON_PATH + '"></path></svg>'
+    );
+  }
 
   // Иконки Phosphor (bold), которых нет в SSR-разметке: крестик и телефон
   // для JS-панелей (мобильное меню, модалка, MobileBar). Контур и «плюс»
@@ -1356,6 +1373,171 @@
     });
   }
 
+  /* ── Карта офиса: JS API Яндекс Карт 3.0 с откатом на iframe ────────
+   * Порт components/map/YandexOfficeMap.tsx + ymaps3.ts + mapStyle.ts +
+   * OfficePlaque.tsx. Без ключа (или при сбое загрузки API, таймауте,
+   * невалидном ключе) — iframe-виджет из HTML, как в оригинальном
+   * фолбэке. Скрипт API грузится лениво — по приближению футера. */
+
+  // Кастомизация векторной схемы под палитру сайта (mapStyle.ts):
+  // тёплая «бумага», дома в тон, белые улицы, POI скрыты
+  var MAP_CUSTOMIZATION = [
+    { tags: { any: ["landscape"] }, elements: "geometry", stylers: [{ color: "#f3eee8" }] },
+    { tags: { any: ["urban_area", "residential", "industrial"] }, elements: "geometry", stylers: [{ color: "#efe8e1" }] },
+    { tags: { any: ["vegetation", "park", "national_park"] }, elements: "geometry", stylers: [{ color: "#e3e5d3" }] },
+    { tags: { any: ["water"] }, elements: "geometry", stylers: [{ color: "#d6dee1" }] },
+    { tags: { any: ["building"] }, elements: "geometry.fill", stylers: [{ color: "#e7ded6" }] },
+    { tags: { any: ["building"] }, elements: "geometry.outline", stylers: [{ color: "#dccfc4" }] },
+    { tags: { any: ["road"] }, elements: "geometry.fill", stylers: [{ color: "#ffffff" }] },
+    { tags: { any: ["road"] }, elements: "geometry.outline", stylers: [{ color: "#e4d9cf" }] },
+    { tags: { any: ["transit_line"] }, elements: "geometry", stylers: [{ saturation: -0.7 }, { opacity: 0.6 }] },
+    { tags: { any: ["poi"] }, stylers: [{ visibility: "off" }] },
+    { tags: { any: ["transit_stop"] }, stylers: [{ visibility: "off" }] },
+    { elements: "label.text.fill", stylers: [{ color: "#7a706b" }] },
+    { elements: "label.text.outline", stylers: [{ color: "#ffffff" }] },
+  ];
+  var MAP_LAND = "#f3eee8"; // цвет «земли», пока карта грузится
+
+  // навигационная стрелка (Phosphor NavigationArrow, fill) — для кнопки маршрута
+  var ICON_NAV_ARROW =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" style="transform:scaleX(-1)"><path d="M248,121.58a15.76,15.76,0,0,1-11.29,15l-.2.06-78,21.84-21.84,78-.06.2a15.77,15.77,0,0,1-15,11.29h-.3a15.77,15.77,0,0,1-15.07-10.67L41,61.41a1,1,0,0,1-.05-.16A16,16,0,0,1,61.25,40.9l.16.05,175.92,65.26A15.78,15.78,0,0,1,248,121.58Z"></path></svg>';
+
+  // Плашка агентства (OfficePlaque.tsx): карточка с адресом и офисным
+  // телефоном + кнопка маршрута, хвостик и бордовая точка на координате
+  function plaqueHtml() {
+    return (
+      '<div class="absolute left-0 top-0 flex -translate-x-1/2 -translate-y-full flex-col items-center">' +
+      '  <div class="relative z-10 w-[232px] rounded-2xl bg-surface p-4 text-ink shadow-[0_16px_36px_-14px_rgba(51,10,15,0.4)] ring-1 ring-ink/5 sm:w-[248px]">' +
+      '    <div class="flex items-center gap-2.5">' +
+      '      <span aria-hidden="true" class="block h-[22px] w-11 shrink-0 bg-wine" style="mask-image:url(./img/brand/emblem.svg);mask-size:contain;mask-repeat:no-repeat;mask-position:center;-webkit-mask-image:url(./img/brand/emblem.svg);-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center"></span>' +
+      '      <div class="min-w-0 leading-tight">' +
+      '        <p class="font-display text-[15px] font-bold">Позитив ВТ</p>' +
+      '        <p class="mt-0.5 truncate text-xs text-ink-soft">ул. Палиха, 14/33, стр. 2</p>' +
+      "      </div>" +
+      "    </div>" +
+      '    <a href="' + PHONE.href + '" class="tnum mt-3 flex items-center gap-2 whitespace-nowrap text-[14px] font-semibold transition-colors hover:text-wine">' +
+      '      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256" class="text-wine" aria-hidden="true"><path d="' + PHONE_ICON_PATH + '"></path></svg>' +
+      PHONE.display + "</a>" +
+      '    <a href="https://yandex.ru/maps/?rtext=~55.784417,37.600359&amp;rtt=auto&amp;z=16" target="_blank" rel="noopener noreferrer" class="mt-3 flex h-9 items-center justify-center gap-1.5 rounded-full bg-wine text-[13px] font-semibold text-white transition-colors hover:bg-wine-deep active:scale-[0.98]">' +
+      ICON_NAV_ARROW +
+      '      Построить маршрут</a>' +
+      "  </div>" +
+      '  <span aria-hidden="true" class="relative z-20 -mt-[7px] h-3.5 w-3.5 rotate-45 bg-surface shadow-[2px_2px_3px_-1px_rgba(51,10,15,0.12)]"></span>' +
+      '  <span aria-hidden="true" class="mt-0.5 h-3.5 w-3.5 translate-y-1/2 rounded-full border-[3px] border-white bg-wine shadow-[0_2px_6px_rgba(51,10,15,0.45)]"></span>' +
+      "</div>"
+    );
+  }
+
+  // Загрузчик JS API 3.0 (ymaps3.ts): один скрипт на страницу, таймаут
+  // 12 с страхует зависшую сеть; при неудаче следующий вызов пробует заново
+  var YMAPS_LOAD_TIMEOUT_MS = 12000;
+  var ymaps3Pending = null;
+  function loadYmaps3(apiKey) {
+    if (ymaps3Pending) return ymaps3Pending;
+    var load = new Promise(function (resolve, reject) {
+      var whenReady = function () {
+        var api = window.ymaps3;
+        if (!api) return reject(new Error("ymaps3 не появился после загрузки"));
+        api.ready.then(function () { resolve(api); }, reject);
+      };
+      if (window.ymaps3) return whenReady();
+      var script = document.createElement("script");
+      script.src = "https://api-maps.yandex.ru/v3/?apikey=" + encodeURIComponent(apiKey) + "&lang=ru_RU";
+      script.async = true;
+      script.onload = whenReady;
+      script.onerror = function () {
+        script.remove();
+        reject(new Error("JS API Яндекс Карт не загрузился"));
+      };
+      document.head.appendChild(script);
+    });
+    var timeout = new Promise(function (_, reject) {
+      setTimeout(function () { reject(new Error("JS API Яндекс Карт: таймаут")); }, YMAPS_LOAD_TIMEOUT_MS);
+    });
+    ymaps3Pending = Promise.race([load, timeout]);
+    ymaps3Pending.catch(function () { ymaps3Pending = null; });
+    return ymaps3Pending;
+  }
+
+  function initOfficeMap() {
+    // iframe-виджет из HTML — носитель контейнера и фолбэк
+    var iframe = document.querySelector('#kontakty iframe[src*="map-widget"]');
+    if (!iframe) return;
+    var host = iframe.parentElement;
+    if (!host) return;
+    if (!YANDEX_MAPS_API_KEY) return; // без ключа iframe-виджет как есть
+
+    var started = false;
+    var io = new IntersectionObserver(function (entries) {
+      if (!entries[0].isIntersecting || started) return;
+      started = true;
+      io.disconnect();
+      startBrandedMap();
+    }, { rootMargin: "600px 0px" });
+    io.observe(host);
+
+    function startBrandedMap() {
+      // брендированный контейнер поверх iframe (фон «земли», пока грузится)
+      var branded = document.createElement("div");
+      branded.setAttribute("role", "region");
+      branded.setAttribute("aria-label", "Офис «Позитив ВТ» на карте");
+      branded.className = "absolute inset-0";
+      branded.style.backgroundColor = MAP_LAND;
+      host.appendChild(branded);
+
+      loadYmaps3(YANDEX_MAPS_API_KEY)
+        .then(function (api) {
+          var coarse = window.matchMedia("(pointer: coarse)").matches;
+          var wide = window.matchMedia("(min-width: 640px)").matches;
+          var office = [37.600359, 55.784417]; // ул. Палиха, 14/33, стр. 2
+          var map = new api.YMap(branded, {
+            location: { center: office, zoom: 16 },
+            mode: "vector",
+            theme: "light",
+            // отступ сверху: центр карты считается без него, над офисом плашка
+            margin: [wide ? 170 : 150, 0, 0, 0],
+            // на тач-экранах карту не тянуть одним пальцем — прокрутка страницы
+            behaviors: coarse ? ["pinchZoom", "dblClick"] : ["drag", "pinchZoom", "dblClick"],
+            zoomRange: { min: 11, max: 19 },
+          });
+          map.addChild(new api.YMapDefaultSchemeLayer({ customization: MAP_CUSTOMIZATION }));
+          map.addChild(new api.YMapDefaultFeaturesLayer({}));
+          // маркер-точка с плашкой; blockBehaviors — взаимодействие с плашкой
+          // не двигает карту
+          var markerEl = document.createElement("div");
+          markerEl.innerHTML = plaqueHtml();
+          map.addChild(new api.YMapMarker({ coordinates: office, blockBehaviors: true }, markerEl));
+          // «Открыть Яндекс Карты» слева сверху — обязательна по условиям
+          // Яндекса (п. 4.1.3.3); зум справа — на широких экранах
+          return Promise.all([
+            api.import("@yandex/ymaps3-controls@0.0.1"),
+            api.import("@yandex/ymaps3-controls-extra"),
+          ]).then(function (imports) {
+            var YMapZoomControl = imports[0].YMapZoomControl;
+            var YMapOpenMapsButton = imports[1].YMapOpenMapsButton;
+            map.addChild(
+              new api.YMapControls({ position: "top left" })
+                .addChild(new YMapOpenMapsButton({}))
+            );
+            if (wide) {
+              map.addChild(
+                new api.YMapControls({ position: "right" })
+                  .addChild(new YMapZoomControl({}))
+              );
+            }
+          });
+        })
+        .then(function () {
+          // успех: iframe-виджет больше не нужен
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        })
+        .catch(function () {
+          // любой сбой (сеть/таймаут/невалидный ключ) — откат на iframe
+          if (branded.parentNode) branded.parentNode.removeChild(branded);
+        });
+    }
+  }
+
   /* ── Запуск ──────────────────────────────────────────────────────── */
 
   initHeader();
@@ -1370,4 +1552,5 @@
   initCarousel();
   initMobileBar();
   initKeyboard();
+  initOfficeMap();
 })();
