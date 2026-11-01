@@ -175,7 +175,9 @@ RewriteRule ^/consent$ /consent.html? [R=301,L]
 закрывает и 404 из раздела «Деплой», и редиректы выше. В примере — 404,
 `/privacy`, `/consent` и правило для старого `/cgi-bin/…`; остальные
 цели (`i=5/6/8`, `cat|elem`) — копии правила `cgi-old` с условиями
-(аналог `RewriteCond`) и целями из таблицы выше:
+(аналог `RewriteCond`) и целями из таблицы выше — во всех action
+обязательно `appendQueryString="false"` (иначе старая query приклеится
+к чистой цели: `/#kontakty?text=page&i=4`):
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -183,17 +185,21 @@ RewriteRule ^/consent$ /consent.html? [R=301,L]
   <system.webServer>
     <httpErrors existingResponse="Replace" errorMode="Custom">
       <remove statusCode="404" />
-      <error statusCode="404" path="/404.html" responseMode="File" />
+      <!-- ExecuteURL: path — URL на сайте (/404.html), а не физический путь;
+           404.html использует абсолютные пути (/styles.css), поэтому работает.
+           Кастомная страница httpErrors отдаётся с ИСХОДНЫМ статусом ошибки
+           (404 сохраняется; режим Redirect сделал бы 302 — не годится). -->
+      <error statusCode="404" path="/404.html" responseMode="ExecuteURL" />
     </httpErrors>
     <rewrite>
       <rules>
         <rule name="privacy" stopProcessing="true">
           <match url="^privacy$" />
-          <action type="Redirect" url="/privacy.html" redirectType="Permanent" />
+          <action type="Redirect" url="/privacy.html" appendQueryString="false" redirectType="Permanent" />
         </rule>
         <rule name="consent" stopProcessing="true">
           <match url="^consent$" />
-          <action type="Redirect" url="/consent.html" redirectType="Permanent" />
+          <action type="Redirect" url="/consent.html" appendQueryString="false" redirectType="Permanent" />
         </rule>
         <rule name="cgi-old" stopProcessing="true">
           <match url="^cgi-bin/positiv_vt/index\.pl$" />
@@ -201,11 +207,11 @@ RewriteRule ^/consent$ /consent.html? [R=301,L]
             <add input="{QUERY_STRING}" pattern="(^|&amp;)text=page(&amp;|$)" />
             <add input="{QUERY_STRING}" pattern="(^|&amp;)i=4(&amp;|$)" />
           </conditions>
-          <action type="Redirect" url="/#kontakty" redirectType="Permanent" />
+          <action type="Redirect" url="/#kontakty" appendQueryString="false" redirectType="Permanent" />
         </rule>
         <rule name="cgi-old fallback" stopProcessing="true">
           <match url="^cgi-bin/positiv_vt/index\.pl$" />
-          <action type="Redirect" url="/" redirectType="Permanent" />
+          <action type="Redirect" url="/" appendQueryString="false" redirectType="Permanent" />
         </rule>
       </rules>
     </rewrite>
@@ -217,10 +223,17 @@ RewriteRule ^/consent$ /consent.html? [R=301,L]
 
 - Включите на веб-сервере сжатие текстовых файлов (gzip или brotli):
   html, css, js и svg сайта сжимаются в несколько раз.
-- Содержимое `img/` и `fonts/` не меняется — отдавайте с долгим кэшем:
-  `Cache-Control: public, max-age=31536000, immutable`.
-- HTML — наоборот, с коротким кэшем (`Cache-Control: no-cache`), чтобы
-  правки сайта подхватывались сразу после перезаливки.
+- `fonts/` — долгий кэш с `immutable`: имена файлов содержат хэш
+  (`golos-text-cyrillic-wght-normal.3bf69esvr9_f7.woff2`), при обновлении
+  шрифта имя меняется → `Cache-Control: public, max-age=31536000, immutable`.
+- `img/` — имена стабильные, без версионирования (`city-skyline.jpg`,
+  `wordmark.svg`): годовой immutable при замене картинки месяц держал бы
+  старый файл у посетителей. Для лендинга разумно `Cache-Control:
+  public, max-age=604800` (неделя) — заменённая картинка подхватится
+  максимум через неделю без какой-либо инфраструктуры версионирования.
+  То же для `styles.css` и `script.js` (стабильные имена без хэшей).
+- HTML — с коротким кэшем (`Cache-Control: no-cache`), чтобы правки
+  сайта подхватывались сразу после перезаливки.
 
 ## Интеграция 1: отправка заявок
 

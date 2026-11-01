@@ -1485,12 +1485,39 @@
       branded.style.backgroundColor = MAP_LAND;
       host.appendChild(branded);
 
+      // Общий таймаут ВСЕЙ операции — 15 с: 12 с запас на загрузку скрипта
+      // API и ready + ~3 с на построение карты и импорт контролов. Без него
+      // зависший импорт/ready оставлял бы пустой контейнер поверх iframe
+      // навсегда (loadYmaps3-таймаут 12 с покрывает только загрузку).
+      // Гонка с успехом: settled — таймаут, сработавший позже, карту не трогает.
+      var map = null;      // созданная (пусть и недостроенная) карта
+      var settled = false; // успех зафиксирован
+      var timer = setTimeout(function () { finish(false); }, 15000);
+
+      function finish(ok) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (ok) {
+          // успех: iframe-виджет больше не нужен
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+          return;
+        }
+        // откат: снести недостроенную карту (map.destroy()) и контейнер —
+        // iframe-виджет из HTML остаётся
+        if (map) {
+          try { map.destroy(); } catch (e) { /* карта могла не создаться */ }
+          map = null;
+        }
+        if (branded.parentNode) branded.parentNode.removeChild(branded);
+      }
+
       loadYmaps3(YANDEX_MAPS_API_KEY)
         .then(function (api) {
           var coarse = window.matchMedia("(pointer: coarse)").matches;
           var wide = window.matchMedia("(min-width: 640px)").matches;
           var office = [37.600359, 55.784417]; // ул. Палиха, 14/33, стр. 2
-          var map = new api.YMap(branded, {
+          map = new api.YMap(branded, {
             location: { center: office, zoom: 16 },
             mode: "vector",
             theme: "light",
@@ -1525,15 +1552,13 @@
                   .addChild(new YMapZoomControl({}))
               );
             }
+            // карта построена полностью: таймаут больше ничего не сносит
+            finish(true);
           });
-        })
-        .then(function () {
-          // успех: iframe-виджет больше не нужен
-          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
         })
         .catch(function () {
           // любой сбой (сеть/таймаут/невалидный ключ) — откат на iframe
-          if (branded.parentNode) branded.parentNode.removeChild(branded);
+          finish(false);
         });
     }
   }
